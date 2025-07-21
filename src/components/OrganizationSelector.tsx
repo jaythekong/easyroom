@@ -120,7 +120,7 @@ export function OrganizationSelector() {
                         <Badge variant="secondary">Member</Badge>
                       </div>
                       <CardDescription>
-                        Access at: roomer.lovable.app/{org.slug}
+                        Access at: {window.location.origin}/{org.slug}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -158,7 +158,7 @@ export function OrganizationSelector() {
                       {org.name}
                     </CardTitle>
                     <CardDescription>
-                      Access at: roomer.lovable.app/{org.slug}
+                      Access at: {window.location.origin}/{org.slug}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
