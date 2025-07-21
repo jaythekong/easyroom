@@ -77,8 +77,13 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
       if (existingBooking) {
         // Pre-fill form with existing booking data
+        // Parse the UTC times and convert to local date but keep the time in the intended timezone
         const startDate = new Date(existingBooking.start_time);
         const endDate = new Date(existingBooking.end_time);
+        
+        // Create new date objects for the same calendar date but with corrected times
+        const localStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const localEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
         
         console.log('📝 Existing booking data:', {
           id: existingBooking.id,
@@ -92,14 +97,17 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           endDate: endDate.toISOString()
         });
 
-        const formattedStartTime = format(startDate, 'HH:mm');
-        const formattedEndTime = format(endDate, 'HH:mm');
+        // Extract time components from the original UTC times
+        const startUTC = new Date(existingBooking.start_time);
+        const endUTC = new Date(existingBooking.end_time);
+        const formattedStartTime = startUTC.toISOString().substring(11, 16); // HH:mm format from UTC
+        const formattedEndTime = endUTC.toISOString().substring(11, 16); // HH:mm format from UTC
         
         console.log('📝 Time formatting:', {
           originalStartTime: existingBooking.start_time,
           originalEndTime: existingBooking.end_time,
-          parsedStartDate: startDate,
-          parsedEndDate: endDate,
+          startUTC: startUTC.toISOString(),
+          endUTC: endUTC.toISOString(),
           formattedStartTime,
           formattedEndTime,
           availableTimeSlots: timeSlots,
@@ -109,7 +117,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
         const newFormData = {
           title: existingBooking.title || "",
-          date: startDate,
+          date: localStartDate,
           startTime: formattedStartTime,
           endTime: formattedEndTime,
           attendees: existingBooking.attendees?.toString() || "",
