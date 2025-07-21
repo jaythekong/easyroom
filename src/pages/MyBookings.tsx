@@ -166,11 +166,15 @@ export default function MyBookings() {
   };
 
   const formatDateTime = (dateTime: string) => {
-    return format(new Date(dateTime), 'PPP p');
+    // Treat the stored time as local time, not UTC
+    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
+    return format(date, 'PPP p');
   };
 
   const formatTime = (dateTime: string) => {
-    return format(new Date(dateTime), 'p');
+    // Treat the stored time as local time, not UTC
+    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
+    return format(date, 'p');
   };
 
   const isUpcoming = (startTime: string) => {
