@@ -108,12 +108,13 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
         </div>
       </div>
 
-      {/* Time Header */}
-      <div className="sticky top-4 z-10 bg-background border-b pb-2">
-        <div className="flex gap-2">
-          <div className="flex-shrink-0 w-[200px] text-sm font-medium text-muted-foreground">Rooms</div>
-          <div className="flex-1">
-            <div className="flex gap-2 min-w-max">
+      {/* Timeline Container - Single scroll for both header and content */}
+      <div className="overflow-x-auto">
+        {/* Time Header */}
+        <div className="sticky top-4 z-10 bg-background border-b pb-2">
+          <div className="flex gap-2 min-w-max">
+            <div className="flex-shrink-0 w-[200px] text-sm font-medium text-muted-foreground">Rooms</div>
+            <div className="flex gap-2">
               {timeSlots.map(({ time }) => (
                 <div 
                   key={time} 
@@ -129,73 +130,73 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Room Rows */}
-      <div className="space-y-2 overflow-x-auto">
-        {rooms.map((room) => (
-          <div key={room.id} className="bg-card border rounded-lg p-3">
-            <div className="flex gap-2 min-w-max">
-              {/* Room Info */}
-              <div className="flex-shrink-0 w-[200px]">
-                <h3 className="font-medium text-sm">{room.name}</h3>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Users className="h-3 w-3" />
-                  <span>{room.capacity}</span>
-                  {room.location && (
-                    <>
-                      <span>•</span>
-                      <span>{room.location}</span>
-                    </>
-                  )}
+        {/* Room Rows */}
+        <div className="space-y-2">
+          {rooms.map((room) => (
+            <div key={room.id} className="bg-card border rounded-lg p-3">
+              <div className="flex gap-2 min-w-max">
+                {/* Room Info */}
+                <div className="flex-shrink-0 w-[200px]">
+                  <h3 className="font-medium text-sm">{room.name}</h3>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3" />
+                    <span>{room.capacity}</span>
+                    {room.location && (
+                      <>
+                        <span>•</span>
+                        <span>{room.location}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Timeline Slots */}
+                <div className="flex gap-2">
+                  {timeSlots.map(({ time }) => {
+                    const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
+                    const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                    const isCurrent = isCurrentHour(time);
+                    
+                    return (
+                      <div
+                        key={`${room.id}-${time}`}
+                        className={`
+                          flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
+                          ${isAvailable 
+                            ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
+                            : 'border-danger/30 bg-danger/10 text-danger'
+                          }
+                          ${isCurrent ? 'ring-1 ring-primary/50' : ''}
+                        `}
+                        onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                      >
+                        {isAvailable ? (
+                          isCurrent ? (
+                            <Button
+                              size="sm"
+                              className="h-8 w-full text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onQuickBook(room.id, time);
+                              }}
+                            >
+                              Book
+                            </Button>
+                          ) : (
+                            <span className="text-success-foreground">Free</span>
+                          )
+                        ) : (
+                          <span className="text-danger-foreground">Busy</span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-
-              {/* Timeline Slots */}
-              <div className="flex gap-2">
-                {timeSlots.map(({ time }) => {
-                  const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
-                  const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                  const isCurrent = isCurrentHour(time);
-                  
-                  return (
-                    <div
-                      key={`${room.id}-${time}`}
-                      className={`
-                        flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
-                        ${isAvailable 
-                          ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
-                          : 'border-danger/30 bg-danger/10 text-danger'
-                        }
-                        ${isCurrent ? 'ring-1 ring-primary/50' : ''}
-                      `}
-                      onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                    >
-                      {isAvailable ? (
-                        isCurrent ? (
-                          <Button
-                            size="sm"
-                            className="h-8 w-full text-xs"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onQuickBook(room.id, time);
-                            }}
-                          >
-                            Book
-                          </Button>
-                        ) : (
-                          <span className="text-success-foreground">Free</span>
-                        )
-                      ) : (
-                        <span className="text-danger-foreground">Busy</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
     </div>
