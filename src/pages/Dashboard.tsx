@@ -278,15 +278,6 @@ export default function Dashboard() {
                 <h2 className="text-2xl font-bold text-foreground mb-2">
                   {getTimeBasedGreeting()}, {userDisplayName}! ☀️
                 </h2>
-                <p className="text-muted-foreground">
-                  {new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    timeZone: organization?.timezone || 'America/New_York'
-                  })}
-                </p>
               </div>
             </div>
           </div>
@@ -323,8 +314,8 @@ export default function Dashboard() {
                   <Users className="w-4 h-4 text-accent-foreground" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Total Capacity</span>
-                  <p className="text-2xl font-bold text-foreground">{totalCapacity}</p>
+                  <span className="text-sm font-medium text-muted-foreground">Your Booking This Week</span>
+                  <p className="text-2xl font-bold text-foreground">0</p>
                 </div>
               </div>
             </div>
