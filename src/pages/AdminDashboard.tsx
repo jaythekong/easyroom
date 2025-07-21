@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RoomManagement } from "@/components/admin/RoomManagement";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { TeamManagement } from "@/components/admin/TeamManagement";
+import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -35,7 +36,7 @@ export default function AdminDashboard() {
         <AdminStats />
 
         <Tabs defaultValue="rooms" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="rooms" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Rooms
@@ -51,6 +52,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -92,6 +97,10 @@ export default function AdminDashboard() {
                 </p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <OrganizationSettings />
           </TabsContent>
         </Tabs>
       </div>
