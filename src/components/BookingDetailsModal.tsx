@@ -54,7 +54,7 @@ export function BookingDetailsModal({
   if (!booking || !room) return null;
 
   const isMyBooking = user?.id === booking.user_id;
-  const canEditBooking = user && userRole; // Any authenticated team member can edit
+  const canEditBooking = userRole === 'admin' || isMyBooking;
   
   const formatDateTime = (dateTime: string) => {
     // Treat the stored time as local time, not UTC
