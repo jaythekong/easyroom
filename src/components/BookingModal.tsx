@@ -125,7 +125,20 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (!formData.startTime) return timeSlots;
     
     const startIndex = timeSlots.findIndex(time => time === formData.startTime);
-    return timeSlots.slice(startIndex + 1); // Only show times after start time
+    const availableTimes = timeSlots.slice(startIndex + 1); // Only show times after start time
+    
+    // When editing an existing booking, ensure the original end time is always available
+    if (existingBooking && formData.endTime && !availableTimes.includes(formData.endTime)) {
+      // Add the original end time to the available options and sort them
+      const allTimes = [...availableTimes, formData.endTime].sort((a, b) => {
+        const [aHour, aMin] = a.split(':').map(Number);
+        const [bHour, bMin] = b.split(':').map(Number);
+        return (aHour * 60 + aMin) - (bHour * 60 + bMin);
+      });
+      return allTimes;
+    }
+    
+    return availableTimes;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
