@@ -93,10 +93,18 @@ export function RoomManagement() {
     }
 
     try {
+      console.log("Attempting to delete room:", roomId);
+      
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Current user:", user);
+      
       const { error } = await supabase
         .from("rooms")
         .delete()
         .eq("id", roomId);
+
+      console.log("Delete result:", { error });
 
       if (error) throw error;
 
