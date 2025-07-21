@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -126,8 +127,9 @@ export default function Dashboard() {
     setBookings(prev => [...prev, booking]);
     setIsBookingModalOpen(false);
     setSelectedRoom(null);
-    // Refresh rooms data to update timeline
-    fetchRooms();
+    setEditingBooking(null);
+    // Force refresh of timeline data
+    setRefreshKey(prev => prev + 1);
   };
 
   const availableRooms = rooms.length; // All fetched rooms are active
@@ -316,11 +318,14 @@ export default function Dashboard() {
               </div>
             ) : (
               <RoomTimeline
+                key={refreshKey}
                 rooms={timelineRooms}
                 selectedDate={selectedDate}
                 onQuickBook={handleQuickBook}
                 onTimeSlotSelect={handleTimeSlotSelect}
-                onBookingUpdate={fetchRooms}
+                onBookingUpdate={() => {
+                  setRefreshKey(prev => prev + 1);
+                }}
                 onDateSelect={setSelectedDate}
                 onEditBooking={(booking) => {
                   // Check if booking has room object or room_id
