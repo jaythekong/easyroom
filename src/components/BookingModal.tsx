@@ -135,7 +135,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm }: Bookin
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto" aria-describedby="booking-dialog-description">
+        <div id="booking-dialog-description" className="sr-only">
+          Book a meeting room by filling out the form below with your meeting details.
+        </div>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <MapPin className="h-5 w-5 text-primary" />
