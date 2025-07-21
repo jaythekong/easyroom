@@ -250,6 +250,22 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     return hour === getCurrentHour() && isSameDay(checkDate, today);
   };
 
+  const isPastTimeSlot = (timeSlot: string, date?: Date) => {
+    const checkDate = date || selectedDate;
+    const today = new Date();
+    
+    // Only gray out past times for today
+    if (!isSameDay(checkDate, today)) {
+      return false;
+    }
+    
+    const [hours, minutes] = timeSlot.split(':').map(Number);
+    const slotTime = new Date();
+    slotTime.setHours(hours, minutes, 0, 0);
+    
+    return slotTime < today;
+  };
+
   const shiftTimeRange = (direction: 'earlier' | 'later') => {
     if (direction === 'earlier' && selectedHourRange.start > 6) {
       setSelectedHourRange(prev => ({
@@ -414,6 +430,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           );
                           const isAvailable = !roomTimeSlot || roomTimeSlot.available;
                           const isCurrent = isCurrentHour(time);
+                          const isPast = isPastTimeSlot(time);
                           const isDowntime = roomTimeSlot?.isDowntime;
                           
                           return (
@@ -421,24 +438,30 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               key={`${room.id}-${time}`}
                               className={`
                                 flex-shrink-0 w-16 h-10 border rounded cursor-pointer flex items-center justify-center text-xs font-medium transition-all duration-200
-                                ${isAvailable 
-                                  ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
-                                  : isDowntime
-                                    ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
-                                    : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
+                                ${isPast 
+                                  ? 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed border-muted/30' 
+                                  : isAvailable 
+                                    ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
+                                    : isDowntime
+                                      ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
+                                      : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
                                 }
                                 ${isCurrent ? 'ring-1 ring-primary/40 bg-primary/10' : ''}
                               `}
-                              onClick={() => isAvailable && onTimeSlotSelect(room.id, `${format(selectedDate, 'yyyy-MM-dd')}T${time}:00`)}
+                              onClick={() => !isPast && isAvailable && onTimeSlotSelect(room.id, `${format(selectedDate, 'yyyy-MM-dd')}T${time}:00`)}
                               title={
-                                isAvailable 
-                                  ? 'Available for booking' 
-                                  : isDowntime 
-                                    ? `${roomTimeSlot?.downtimeType || 'Downtime'}: ${roomTimeSlot?.meeting || 'Maintenance'}` 
-                                    : `Booked: ${roomTimeSlot?.meeting || 'Meeting'}`
+                                isPast 
+                                  ? 'Past time slot' 
+                                  : isAvailable 
+                                    ? 'Available for booking' 
+                                    : isDowntime 
+                                      ? `${roomTimeSlot?.downtimeType || 'Downtime'}: ${roomTimeSlot?.meeting || 'Maintenance'}` 
+                                      : `Booked: ${roomTimeSlot?.meeting || 'Meeting'}`
                               }
                             >
-                              {isAvailable ? (
+                              {isPast ? (
+                                <span className="text-muted-foreground/50 font-semibold text-[10px]">Past</span>
+                              ) : isAvailable ? (
                                 <span className="text-success font-semibold">Free</span>
                               ) : isDowntime ? (
                                 <span className="text-warning font-semibold text-[10px]">
@@ -484,6 +507,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                 );
                                 const isAvailable = !roomTimeSlot || roomTimeSlot.available;
                                 const isCurrent = isCurrentHour(time, day);
+                                const isPast = isPastTimeSlot(time, day);
                                 const isDowntime = roomTimeSlot?.isDowntime;
                                 
                                 return (
@@ -491,24 +515,30 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                     key={`${room.id}-${dayKey}-${time}`}
                                     className={`
                                       flex-shrink-0 w-16 h-10 border rounded cursor-pointer flex items-center justify-center text-xs font-medium transition-all duration-200
-                                      ${isAvailable 
-                                        ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
-                                        : isDowntime
-                                          ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
-                                          : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
+                                      ${isPast 
+                                        ? 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed border-muted/30' 
+                                        : isAvailable 
+                                          ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
+                                          : isDowntime
+                                            ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
+                                            : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
                                       }
                                       ${isCurrent ? 'ring-1 ring-primary/40 bg-primary/10' : ''}
                                     `}
-                                    onClick={() => isAvailable && onTimeSlotSelect(room.id, `${dayKey}T${time}:00`)}
+                                    onClick={() => !isPast && isAvailable && onTimeSlotSelect(room.id, `${dayKey}T${time}:00`)}
                                     title={
-                                      isAvailable 
-                                        ? 'Available for booking' 
-                                        : isDowntime 
-                                          ? `${roomTimeSlot?.downtimeType || 'Downtime'}: ${roomTimeSlot?.meeting || 'Maintenance'}` 
-                                          : `Booked: ${roomTimeSlot?.meeting || 'Meeting'}`
+                                      isPast 
+                                        ? 'Past time slot' 
+                                        : isAvailable 
+                                          ? 'Available for booking' 
+                                          : isDowntime 
+                                            ? `${roomTimeSlot?.downtimeType || 'Downtime'}: ${roomTimeSlot?.meeting || 'Maintenance'}` 
+                                            : `Booked: ${roomTimeSlot?.meeting || 'Meeting'}`
                                     }
                                   >
-                                    {isAvailable ? (
+                                    {isPast ? (
+                                      <span className="text-muted-foreground/50 font-semibold text-[10px]">Past</span>
+                                    ) : isAvailable ? (
                                       <span className="text-success font-semibold">Free</span>
                                     ) : isDowntime ? (
                                       <span className="text-warning font-semibold text-[10px]">
