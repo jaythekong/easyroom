@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./hooks/useAuth";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
@@ -36,32 +36,32 @@ const App = () => (
               <Route path="/invite/:token" element={<InviteSignup />} />
               
               {/* Organization-specific routes */}
-              <Route path="/:orgSlug/*" element={
+              <Route path="/:orgSlug" element={
                 <OrganizationProvider>
-                  <Routes>
-                    <Route path="/" element={
-                      <OrganizationLayout requireAuth={true}>
-                        <Index />
-                      </OrganizationLayout>
-                    } />
-                    <Route path="/my-bookings" element={
-                      <OrganizationLayout requireAuth={true}>
-                        <ProtectedRoute>
-                          <MyBookings />
-                        </ProtectedRoute>
-                      </OrganizationLayout>
-                    } />
-                    <Route path="/admin" element={
-                      <OrganizationLayout requireAuth={true} requireAdmin={true}>
-                        <AdminDashboard />
-                      </OrganizationLayout>
-                    } />
-                  </Routes>
+                  <OrganizationLayout requireAuth={true}>
+                    <Index />
+                  </OrganizationLayout>
+                </OrganizationProvider>
+              } />
+              <Route path="/:orgSlug/my-bookings" element={
+                <OrganizationProvider>
+                  <OrganizationLayout requireAuth={true}>
+                    <ProtectedRoute>
+                      <MyBookings />
+                    </ProtectedRoute>
+                  </OrganizationLayout>
+                </OrganizationProvider>
+              } />
+              <Route path="/:orgSlug/admin" element={
+                <OrganizationProvider>
+                  <OrganizationLayout requireAuth={true} requireAdmin={true}>
+                    <AdminDashboard />
+                  </OrganizationLayout>
                 </OrganizationProvider>
               } />
               
-              {/* Fallback route for root - redirect to a default org or show 404 */}
-              <Route path="/" element={<NotFound />} />
+              {/* Default redirect to kampus organization */}
+              <Route path="/" element={<Navigate to="/kampus" replace />} />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
