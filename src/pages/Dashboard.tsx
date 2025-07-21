@@ -192,7 +192,7 @@ export default function Dashboard() {
             
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground hidden sm:inline">
-                Welcome, {user?.email}
+                {user ? `Welcome, ${user.email}` : "Not signed in"}
               </span>
               <ThemeToggle />
               <Button variant="outline" size="sm" className="hidden sm:flex">

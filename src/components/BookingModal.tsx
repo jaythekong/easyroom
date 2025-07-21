@@ -81,7 +81,17 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !room) return;
+    console.log("Booking attempt - User:", user, "Room:", room);
+    
+    if (!user || !room) {
+      console.log("Booking failed: Missing user or room", { user: !!user, room: !!room });
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to book a room.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     // Validate required fields
     if (!formData.title || !formData.startTime || !formData.endTime) {
