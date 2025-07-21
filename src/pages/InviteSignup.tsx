@@ -23,6 +23,7 @@ export default function InviteSignup() {
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -55,6 +56,12 @@ export default function InviteSignup() {
       }
 
       setInviteData(data);
+      // Set email if it's a link invite (email will be empty)
+      if (!data.email) {
+        setEmail(""); // User will need to enter their email
+      } else {
+        setEmail(data.email);
+      }
     } catch (error) {
       setError("Failed to load invitation details");
     } finally {
@@ -63,7 +70,7 @@ export default function InviteSignup() {
   };
 
   const handleSignup = async () => {
-    if (!inviteData || !password) return;
+    if (!inviteData || !password || !email) return;
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -81,7 +88,7 @@ export default function InviteSignup() {
     try {
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: inviteData.email,
+        email: email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
@@ -173,6 +180,7 @@ export default function InviteSignup() {
             <CardDescription className="mt-2">
               You've been invited to join as a{" "}
               <span className="font-medium capitalize">{inviteData.role}</span>
+              {inviteData.email ? ` for ${inviteData.email}` : ""}
             </CardDescription>
           </div>
         </CardHeader>
@@ -182,9 +190,11 @@ export default function InviteSignup() {
             <Input
               id="email"
               type="email"
-              value={inviteData.email}
-              disabled
-              className="bg-muted"
+              placeholder={inviteData.email || "Enter your email"}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!!inviteData.email}
+              className={inviteData.email ? "bg-muted" : ""}
             />
           </div>
           
@@ -218,7 +228,7 @@ export default function InviteSignup() {
 
           <Button
             onClick={handleSignup}
-            disabled={isSigningUp || !password || !confirmPassword}
+            disabled={isSigningUp || !password || !confirmPassword || !email}
             className="w-full"
           >
             {isSigningUp ? (

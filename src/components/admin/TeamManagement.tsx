@@ -42,14 +42,67 @@ export function TeamManagement() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [userOrgId, setUserOrgId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTeamData();
-  }, []);
+    initializeUser();
+  }, [user]);
 
-  const fetchTeamData = async () => {
+  const initializeUser = async () => {
+    if (!user) return;
+
     try {
-      // Fetch team members with their email from auth
+      // Check if user profile exists
+      let { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError && profileError.code === 'PGRST116') {
+        // User profile doesn't exist, create one with default organization
+        const { data: defaultOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .limit(1)
+          .single();
+
+        if (defaultOrg) {
+          const { data: newProfile, error: createError } = await supabase
+            .from('user_profiles')
+            .insert({
+              user_id: user.id,
+              organization_id: defaultOrg.id,
+              role: 'admin'
+            })
+            .select('organization_id')
+            .single();
+
+          if (!createError && newProfile) {
+            profile = newProfile;
+          }
+        }
+      }
+
+      if (profile?.organization_id) {
+        setUserOrgId(profile.organization_id);
+        fetchTeamData(profile.organization_id);
+      }
+    } catch (error) {
+      console.error('Error initializing user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize user profile",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchTeamData = async (orgId?: string) => {
+    const organizationId = orgId || userOrgId;
+    if (!organizationId) return;
+    try {
+      // Fetch team members from the same organization
       const { data: members, error: membersError } = await supabase
         .from('user_profiles')
         .select(`
@@ -57,24 +110,24 @@ export function TeamManagement() {
           user_id,
           role,
           created_at
-        `);
+        `)
+        .eq('organization_id', organizationId);
 
       if (membersError) throw membersError;
 
-      // Get emails for members (this is a simplified approach)
-      const membersWithEmails = await Promise.all(
-        (members || []).map(async (member) => {
-          // In a real app, you'd have emails in your profiles table or fetch from a users view
-          return { ...member, email: `user-${member.user_id.slice(0, 8)}@example.com` };
-        })
-      );
+      // For now, use placeholder emails since we don't have email in profiles table
+      const membersWithEmails = (members || []).map((member) => ({
+        ...member,
+        email: `user-${member.user_id.slice(0, 8)}@company.com`
+      }));
 
       setTeamMembers(membersWithEmails);
 
-      // Fetch pending invitations
+      // Fetch pending invitations for this organization
       const { data: invites, error: invitesError } = await supabase
         .from('invitations')
         .select('*')
+        .eq('organization_id', organizationId)
         .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString());
 
@@ -91,7 +144,7 @@ export function TeamManagement() {
   };
 
   const sendInvite = async () => {
-    if (!inviteEmail || !user) return;
+    if (!inviteEmail || !user || !userOrgId) return;
 
     setIsLoading(true);
     try {
@@ -101,7 +154,7 @@ export function TeamManagement() {
           email: inviteEmail,
           role: inviteRole as 'admin' | 'member',
           invited_by: user.id,
-          organization_id: '00000000-0000-0000-0000-000000000000', // This should be dynamic
+          organization_id: userOrgId,
         });
 
       if (error) throw error;
@@ -127,7 +180,7 @@ export function TeamManagement() {
   };
 
   const generateInviteLink = async () => {
-    if (!user) return;
+    if (!user || !userOrgId) return;
 
     setIsLoading(true);
     try {
@@ -137,7 +190,7 @@ export function TeamManagement() {
           email: '', // Empty email for link-only invites
           role: linkRole as 'admin' | 'member',
           invited_by: user.id,
-          organization_id: '00000000-0000-0000-0000-000000000000', // This should be dynamic
+          organization_id: userOrgId,
         })
         .select()
         .single();
