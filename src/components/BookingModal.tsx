@@ -58,12 +58,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Reset form data when modal opens with new initial values
   useEffect(() => {
     if (isOpen) {
-      const calculatedEndTime = initialStartTime ? getEndTimeForStartTime(initialStartTime) : "";
       setFormData({
         title: "",
         date: initialDate || new Date(),
         startTime: initialStartTime || "",
-        endTime: calculatedEndTime,
+        endTime: "",
         attendees: "",
         description: "",
         recurring: "none"
@@ -77,18 +76,6 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     
     const startIndex = timeSlots.findIndex(time => time === formData.startTime);
     return timeSlots.slice(startIndex + 1); // Only show times after start time
-  };
-
-  // Calculate end time that's exactly 1 hour after start time
-  const getEndTimeForStartTime = (startTime: string) => {
-    if (!startTime) return "";
-    
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const endHour = hours + 1;
-    const endTime = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-    
-    // Check if the calculated end time exists in our time slots
-    return timeSlots.includes(endTime) ? endTime : "";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -242,11 +229,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               <Select 
                 value={formData.startTime} 
                 onValueChange={(value) => {
-                  const calculatedEndTime = getEndTimeForStartTime(value);
-                  updateFormData({ 
-                    startTime: value,
-                    endTime: calculatedEndTime
-                  });
+                  updateFormData({ startTime: value });
+                  // Clear end time if it's now before the new start time
+                  if (formData.endTime && value >= formData.endTime) {
+                    updateFormData({ endTime: "" });
+                  }
                 }}
               >
                 <SelectTrigger>
@@ -261,10 +248,20 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="endTime">End Time (1 hour later) *</Label>
-              <div className="w-full px-3 py-2 border border-input bg-muted rounded-md text-sm">
-                {formData.endTime || "Select start time first"}
-              </div>
+              <Label htmlFor="endTime">End Time *</Label>
+              <Select 
+                value={formData.endTime} 
+                onValueChange={(value) => updateFormData({ endTime: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="End time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableEndTimes().map((time) => (
+                    <SelectItem key={time} value={time}>{time}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
