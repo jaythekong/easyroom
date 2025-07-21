@@ -53,9 +53,7 @@ const App = () => (
               <Route path="/:orgSlug/my-bookings" element={
                 <OrganizationProvider>
                   <OrganizationLayout requireAuth={true}>
-                    <ProtectedRoute>
-                      <MyBookings />
-                    </ProtectedRoute>
+                    <MyBookings />
                   </OrganizationLayout>
                 </OrganizationProvider>
               } />

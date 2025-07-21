@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,9 +18,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('useAuth: Initializing auth state');
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('useAuth: Auth state change event:', event, 'session:', !!session);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -27,24 +31,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('useAuth: Error getting session:', error);
+      } else {
+        console.log('useAuth: Initial session check:', !!session);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('useAuth: Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {
+    console.log('useAuth: Signing out user');
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error("Error signing out:", error.message);
+      console.error("useAuth: Error signing out:", error.message);
+    } else {
+      console.log('useAuth: Successfully signed out');
     }
   };
 
+  const contextValue = {
+    user,
+    session,
+    loading,
+    signOut,
+  };
+
+  console.log('useAuth: Context value:', { 
+    hasUser: !!user, 
+    hasSession: !!session, 
+    loading,
+    userEmail: user?.email 
+  });
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

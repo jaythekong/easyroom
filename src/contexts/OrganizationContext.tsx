@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +30,7 @@ interface OrganizationProviderProps {
 
 export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,17 +39,30 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
 
   useEffect(() => {
     if (orgSlug) {
+      console.log('OrganizationProvider: Starting fetch for orgSlug:', orgSlug);
       fetchOrganization();
+    } else {
+      console.log('OrganizationProvider: No orgSlug provided');
+      setIsLoading(false);
     }
-  }, [orgSlug, user]);
+  }, [orgSlug]);
+
+  // Separate effect for user membership check that depends on both org and user
+  useEffect(() => {
+    if (organization && !authLoading) {
+      console.log('OrganizationProvider: Checking user membership for org:', organization.name, 'user:', user?.email);
+      checkUserMembership();
+    }
+  }, [organization, user, authLoading]);
 
   const fetchOrganization = async () => {
     if (!orgSlug) return;
 
-    setIsLoading(true);
-    setError(null);
-
     try {
+      setIsLoading(true);
+      setError(null);
+      console.log('OrganizationProvider: Fetching organization with slug:', orgSlug);
+
       // Fetch organization by slug
       const { data: org, error: orgError } = await supabase
         .from('organizations')
@@ -57,55 +71,76 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         .single();
 
       if (orgError) {
+        console.error('OrganizationProvider: Error fetching organization:', orgError);
         if (orgError.code === 'PGRST116') {
           setError('Organization not found');
         } else {
-          throw orgError;
+          setError('Failed to load organization');
         }
         return;
       }
 
+      console.log('OrganizationProvider: Successfully fetched organization:', org.name);
       setOrganization(org);
-
-      // Check if user belongs to this organization
-      if (user) {
-        const { data: profile, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('organization_id', org.id)
-          .single();
-
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error fetching user profile:', profileError);
-        }
-
-        if (profile) {
-          setIsUserInOrganization(true);
-          setUserRole(profile.role);
-        } else {
-          setIsUserInOrganization(false);
-          setUserRole(null);
-        }
-      }
     } catch (error: any) {
-      console.error('Error fetching organization:', error);
+      console.error('OrganizationProvider: Unexpected error:', error);
       setError('Failed to load organization');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const checkUserMembership = async () => {
+    if (!organization || !user) {
+      console.log('OrganizationProvider: Skipping membership check - no org or user');
+      setIsUserInOrganization(false);
+      setUserRole(null);
+      return;
+    }
+
+    try {
+      console.log('OrganizationProvider: Checking membership for user:', user.email, 'in org:', organization.name);
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('organization_id', organization.id)
+        .single();
+
+      if (profileError) {
+        if (profileError.code !== 'PGRST116') {
+          console.error('OrganizationProvider: Error fetching user profile:', profileError);
+        } else {
+          console.log('OrganizationProvider: User not found in organization');
+        }
+        setIsUserInOrganization(false);
+        setUserRole(null);
+        return;
+      }
+
+      console.log('OrganizationProvider: User found with role:', profile.role);
+      setIsUserInOrganization(true);
+      setUserRole(profile.role);
+    } catch (error: any) {
+      console.error('OrganizationProvider: Error checking membership:', error);
+      setIsUserInOrganization(false);
+      setUserRole(null);
+    }
+  };
+
+  const contextValue = {
+    organization,
+    isLoading: isLoading || authLoading,
+    error,
+    isUserInOrganization,
+    userRole,
+  };
+
+  console.log('OrganizationProvider: Context value:', contextValue);
+
   return (
-    <OrganizationContext.Provider
-      value={{
-        organization,
-        isLoading,
-        error,
-        isUserInOrganization,
-        userRole,
-      }}
-    >
+    <OrganizationContext.Provider value={contextValue}>
       {children}
     </OrganizationContext.Provider>
   );
