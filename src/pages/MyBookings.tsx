@@ -51,6 +51,9 @@ export default function MyBookings() {
         .from('bookings')
         .select(`
           *,
+          user_profiles!bookings_user_id_fkey (
+            email
+          ),
           rooms (
             id,
             name,

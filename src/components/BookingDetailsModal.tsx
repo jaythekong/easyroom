@@ -21,6 +21,9 @@ interface BookingDetailsModalProps {
     status: string;
     recurring: string;
     user_id: string;
+    user_profiles?: {
+      email: string;
+    };
   } | null;
   room: {
     id: string;
@@ -180,7 +183,7 @@ export function BookingDetailsModal({
               <User className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="font-medium">
-                  {isMyBooking ? "Your booking" : "Someone else's booking"}
+                  {isMyBooking ? "Your booking" : `Booked by ${booking.user_profiles?.email || 'Unknown user'}`}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {isMyBooking ? "You can edit or cancel this booking" : "View-only access"}

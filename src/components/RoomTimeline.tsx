@@ -127,7 +127,12 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
       
       const { data, error } = await supabase
         .from('bookings')
-        .select('*')
+        .select(`
+          *,
+          user_profiles!bookings_user_id_fkey (
+            email
+          )
+        `)
         .gte('start_time', startDate)
         .lte('start_time', endDate);
       
