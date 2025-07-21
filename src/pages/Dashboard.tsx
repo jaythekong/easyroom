@@ -16,6 +16,7 @@ import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
+import { useBookings } from "@/hooks/useBookings";
 
 interface Room {
   id: string;
@@ -98,6 +99,14 @@ export default function Dashboard() {
       setLoading(false);
     }
   }, [toast]);
+
+  // Fetch user's bookings for this week
+  const { data: userBookings = [] } = useBookings(new Date());
+  
+  // Count user's bookings for this week
+  const userWeeklyBookings = useMemo(() => {
+    return userBookings.filter(booking => booking.user_id === userId).length;
+  }, [userBookings, userId]);
 
   const fetchUserProfile = useCallback(async () => {
     if (!userId) return;
@@ -315,7 +324,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <span className="text-sm font-medium text-muted-foreground">Your Booking This Week</span>
-                  <p className="text-2xl font-bold text-foreground">0</p>
+                  <p className="text-2xl font-bold text-foreground">{userWeeklyBookings}</p>
                 </div>
               </div>
             </div>
