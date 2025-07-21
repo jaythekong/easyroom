@@ -322,7 +322,8 @@ export default function Dashboard() {
                 onBookingUpdate={fetchRooms}
                 onDateSelect={setSelectedDate}
                 onEditBooking={(booking) => {
-                  const room = rooms.find(r => r.id === booking.room_id);
+                  // Check if booking has room object or room_id
+                  const room = booking.room || rooms.find(r => r.id === booking.room_id);
                   if (room) {
                     setSelectedRoom(room);
                     setSelectedTimeSlot(booking.start_time);
