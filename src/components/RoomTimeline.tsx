@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize, Wrench, CalendarIcon } from "lucide-react";
+import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize, Wrench, CalendarIcon, ArrowLeft, ArrowRight } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, startOfWeek, addDays, isSameDay } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, addDays as addDaysUtil, subDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TimeSlot {
@@ -298,6 +298,20 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     });
   };
 
+  const goToPreviousDay = () => {
+    onDateSelect(subDays(selectedDate, 1));
+  };
+
+  const goToNextDay = () => {
+    onDateSelect(addDaysUtil(selectedDate, 1));
+  };
+
+  const goToToday = () => {
+    onDateSelect(new Date());
+  };
+
+  const isToday = isSameDay(selectedDate, new Date());
+
   return (
     <div className="space-y-3">
       {/* Room Cards */}
@@ -335,31 +349,63 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {/* Date Picker */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "h-7 px-2 text-xs justify-start font-normal",
-                            !selectedDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="h-3 w-3 mr-1" />
-                          {format(selectedDate, "MMM d")}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <CalendarComponent
-                          mode="single"
-                          selected={selectedDate}
-                          onSelect={(date) => date && onDateSelect(date)}
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    {/* Date Navigation */}
+                    <div className="flex items-center gap-1 border rounded px-2 py-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={goToPreviousDay}
+                        className="h-6 w-6 p-0"
+                      >
+                        <ArrowLeft className="h-3 w-3" />
+                      </Button>
+                      
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn(
+                              "h-6 px-2 text-xs justify-start font-normal",
+                              !selectedDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="h-3 w-3 mr-1" />
+                            {format(selectedDate, "MMM d")}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={(date) => date && onDateSelect(date)}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={goToNextDay}
+                        className="h-6 w-6 p-0"
+                      >
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* Today Button */}
+                    {!isToday && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToToday}
+                        className="h-6 px-2 text-xs"
+                      >
+                        Today
+                      </Button>
+                    )}
 
                     {/* Time Range Picker for this room */}
                     <div className="flex items-center gap-1 border rounded px-2 py-1">
