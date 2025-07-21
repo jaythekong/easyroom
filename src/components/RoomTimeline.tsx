@@ -302,17 +302,34 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     if (booking.bookingId) {
       const fullBooking = bookings.find(b => b.id === booking.bookingId);
       if (fullBooking) {
-        console.log('📅 Clicked on booking:', fullBooking.title);
+        console.log('📅 BOOKING CLICK DEBUG:', {
+          bookingTitle: fullBooking.title,
+          bookingId: fullBooking.id,
+          bookingUserId: fullBooking.user_id,
+          currentUser: user?.id,
+          userRole: userRole,
+          isAdmin: userRole === 'admin',
+          isOwner: fullBooking.user_id === user?.id,
+          onEditBookingExists: !!onEditBooking
+        });
         
         // Check if user can edit this booking
         const canEditBooking = userRole === 'admin' || fullBooking.user_id === user?.id;
         
+        console.log('📅 PERMISSION CHECK:', {
+          canEditBooking,
+          userRole,
+          bookingOwnerId: fullBooking.user_id,
+          currentUserId: user?.id,
+          hasOnEditBooking: !!onEditBooking
+        });
+        
         if (canEditBooking && onEditBooking) {
-          console.log('📅 Editing booking:', fullBooking.title);
+          console.log('📅 EDITING booking:', fullBooking.title);
           onEditBooking(fullBooking);
         } else {
           // Show details modal for view-only
-          console.log('📅 View-only access to booking:', fullBooking.title);
+          console.log('📅 SHOWING DETAILS for booking:', fullBooking.title);
           setSelectedBooking(fullBooking);
           setSelectedBookingRoom(room);
           setIsBookingDetailsOpen(true);
