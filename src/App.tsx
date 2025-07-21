@@ -33,6 +33,13 @@ const App = () => (
             <Routes>
               {/* Global routes (no organization context) */}
               <Route path="/auth" element={<Auth />} />
+              
+              {/* Organization-specific auth route */}
+              <Route path="/:orgSlug/auth" element={
+                <OrganizationProvider>
+                  <Auth />
+                </OrganizationProvider>
+              } />
               <Route path="/invite/:token" element={<InviteSignup />} />
               
               {/* Organization-specific routes */}

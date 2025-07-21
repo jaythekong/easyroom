@@ -1,14 +1,22 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Loader2 } from "lucide-react";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { toast } from "sonner";
 
 const Auth = () => {
+  const { orgSlug } = useParams<{ orgSlug: string }>();
+  const { organization, isLoading: orgLoading } = orgSlug ? useOrganization() : { organization: null, isLoading: false };
+  useOrganizationTheme(); // Apply organization theme if available
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -95,11 +103,41 @@ const Auth = () => {
     }
   };
 
+  // Show loading while fetching organization data
+  if (orgSlug && orgLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-muted-foreground">Loading organization...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Room Booking System</CardTitle>
+        <CardHeader className="text-center space-y-4">
+          {organization && (
+            <div className="flex flex-col items-center space-y-3">
+              <Avatar className="h-16 w-16">
+                <AvatarImage src={organization.logo_url} alt={organization.name} />
+                <AvatarFallback className="text-lg">
+                  {organization.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <CardTitle className="text-2xl font-bold">{organization.name}</CardTitle>
+                <p className="text-muted-foreground text-sm mt-1">Room Booking System</p>
+              </div>
+            </div>
+          )}
+          {!organization && (
+            <CardTitle className="text-2xl font-bold">Room Booking System</CardTitle>
+          )}
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
