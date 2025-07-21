@@ -108,21 +108,30 @@ export default function MyBookings() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
+      console.log('Cancelling booking:', bookingId);
+      
       const { error } = await supabase
         .from('bookings')
         .delete()
         .eq('id', bookingId)
         .eq('user_id', user?.id); // Extra security check
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+
+      console.log('Booking deleted successfully, refreshing list...');
 
       toast({
         title: "Booking Cancelled",
         description: "Your booking has been successfully cancelled.",
       });
 
-      // Refresh the bookings list
-      fetchMyBookings();
+      // Await the refresh to ensure it completes
+      await fetchMyBookings();
+      console.log('Bookings list refreshed successfully');
+      
     } catch (error) {
       console.error('Error cancelling booking:', error);
       toast({
