@@ -148,8 +148,11 @@ const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, 
     const slotStart = new Date(slotDateTime);
     
     return roomBookings.find(b => {
-      const bookingStart = new Date(b.start_time.replace('Z', '').replace('+00:00', ''));
-      const bookingEnd = new Date(b.end_time.replace('Z', '').replace('+00:00', ''));
+      // Parse UTC times correctly - don't strip timezone info
+      const bookingStart = new Date(b.start_time);
+      const bookingEnd = new Date(b.end_time);
+      
+      // Check if slot time falls within booking time range
       return bookingStart <= slotStart && bookingEnd > slotStart;
     });
   }, [bookingsByRoom]);
@@ -159,8 +162,9 @@ const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, 
     const slotStart = new Date(slotDateTime);
     
     return roomDowntimes.find(d => {
-      const downtimeStart = new Date(d.start_time.replace('Z', '').replace('+00:00', ''));
-      const downtimeEnd = new Date(d.end_time.replace('Z', '').replace('+00:00', ''));
+      // Parse UTC times correctly - don't strip timezone info
+      const downtimeStart = new Date(d.start_time);
+      const downtimeEnd = new Date(d.end_time);
       return downtimeStart <= slotStart && downtimeEnd > slotStart;
     });
   }, [downtimeByRoom]);
@@ -178,7 +182,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, 
       weekDays.forEach(date => {
         timeSlots.forEach(({ time, endTime }) => {
           const dateStr = format(date, 'yyyy-MM-dd');
-          const startDateTime = `${dateStr}T${time}:00`;
+          const startDateTime = `${dateStr}T${time}:00.000Z`; // Add .000Z to match UTC format
           
           const booking = findBookingForSlot(room.id, startDateTime);
           const roomDowntime = findDowntimeForSlot(room.id, startDateTime);
