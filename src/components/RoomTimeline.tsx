@@ -96,11 +96,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
       timeSlots: []
     }));
 
-    // For each room, generate time slots for selected date and week
+    // For each room, generate time slots for the full week
     roomsWithTimeSlots.forEach(room => {
-      const dates = [selectedDate, ...weekDays];
-      
-      dates.forEach(date => {
+      weekDays.forEach(date => {
         timeSlots.forEach(({ time, endTime }) => {
           const dateStr = format(date, 'yyyy-MM-dd');
           const startDateTime = `${dateStr}T${time}:00`;
@@ -349,9 +347,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                       <div className="text-sm text-muted-foreground font-medium">Week View</div>
                     </div>
 
-                    {/* Week Rows - Include all 7 days */}
+                    {/* Week Rows - Use weekDays which already includes today */}
                     <div className="space-y-2">
-                      {[selectedDate, ...weekDays].map((day) => (
+                      {weekDays.map((day) => (
                         <div key={day.toISOString()} className="flex gap-2 min-w-max">
                           {/* Date Label - Same Width as Room Info */}
                           <div className="flex-shrink-0 w-[200px] flex items-center pl-8">
