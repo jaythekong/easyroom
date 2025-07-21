@@ -98,6 +98,13 @@ All colors MUST be HSL.
     --border: 217 19% 88%;
     --input: 217 19% 88%;
     --ring: 25 95% 53%;
+    
+    /* Light mode gradients */
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(0 0% 98%));
+    --shadow-elegant: 0 10px 30px -10px hsl(217 33% 8% / 0.1);
+    --shadow-card: 0 4px 20px -4px hsl(217 33% 8% / 0.05);
+    --shadow-glow: 0 0 40px hsl(25 95% 53% / 0.1);
+    
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 217 33% 8%;
     --sidebar-primary: 25 95% 53%;
