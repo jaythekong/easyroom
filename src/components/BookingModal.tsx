@@ -70,6 +70,14 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
   }, [isOpen, initialDate, initialStartTime]);
 
+  // Filter end time options to only show times after start time
+  const getAvailableEndTimes = () => {
+    if (!formData.startTime) return timeSlots;
+    
+    const startIndex = timeSlots.findIndex(time => time === formData.startTime);
+    return timeSlots.slice(startIndex + 1); // Only show times after start time
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -218,7 +226,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
             <div className="space-y-2">
               <Label htmlFor="startTime">Start Time *</Label>
-              <Select value={formData.startTime} onValueChange={(value) => updateFormData({ startTime: value })}>
+              <Select 
+                value={formData.startTime} 
+                onValueChange={(value) => {
+                  updateFormData({ startTime: value });
+                  // Clear end time if it's now before the new start time
+                  if (formData.endTime && value >= formData.endTime) {
+                    updateFormData({ endTime: "" });
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Start time" />
                 </SelectTrigger>
@@ -232,12 +249,15 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
             <div className="space-y-2">
               <Label htmlFor="endTime">End Time *</Label>
-              <Select value={formData.endTime} onValueChange={(value) => updateFormData({ endTime: value })}>
+              <Select 
+                value={formData.endTime} 
+                onValueChange={(value) => updateFormData({ endTime: value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="End time" />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((time) => (
+                  {getAvailableEndTimes().map((time) => (
                     <SelectItem key={time} value={time}>{time}</SelectItem>
                   ))}
                 </SelectContent>
