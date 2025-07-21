@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -311,11 +312,11 @@ export default function Dashboard() {
             ) : (
               <RoomTimeline
                 rooms={timelineRooms}
-                selectedDate={new Date()}
+                selectedDate={selectedDate}
                 onQuickBook={handleQuickBook}
                 onTimeSlotSelect={handleTimeSlotSelect}
                 onBookingUpdate={fetchRooms}
-                onDateSelect={() => {}} // Add empty handler since we're using fixed date for now
+                onDateSelect={setSelectedDate}
               />
             )}
           </TabsContent>
