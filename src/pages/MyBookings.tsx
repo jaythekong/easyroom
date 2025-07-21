@@ -10,6 +10,17 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { BookingModal } from "@/components/BookingModal";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Booking {
   id: string;
@@ -39,6 +50,7 @@ export default function MyBookings() {
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [confirmingBookings, setConfirmingBookings] = useState<Set<string>>(new Set());
+  const [deletingBookingId, setDeletingBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -370,15 +382,38 @@ export default function MyBookings() {
                               </Button>
                             )}
                             
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleCancelBooking(booking.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Cancel
-                            </Button>
+                            <AlertDialog open={deletingBookingId === booking.id} onOpenChange={() => setDeletingBookingId(null)}>
+                              <AlertDialogTrigger asChild>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => setDeletingBookingId(booking.id)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Cancel
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to cancel your booking for "{booking.title}" 
+                                    at {booking.room?.name} on {format(new Date(booking.start_time), "PPP")}? 
+                                    This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleCancelBooking(booking.id)}
+                                    className="bg-destructive hover:bg-destructive/90"
+                                  >
+                                    Yes, Cancel Booking
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </>
                         )}
                         
