@@ -62,8 +62,8 @@ export function OrganizationLayout({
                 {error || "The organization you're looking for doesn't exist."}
               </p>
             </div>
-            <Button onClick={() => window.location.href = '/'} variant="outline">
-              Go Home
+            <Button onClick={() => window.history.back()} variant="outline">
+              Go Back
             </Button>
           </CardContent>
         </Card>
@@ -97,8 +97,8 @@ export function OrganizationLayout({
                   User: {user.email}
                 </p>
               </div>
-              <Button onClick={() => window.location.href = '/'} variant="outline">
-                Go Home
+              <Button onClick={() => window.history.back()} variant="outline">
+                Go Back
               </Button>
             </CardContent>
           </Card>
