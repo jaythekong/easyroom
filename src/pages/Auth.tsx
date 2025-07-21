@@ -18,10 +18,15 @@ const Auth = () => {
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const redirectTo = searchParams.get('redirectTo') || '/';
-        navigate(redirectTo);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const redirectTo = searchParams.get('redirectTo') || '/';
+          console.log('Auth: User already logged in, redirecting to:', redirectTo);
+          navigate(redirectTo);
+        }
+      } catch (error) {
+        console.error('Auth: Error checking session:', error);
       }
     };
     checkUser();
@@ -33,6 +38,7 @@ const Auth = () => {
     
     try {
       const redirectTo = searchParams.get('redirectTo') || '/';
+      console.log('Auth: Signing up with redirectTo:', redirectTo);
       const redirectUrl = `${window.location.origin}${redirectTo}`;
       
       const { error } = await supabase.auth.signUp({
@@ -70,6 +76,7 @@ const Auth = () => {
       });
 
       if (error) {
+        console.error('Auth: Sign in error:', error);
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password. Please check your credentials.");
         } else {
@@ -77,9 +84,11 @@ const Auth = () => {
         }
       } else {
         const redirectTo = searchParams.get('redirectTo') || '/';
+        console.log('Auth: Sign in successful, redirecting to:', redirectTo);
         navigate(redirectTo);
       }
     } catch (error) {
+      console.error('Auth: Unexpected error:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);

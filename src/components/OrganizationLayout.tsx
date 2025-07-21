@@ -59,7 +59,10 @@ export function OrganizationLayout({
 
   // Check authentication requirements
   if (requireAuth && !user) {
-    return <Navigate to={`/auth?redirectTo=${encodeURIComponent(location.pathname)}`} replace />;
+    // Construct proper redirect URL using organization slug instead of route params
+    const redirectPath = organization ? `/${organization.slug}${location.pathname.replace(/^\/[^\/]+/, '')}` : '/';
+    console.log('OrganizationLayout: Redirecting to auth with redirectTo:', redirectPath);
+    return <Navigate to={`/auth?redirectTo=${encodeURIComponent(redirectPath)}`} replace />;
   }
 
   // Check organization membership
