@@ -304,8 +304,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       if (fullBooking) {
         console.log('📅 Clicked on booking:', fullBooking.title);
         
-        // Check if user can edit this booking
-        const canEditBooking = userRole === 'admin' || fullBooking.user_id === user?.id;
+        // Allow any authenticated team member to edit bookings
+        const canEditBooking = user && organization;
         
         if (canEditBooking && onEditBooking) {
           console.log('📅 Editing booking:', fullBooking.title);
