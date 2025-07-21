@@ -190,10 +190,13 @@ export function TeamManagement() {
 
     setIsLoading(true);
     try {
+      // Use a unique identifier for link-only invites to avoid constraint violations
+      const linkIdentifier = `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
       const { data, error } = await supabase
         .from('invitations')
         .insert({
-          email: '', // Empty email for link-only invites
+          email: linkIdentifier, // Use unique identifier instead of empty string
           role: linkRole as 'admin' | 'member',
           invited_by: user.id,
           organization_id: userOrgId,
@@ -214,6 +217,7 @@ export function TeamManagement() {
       setIsLinkDialogOpen(false);
       fetchTeamData();
     } catch (error: any) {
+      console.error('Generate invite link error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to generate invite link",
@@ -418,7 +422,10 @@ export function TeamManagement() {
                 {invitations.map((invite) => (
                   <TableRow key={invite.id}>
                     <TableCell className="font-medium">
-                      {invite.email || <span className="italic text-muted-foreground">Link invite</span>}
+                      {invite.email?.startsWith('link-') ? 
+                        <span className="italic text-muted-foreground">Link invite</span> : 
+                        invite.email || <span className="italic text-muted-foreground">Link invite</span>
+                      }
                     </TableCell>
                     <TableCell>
                       <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
