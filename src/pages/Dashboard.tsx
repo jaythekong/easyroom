@@ -195,9 +195,11 @@ export default function Dashboard() {
                 {user ? `Welcome, ${user.email}` : "Not signed in"}
               </span>
               <ThemeToggle />
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Calendar className="h-4 w-4 mr-2" />
-                My Bookings
+              <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
+                <Link to="/my-bookings">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  My Bookings
+                </Link>
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <Link to="/admin">

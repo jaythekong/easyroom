@@ -95,6 +95,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     
     // Validate required fields
     if (!formData.title || !formData.startTime || !formData.endTime) {
+      console.log("Validation failed:", { 
+        title: formData.title, 
+        startTime: formData.startTime, 
+        endTime: formData.endTime 
+      });
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -103,21 +108,40 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       return;
     }
 
+    console.log("Form data before submission:", formData);
+
     try {
       // Create datetime strings
       const startDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
       const endDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
 
+      console.log("DateTime strings:", { startDateTime, endDateTime });
+
       // Get user's organization ID
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('organization_id')
         .eq('user_id', user.id)
         .single();
 
-      if (!profile?.organization_id) {
-        throw new Error('User organization not found');
+      console.log("Profile fetch result:", { profile, profileError });
+
+      if (profileError || !profile?.organization_id) {
+        console.error('Profile/organization error:', profileError);
+        throw new Error('User organization not found - please contact admin');
       }
+
+      console.log("About to create booking with:", {
+        room_id: room.id,
+        user_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        start_time: startDateTime,
+        end_time: endDateTime,
+        attendees: parseInt(formData.attendees) || 1,
+        recurring: formData.recurring,
+        organization_id: profile.organization_id
+      });
 
       // Create booking in database
       const { data: booking, error } = await supabase
@@ -135,6 +159,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         })
         .select()
         .single();
+
+      console.log("Booking creation result:", { booking, error });
 
       if (error) throw error;
 
