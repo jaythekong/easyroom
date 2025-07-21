@@ -243,16 +243,6 @@ export default function Dashboard() {
                   })}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <Button className="quick-book-button">
-                  <Zap className="h-4 w-4 mr-2" />
-                  Quick Book
-                </Button>
-                <Button variant="outline">
-                  <Coffee className="h-4 w-4 mr-2" />
-                  Coffee Break
-                </Button>
-              </div>
             </div>
           </div>
 
