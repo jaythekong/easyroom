@@ -2,12 +2,12 @@ import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize, Wrench, CalendarIcon, ArrowLeft, ArrowRight } from "lucide-react";
+import { Clock, Users, MapPin, Calendar, ArrowLeft, ArrowRight, Expand, Minimize } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format, startOfWeek, addDays, isSameDay, addDays as addDaysUtil, subDays } from "date-fns";
+import { format, startOfWeek, addDays, isSameDay, subDays } from "date-fns";
 import { BookingDetailsModal } from "@/components/BookingDetailsModal";
 import { useBookings, useDowntime } from "@/hooks/useBookings";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -88,155 +88,146 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const { organization } = useOrganization();
 
-  // Use React Query for data fetching
+  // Fetch booking data
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
   const { data: downtime = [], refetch: refetchDowntime } = useDowntime(selectedDate);
 
-  // Debug logging - critical for tracking data flow
-  console.log('🔍 RoomTimeline Debug:', {
+  console.log('📅 CALENDAR DEBUG - Raw Data:', {
     selectedDate: selectedDate.toISOString(),
-    bookingsCount: bookings.length,
-    roomsCount: rooms.length,
-    bookingTitles: bookings.map(b => b.title),
-    organizationTimezone: organization?.timezone
+    totalBookings: bookings.length,
+    bookingsList: bookings.map(b => ({
+      id: b.id,
+      title: b.title,
+      start: b.start_time,
+      end: b.end_time,
+      room: b.room_id
+    })),
+    totalRooms: rooms.length
   });
 
-  // Expand all rooms by default
+  // Expand all rooms by default on first load
   useEffect(() => {
     if (rooms.length > 0 && expandedRooms.size === 0) {
       const allRoomIds = new Set(rooms.map(room => room.id));
       onExpandedRoomsChange(allRoomIds);
+      console.log('📅 Auto-expanding all rooms:', allRoomIds);
     }
   }, [rooms, expandedRooms.size, onExpandedRoomsChange]);
 
-  // Generate time slots for full day (24 hours)
-  const generateTimeSlots = () => {
+  // Generate 24-hour time slots
+  const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = 0; hour < 24; hour++) {
-      const timeStr = `${hour.toString().padStart(2, '0')}:00`;
-      const endTimeStr = `${((hour + 1) % 24).toString().padStart(2, '0')}:00`;
-      slots.push({ time: timeStr, endTime: endTimeStr });
+      slots.push({
+        time: `${hour.toString().padStart(2, '0')}:00`,
+        endTime: `${((hour + 1) % 24).toString().padStart(2, '0')}:00`
+      });
     }
+    console.log('📅 Generated time slots:', slots.length, 'hours');
     return slots;
-  };
+  }, []);
 
-  // Generate week days
-  const generateWeekDays = () => {
-    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday start
+  // Generate week days starting Monday
+  const weekDays = useMemo(() => {
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const days = [];
     for (let i = 0; i < 7; i++) {
       days.push(addDays(weekStart, i));
     }
+    console.log('📅 Week days:', days.map(d => format(d, 'yyyy-MM-dd')));
     return days;
-  };
+  }, [selectedDate]);
 
-  const timeSlots = useMemo(() => generateTimeSlots(), []);
-  const weekDays = useMemo(() => generateWeekDays(), [selectedDate]);
-
-  // Simple and reliable booking check - check if any part of booking overlaps with time slot
-  const isBookingInSlot = (booking: Booking, slotDate: string, slotTime: string): boolean => {
+  // CRITICAL: Simple and bulletproof booking overlap check
+  const doesBookingOverlapSlot = useCallback((booking: Booking, slotDate: string, slotHour: number): boolean => {
     try {
+      // Parse booking times as UTC (they're stored in UTC)
       const bookingStart = new Date(booking.start_time);
       const bookingEnd = new Date(booking.end_time);
       
-      // Create slot start and end times
-      const [slotHour] = slotTime.split(':').map(Number);
-      const slotStart = new Date(`${slotDate}T${slotTime}:00.000Z`);
-      const slotEnd = new Date(`${slotDate}T${slotHour + 1 < 24 ? (slotHour + 1).toString().padStart(2, '0') : '00'}:00.000Z`);
+      // Create slot boundaries in UTC
+      const slotStart = new Date(`${slotDate}T${slotHour.toString().padStart(2, '0')}:00:00.000Z`);
+      const slotEnd = new Date(`${slotDate}T${((slotHour + 1) % 24).toString().padStart(2, '0')}:00:00.000Z`);
       
-      // Check if booking overlaps with slot
+      // Simple overlap check: booking overlaps if it starts before slot ends and ends after slot starts
       const overlaps = bookingStart < slotEnd && bookingEnd > slotStart;
+      
+      if (overlaps) {
+        console.log('✅ BOOKING OVERLAP FOUND:', {
+          booking: booking.title,
+          bookingWindow: `${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`,
+          slotWindow: `${slotStart.toISOString()} - ${slotEnd.toISOString()}`,
+          slotDate,
+          slotHour
+        });
+      }
       
       return overlaps;
     } catch (error) {
-      console.error('Error checking booking overlap:', error);
+      console.error('❌ Error checking booking overlap:', error, { booking: booking.title, slotDate, slotHour });
       return false;
     }
-  };
+  }, []);
 
-  // Generate rooms with real booking data
+  // Process rooms with booking data - SIMPLIFIED LOGIC
   const roomsWithBookings = useMemo(() => {
-    console.log('🏠 Processing rooms with bookings:', {
-      roomsCount: rooms.length,
-      bookingsTotal: bookings.length,
-      weekDaysCount: weekDays.length,
-      timeSlotsCount: timeSlots.length,
-      selectedDateStr: format(selectedDate, 'yyyy-MM-dd')
-    });
-    
-    if (bookings.length === 0) {
-      console.warn('⚠️ NO BOOKINGS FOUND - Check if data is being fetched correctly');
-    }
+    console.log('🏠 PROCESSING ROOMS WITH BOOKINGS');
+    console.log('Input data:', { roomsCount: rooms.length, bookingsCount: bookings.length });
     
     return rooms.map(room => {
+      // Get bookings for this specific room
       const roomBookings = bookings.filter(b => b.room_id === room.id);
       const roomDowntime = downtime.filter(d => d.room_id === room.id);
       
-      console.log(`🏠 Room "${room.name}" (${room.id}):`, {
-        bookingsCount: roomBookings.length,
-        bookings: roomBookings.map(b => ({
-          title: b.title,
-          start: b.start_time,
-          end: b.end_time,
-          id: b.id
-        }))
+      console.log(`🏠 Room: "${room.name}" (${room.id})`);
+      console.log(`   📋 Bookings for this room: ${roomBookings.length}`);
+      roomBookings.forEach(b => {
+        console.log(`   - "${b.title}" (${b.start_time} to ${b.end_time})`);
       });
-      
+
       const timeSlots: TimeSlot[] = [];
       
+      // For each day of the week
       weekDays.forEach(date => {
         const dateStr = format(date, 'yyyy-MM-dd');
         
-        generateTimeSlots().forEach(({ time, endTime }) => {
-          // Find any booking that overlaps with this time slot
-          const booking = roomBookings.find(b => isBookingInSlot(b, dateStr, time));
-          const roomDt = roomDowntime.find(d => isBookingInSlot(d as any, dateStr, time));
+        // For each hour of the day
+        for (let hour = 0; hour < 24; hour++) {
+          const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+          const endTimeStr = `${((hour + 1) % 24).toString().padStart(2, '0')}:00`;
           
-          // Debug specific cases
-          if (booking) {
-            console.log(`✅ BOOKING FOUND: "${booking.title}" for ${room.name} at ${dateStr} ${time}`, {
-              bookingStart: booking.start_time,
-              bookingEnd: booking.end_time,
-              slotTime: `${dateStr}T${time}:00`
-            });
-          }
-          
-          // Debug for missing bookings on specific dates
-          if (room.name.includes('6th Floor') && dateStr === '2025-07-25' && time === '10:00') {
-            console.log(`🔍 Checking slot 10:00 for 6th Floor Meeting Room on 2025-07-25:`, {
-              roomBookings: roomBookings.map(b => ({
-                title: b.title,
-                start: b.start_time,
-                end: b.end_time
-              })),
-              foundBooking: !!booking
-            });
-          }
+          // Find booking that overlaps this time slot
+          const booking = roomBookings.find(b => doesBookingOverlapSlot(b, dateStr, hour));
+          const downtime = roomDowntime.find(d => doesBookingOverlapSlot(d as any, dateStr, hour));
           
           timeSlots.push({
-            time,
-            endTime,
-            available: !booking && !roomDt,
-            meeting: booking?.title || (roomDt && `${roomDt.title} (${roomDt.downtime_type})`),
+            time: timeStr,
+            endTime: endTimeStr,
+            available: !booking && !downtime,
+            meeting: booking?.title || (downtime && `${downtime.title} (${downtime.downtime_type})`),
             bookingId: booking?.id,
-            isDowntime: !!roomDt,
-            downtimeType: roomDt?.downtime_type,
-            downtimeId: roomDt?.id,
+            isDowntime: !!downtime,
+            downtimeType: downtime?.downtime_type,
+            downtimeId: downtime?.id,
             date: dateStr
           });
-        });
+        }
       });
+      
+      const occupiedSlots = timeSlots.filter(slot => !slot.available).length;
+      console.log(`   📊 Time slots: ${timeSlots.length} total, ${occupiedSlots} occupied`);
       
       return {
         ...room,
         timeSlots
       };
     });
-  }, [rooms, bookings, downtime, weekDays]);
+  }, [rooms, bookings, downtime, weekDays, doesBookingOverlapSlot]);
 
-  // Refresh data when refreshTrigger changes
+  // Refresh data when trigger changes
   useEffect(() => {
     if (refreshTrigger !== undefined) {
+      console.log('🔄 Refreshing booking data due to trigger change');
       refetchBookings();
       refetchDowntime();
     }
@@ -249,6 +240,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   }, []);
 
   const handleDateSelect = (date: Date) => {
+    console.log('📅 Date selected:', format(date, 'yyyy-MM-dd'));
     onDateSelect(date);
   };
 
@@ -256,6 +248,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     const newDate = direction === 'prev' 
       ? subDays(selectedDate, 7)
       : addDays(selectedDate, 7);
+    console.log('📅 Navigating week:', direction, 'to', format(newDate, 'yyyy-MM-dd'));
     onDateSelect(newDate);
   };
 
@@ -270,9 +263,10 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   };
 
   const handleBookingClick = (booking: any) => {
-    if (onEditBooking) {
+    if (onEditBooking && booking.bookingId) {
       const fullBooking = bookings.find(b => b.id === booking.bookingId);
       if (fullBooking) {
+        console.log('📅 Editing booking:', fullBooking.title);
         onEditBooking(fullBooking);
       }
     }
@@ -284,6 +278,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     const slotHour = parseInt(time.split(':')[0]);
     return currentHour === slotHour;
   };
+
+  const totalBookingsThisWeek = bookings.length;
 
   return (
     <div className="space-y-6">
@@ -301,7 +297,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="min-w-[200px]">
-                <CalendarIcon className="h-4 w-4 mr-2" />
+                <Calendar className="h-4 w-4 mr-2" />
                 Week of {format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d, yyyy')}
               </Button>
             </PopoverTrigger>
@@ -326,141 +322,152 @@ const RoomTimelineComponent = memo(function RoomTimeline({
         </div>
         
         <Badge variant="secondary">
-          {bookings.length} booking{bookings.length !== 1 ? 's' : ''} this week
+          {totalBookingsThisWeek} booking{totalBookingsThisWeek !== 1 ? 's' : ''} this week
         </Badge>
       </div>
 
       {/* Timeline Grid */}
       <div className="space-y-4">
-        {roomsWithBookings.map((room) => (
-          <Card key={room.id} className="timeline-card">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleRoomExpansion(room.id)}
-                  >
-                    {expandedRooms.has(room.id) ? (
-                      <Minimize className="h-4 w-4" />
-                    ) : (
-                      <Expand className="h-4 w-4" />
-                    )}
-                  </Button>
-                  
-                  <div>
-                    <CardTitle className="text-lg">{room.name}</CardTitle>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {room.capacity} people
-                      </span>
-                      {room.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {room.location}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onQuickBook(room.id, '')}
-                >
-                  Book Room
-                </Button>
-              </div>
-            </CardHeader>
-
-            {expandedRooms.has(room.id) && (
-              <CardContent className="pt-0">
-                <ScrollArea className="w-full">
-                  <div className="min-w-[800px]">
-                    {/* Day Headers */}
-                    <div className="grid grid-cols-8 gap-1 mb-2">
-                      <div className="p-2 text-sm font-medium">Time</div>
-                      {weekDays.map((day) => (
-                        <div
-                          key={format(day, 'yyyy-MM-dd')}
-                          className={cn(
-                            "p-2 text-center text-sm font-medium",
-                            isSameDay(day, currentTime) && "bg-primary/10 rounded"
-                          )}
-                        >
-                          <div>{format(day, 'EEE')}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {format(day, 'MMM d')}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Time Slots */}
-                    <div className="space-y-1">
-                      {timeSlots.map(({ time }) => {
-                        const daySlots = weekDays.map(day => {
-                          const dateStr = format(day, 'yyyy-MM-dd');
-                          return room.timeSlots.find(
-                            slot => slot.time === time && slot.date === dateStr
-                          );
-                        });
-
-                        return (
-                          <div key={time} className="grid grid-cols-8 gap-1">
-                            <div className="p-2 text-xs font-mono text-muted-foreground bg-muted/30 rounded">
-                              {time}
-                            </div>
-                            {daySlots.map((slot, dayIndex) => {
-                              const day = weekDays[dayIndex];
-                              const isCurrent = isCurrentTime(day, time);
-                              
-                              return (
-                                <div
-                                  key={`${format(day, 'yyyy-MM-dd')}-${time}`}
-                                  className={cn(
-                                    "min-h-[40px] border rounded p-1 text-xs cursor-pointer transition-all hover:shadow-md",
-                                    slot?.available 
-                                      ? "bg-success/10 border-success/20 hover:bg-success/20" 
-                                      : slot?.isDowntime
-                                      ? "bg-warning/20 border-warning/30"
-                                      : "bg-destructive/10 border-destructive/20",
-                                    isCurrent && "ring-2 ring-primary/50",
-                                    !slot?.available && "hover:bg-destructive/20"
-                                  )}
-                                  onClick={() => {
-                                    if (slot?.available) {
-                                      const slotDateTime = `${format(day, 'yyyy-MM-dd')}T${time}:00`;
-                                      onTimeSlotSelect(room.id, slotDateTime);
-                                    } else if (slot?.bookingId) {
-                                      handleBookingClick(slot);
-                                    }
-                                  }}
-                                >
-                                  {slot?.meeting && (
-                                    <div className="font-medium text-foreground truncate">
-                                      {slot.meeting}
-                                    </div>
-                                  )}
-                                  {slot?.available && (
-                                    <div className="text-success font-medium">Available</div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            )}
+        {roomsWithBookings.length === 0 ? (
+          <Card className="timeline-card p-8 text-center">
+            <p className="text-muted-foreground">No rooms available</p>
           </Card>
-        ))}
+        ) : (
+          roomsWithBookings.map((room) => (
+            <Card key={room.id} className="timeline-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleRoomExpansion(room.id)}
+                    >
+                      {expandedRooms.has(room.id) ? (
+                        <Minimize className="h-4 w-4" />
+                      ) : (
+                        <Expand className="h-4 w-4" />
+                      )}
+                    </Button>
+                    
+                    <div>
+                      <CardTitle className="text-lg">{room.name}</CardTitle>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {room.capacity} people
+                        </span>
+                        {room.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {room.location}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onQuickBook(room.id, '')}
+                  >
+                    Book Room
+                  </Button>
+                </div>
+              </CardHeader>
+
+              {expandedRooms.has(room.id) && (
+                <CardContent className="pt-0">
+                  <ScrollArea className="w-full">
+                    <div className="min-w-[800px]">
+                      {/* Day Headers */}
+                      <div className="grid grid-cols-8 gap-1 mb-2">
+                        <div className="p-2 text-sm font-medium">Time</div>
+                        {weekDays.map((day) => (
+                          <div
+                            key={format(day, 'yyyy-MM-dd')}
+                            className={cn(
+                              "p-2 text-center text-sm font-medium",
+                              isSameDay(day, currentTime) && "bg-primary/10 rounded"
+                            )}
+                          >
+                            <div>{format(day, 'EEE')}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {format(day, 'MMM d')}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Time Slots Grid */}
+                      <div className="space-y-1">
+                        {timeSlots.map(({ time }) => {
+                          // Get the slots for this time across all days of the week
+                          const daySlots = weekDays.map(day => {
+                            const dateStr = format(day, 'yyyy-MM-dd');
+                            return room.timeSlots.find(
+                              slot => slot.time === time && slot.date === dateStr
+                            );
+                          });
+
+                          return (
+                            <div key={time} className="grid grid-cols-8 gap-1">
+                              {/* Time label */}
+                              <div className="p-2 text-xs font-mono text-muted-foreground bg-muted/30 rounded">
+                                {time}
+                              </div>
+                              
+                              {/* Slots for each day */}
+                              {daySlots.map((slot, dayIndex) => {
+                                const day = weekDays[dayIndex];
+                                const isCurrent = isCurrentTime(day, time);
+                                
+                                return (
+                                  <div
+                                    key={`${format(day, 'yyyy-MM-dd')}-${time}`}
+                                    className={cn(
+                                      "min-h-[40px] border rounded p-1 text-xs cursor-pointer transition-all hover:shadow-md",
+                                      slot?.available 
+                                        ? "bg-success/10 border-success/20 hover:bg-success/20" 
+                                        : slot?.isDowntime
+                                        ? "bg-warning/20 border-warning/30"
+                                        : "bg-destructive/10 border-destructive/20",
+                                      isCurrent && "ring-2 ring-primary/50",
+                                      !slot?.available && "hover:bg-destructive/20"
+                                    )}
+                                    onClick={() => {
+                                      if (slot?.available) {
+                                        const slotDateTime = `${format(day, 'yyyy-MM-dd')}T${time}:00`;
+                                        onTimeSlotSelect(room.id, slotDateTime);
+                                      } else if (slot?.bookingId) {
+                                        handleBookingClick(slot);
+                                      }
+                                    }}
+                                    title={slot?.meeting || (slot?.available ? 'Available' : 'Unavailable')}
+                                  >
+                                    {slot?.meeting && (
+                                      <div className="font-medium text-foreground truncate">
+                                        {slot.meeting}
+                                      </div>
+                                    )}
+                                    {slot?.available && (
+                                      <div className="text-success font-medium">Available</div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              )}
+            </Card>
+          ))
+        )}
       </div>
 
       <BookingDetailsModal
