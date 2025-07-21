@@ -128,15 +128,31 @@ export function OrganizationSettings() {
       const file = event.target.files?.[0];
       if (!file) return;
 
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error('Please upload a valid image file (JPG, PNG, GIF, or WebP)');
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        throw new Error('File size must be less than 5MB');
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${organization?.id}.${fileExt}`;
       const filePath = `logos/${fileName}`;
+
+      console.log('Uploading file:', { fileName, filePath, fileType: file.type, fileSize: file.size });
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
       const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
       setLogoUrl(data.publicUrl);
@@ -146,8 +162,9 @@ export function OrganizationSettings() {
         description: "Your organization logo has been updated.",
       });
     } catch (error: any) {
+      console.error('Logo upload error:', error);
       toast({
-        title: "Error",
+        title: "Upload failed",
         description: error.message || "Failed to upload logo",
         variant: "destructive",
       });
