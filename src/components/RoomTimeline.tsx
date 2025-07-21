@@ -74,29 +74,16 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   };
 
   return (
-    <div className="space-y-6">
-      {/* Enhanced Header */}
-      <div className="glass-card p-6 rounded-2xl">
-        <div className="flex items-center justify-between mb-4">
+    <div className="space-y-4">
+      {/* Simple Header */}
+      <div className="bg-card border rounded-lg p-4">
+        <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold gradient-text">Room Timeline</h2>
-            <p className="text-muted-foreground text-lg">
-              {selectedDate.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+            <h2 className="text-xl font-semibold">Room Timeline</h2>
+            <p className="text-sm text-muted-foreground">
+              {selectedDate.toLocaleDateString()}
             </p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>Updated: {currentTime.toLocaleTimeString()}</span>
-          </div>
-        </div>
-
-        {/* Time Range Controls */}
-        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="outline"
@@ -104,53 +91,36 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
               onClick={() => shiftTimeRange('earlier')}
               disabled={selectedHourRange.start <= 6}
             >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Earlier
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-            <div className="text-sm font-medium px-4 py-2 bg-muted/50 rounded-lg">
+            <span className="text-sm">
               {selectedHourRange.start}:00 - {selectedHourRange.end}:00
-            </div>
+            </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => shiftTimeRange('later')}
               disabled={selectedHourRange.end >= 22}
             >
-              Later
-              <ChevronRight className="h-4 w-4 ml-1" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-success/20 border border-success/30 rounded"></div>
-              <span className="text-sm">Available</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-danger/20 border border-danger/30 rounded"></div>
-              <span className="text-sm">Booked</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-primary/20 border border-primary rounded animate-pulse"></div>
-              <span className="text-sm">Available Now</span>
-            </div>
           </div>
         </div>
       </div>
 
       {/* Time Header */}
-      <div className="sticky top-20 z-10 glass-card p-4 rounded-xl">
+      <div className="sticky top-4 z-10 bg-background border-b pb-2">
         <div className="flex gap-2">
-          <div className="flex-shrink-0 w-[280px] font-medium text-muted-foreground">Rooms</div>
+          <div className="flex-shrink-0 w-[200px] text-sm font-medium text-muted-foreground">Rooms</div>
           <div className="flex-1 overflow-x-auto">
             <div className="flex gap-2 min-w-max">
               {timeSlots.map(({ time }) => (
                 <div 
                   key={time} 
-                  className={`flex-shrink-0 w-32 text-center p-3 rounded-lg font-medium text-sm transition-all ${
+                  className={`flex-shrink-0 w-24 text-center p-2 text-xs ${
                     isCurrentHour(time) 
-                      ? 'bg-primary/10 text-primary border border-primary/30' 
-                      : 'bg-muted/30 text-muted-foreground'
+                      ? 'text-primary font-medium' 
+                      : 'text-muted-foreground'
                   }`}
                 >
                   {time}
@@ -162,37 +132,21 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
       </div>
 
       {/* Room Rows */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {rooms.map((room) => (
-          <Card key={room.id} className="timeline-card overflow-hidden">
-            <div className="flex gap-4 p-6">
+          <div key={room.id} className="bg-card border rounded-lg p-3">
+            <div className="flex gap-2">
               {/* Room Info */}
-              <div className="flex-shrink-0 w-[280px] space-y-3">
-                <div>
-                  <h3 className="font-bold text-lg text-foreground">{room.name}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{room.capacity} people</span>
-                  </div>
-                </div>
-                
-                {room.location && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{room.location}</span>
-                  </div>
-                )}
-
-                <div className="flex flex-wrap gap-1">
-                  {room.amenities.slice(0, 3).map((amenity) => (
-                    <Badge key={amenity} variant="secondary" className="text-xs">
-                      {amenity}
-                    </Badge>
-                  ))}
-                  {room.amenities.length > 3 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{room.amenities.length - 3}
-                    </Badge>
+              <div className="flex-shrink-0 w-[200px]">
+                <h3 className="font-medium text-sm">{room.name}</h3>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Users className="h-3 w-3" />
+                  <span>{room.capacity}</span>
+                  {room.location && (
+                    <>
+                      <span>•</span>
+                      <span>{room.location}</span>
+                    </>
                   )}
                 </div>
               </div>
@@ -200,7 +154,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
               {/* Timeline Slots */}
               <div className="flex-1 overflow-x-auto">
                 <div className="flex gap-2 min-w-max">
-                  {timeSlots.map(({ time, endTime }) => {
+                  {timeSlots.map(({ time }) => {
                     const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
                     const isAvailable = !roomTimeSlot || roomTimeSlot.available;
                     const isCurrent = isCurrentHour(time);
@@ -209,57 +163,32 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                       <div
                         key={`${room.id}-${time}`}
                         className={`
-                          flex-shrink-0 w-32 relative min-h-[80px] rounded-lg border-2 cursor-pointer transition-all duration-200 p-3
+                          flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
                           ${isAvailable 
-                            ? 'border-success/30 bg-success/5 hover:bg-success/15 hover:border-success/50' 
-                            : 'border-danger/30 bg-danger/5 hover:bg-danger/15'
+                            ? 'border-green-200 bg-green-50 hover:bg-green-100' 
+                            : 'border-red-200 bg-red-50'
                           }
-                          ${isCurrent ? 'ring-2 ring-primary/50 animate-pulse' : ''}
+                          ${isCurrent ? 'ring-1 ring-blue-300' : ''}
                         `}
                         onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
                       >
                         {isAvailable ? (
-                          <div className="h-full flex flex-col justify-between">
-                            <div className="text-xs text-muted-foreground font-medium">
-                              {time} - {endTime}
-                            </div>
-                            {isCurrent && (
-                              <Button
-                                size="sm"
-                                className="quick-book-button w-full mt-2"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onQuickBook(room.id, time);
-                                }}
-                              >
-                                <Zap className="h-3 w-3 mr-1" />
-                                Book Now
-                              </Button>
-                            )}
-                            {!isCurrent && (
-                              <div className="text-center">
-                                <Badge variant="outline" className="text-xs text-success">
-                                  Available
-                                </Badge>
-                              </div>
-                            )}
-                          </div>
+                          isCurrent ? (
+                            <Button
+                              size="sm"
+                              className="h-8 w-full text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onQuickBook(room.id, time);
+                              }}
+                            >
+                              Book
+                            </Button>
+                          ) : (
+                            <span className="text-green-600">Free</span>
+                          )
                         ) : (
-                          <div className="h-full flex flex-col justify-between">
-                            <div className="text-xs text-muted-foreground font-medium">
-                              {time} - {endTime}
-                            </div>
-                            <div className="text-center">
-                              <Badge variant="outline" className="text-xs text-danger mb-1">
-                                Booked
-                              </Badge>
-                              {roomTimeSlot?.meeting && (
-                                <div className="text-xs text-danger font-medium truncate">
-                                  {roomTimeSlot.meeting}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          <span className="text-red-600">Busy</span>
                         )}
                       </div>
                     );
@@ -267,31 +196,10 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="glass-card p-6 rounded-2xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-foreground mb-1">Quick Actions</h3>
-            <p className="text-sm text-muted-foreground">
-              Need something specific? Try these shortcuts
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline">
-              <Calendar className="h-4 w-4 mr-2" />
-              View Calendar
-            </Button>
-            <Button className="quick-book-button">
-              <Zap className="h-4 w-4 mr-2" />
-              Book Any Available
-            </Button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
