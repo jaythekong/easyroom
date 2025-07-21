@@ -49,6 +49,69 @@ export type Database = {
           },
         ]
       }
+      bookings: {
+        Row: {
+          attendees: number | null
+          created_at: string
+          description: string | null
+          end_time: string
+          id: string
+          organization_id: string
+          recurring: string | null
+          room_id: string
+          start_time: string
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          attendees?: number | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          id?: string
+          organization_id: string
+          recurring?: string | null
+          room_id: string
+          start_time: string
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          attendees?: number | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          organization_id?: string
+          recurring?: string | null
+          room_id?: string
+          start_time?: string
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_bookings_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bookings_room"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string

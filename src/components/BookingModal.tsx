@@ -11,6 +11,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Room {
   id: string;
@@ -34,6 +36,7 @@ const timeSlots = [
 ];
 
 export function BookingModal({ isOpen, onClose, room, onBookingConfirm }: BookingModalProps) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: "",
@@ -49,9 +52,12 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm }: Bookin
     setFormData(prev => ({ ...prev, ...updates }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user || !room) return;
+    
+    // Validate required fields
     if (!formData.title || !formData.startTime || !formData.endTime) {
       toast({
         title: "Missing Information",
@@ -61,31 +67,68 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm }: Bookin
       return;
     }
 
-    const booking = {
-      id: `booking-${Date.now()}`,
-      roomId: room?.id,
-      roomName: room?.name,
-      ...formData,
-      status: 'confirmed'
-    };
+    try {
+      // Create datetime strings
+      const startDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
+      const endDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
 
-    onBookingConfirm(booking);
-    toast({
-      title: "Booking Confirmed!",
-      description: `${room?.name} has been booked for ${format(formData.date, "PPP")} from ${formData.startTime} to ${formData.endTime}.`,
-    });
-    onClose();
-    
-    // Reset form
-    setFormData({
-      title: "",
-      date: new Date(),
-      startTime: "",
-      endTime: "",
-      attendees: "",
-      description: "",
-      recurring: "none"
-    });
+      // Get user's organization ID
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!profile?.organization_id) {
+        throw new Error('User organization not found');
+      }
+
+      // Create booking in database
+      const { data: booking, error } = await supabase
+        .from('bookings')
+        .insert({
+          room_id: room.id,
+          user_id: user.id,
+          title: formData.title,
+          description: formData.description,
+          start_time: startDateTime,
+          end_time: endDateTime,
+          attendees: parseInt(formData.attendees) || 1,
+          recurring: formData.recurring,
+          organization_id: profile.organization_id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Call the confirmation callback
+      onBookingConfirm(booking);
+      
+      toast({
+        title: "Booking Confirmed!",
+        description: `${room.name} has been booked for ${format(formData.date, "PPP")} from ${formData.startTime} to ${formData.endTime}.`,
+      });
+      onClose();
+      
+      // Reset form
+      setFormData({
+        title: "",
+        date: new Date(),
+        startTime: "",
+        endTime: "",
+        attendees: "",
+        description: "",
+        recurring: "none"
+      });
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast({
+        title: "Booking Failed",
+        description: "There was an error creating your booking. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!room) return null;

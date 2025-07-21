@@ -123,6 +123,8 @@ export default function Dashboard() {
     setBookings(prev => [...prev, booking]);
     setIsBookingModalOpen(false);
     setSelectedRoom(null);
+    // Refresh rooms data to update timeline
+    fetchRooms();
   };
 
   const availableRooms = rooms.length; // All fetched rooms are active
@@ -316,6 +318,7 @@ export default function Dashboard() {
                 selectedDate={new Date()}
                 onQuickBook={handleQuickBook}
                 onTimeSlotSelect={handleTimeSlotSelect}
+                onBookingUpdate={fetchRooms}
               />
             )}
           </TabsContent>

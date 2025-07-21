@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize } from "lucide-react";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimeSlot {
   time: string;
@@ -12,6 +13,16 @@ interface TimeSlot {
   meeting?: string;
   bookedBy?: string;
   date?: string; // For week view
+  bookingId?: string;
+}
+
+interface Booking {
+  id: string;
+  title: string;
+  start_time: string;
+  end_time: string;
+  room_id: string;
+  user_id: string;
 }
 
 interface TimelineRoom {
@@ -28,12 +39,15 @@ interface RoomTimelineProps {
   selectedDate: Date;
   onQuickBook: (roomId: string, timeSlot: string) => void;
   onTimeSlotSelect: (roomId: string, timeSlot: string) => void;
+  onBookingUpdate?: () => void;
 }
 
-export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect }: RoomTimelineProps) {
+export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedHourRange, setSelectedHourRange] = useState({ start: 8, end: 18 });
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [roomsWithBookings, setRoomsWithBookings] = useState<TimelineRoom[]>([]);
 
   // Generate week days
   const generateWeekDays = () => {
@@ -59,10 +73,75 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   const timeSlots = generateTimeSlots();
   const weekDays = generateWeekDays();
 
+  // Fetch bookings from database
+  const fetchBookings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .gte('start_time', new Date().toISOString().split('T')[0])
+        .lte('start_time', format(addDays(selectedDate, 7), 'yyyy-MM-dd'));
+      
+      if (error) throw error;
+      setBookings(data || []);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+    }
+  };
+
+  // Generate rooms with real booking data
+  const generateRoomsWithBookings = () => {
+    const roomsWithTimeSlots = rooms.map(room => ({
+      ...room,
+      timeSlots: []
+    }));
+
+    // For each room, generate time slots for selected date and week
+    roomsWithTimeSlots.forEach(room => {
+      const dates = [selectedDate, ...weekDays];
+      
+      dates.forEach(date => {
+        timeSlots.forEach(({ time, endTime }) => {
+          const dateStr = format(date, 'yyyy-MM-dd');
+          const startDateTime = `${dateStr}T${time}:00`;
+          const endDateTime = `${dateStr}T${endTime}:00`;
+          
+          // Check if there's a booking for this room and time slot
+          const booking = bookings.find(b => 
+            b.room_id === room.id &&
+            new Date(b.start_time) <= new Date(startDateTime) &&
+            new Date(b.end_time) > new Date(startDateTime)
+          );
+          
+          const timeSlot: TimeSlot = {
+            time,
+            endTime,
+            available: !booking,
+            meeting: booking?.title,
+            bookingId: booking?.id,
+            date: dateStr
+          };
+          
+          room.timeSlots.push(timeSlot);
+        });
+      });
+    });
+
+    setRoomsWithBookings(roomsWithTimeSlots);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    generateRoomsWithBookings();
+  }, [rooms, bookings, selectedDate]);
 
   const getCurrentHour = () => {
     return new Date().getHours();
@@ -161,152 +240,105 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
         {/* Room Rows */}
         <div className="space-y-2">
-          {rooms.map((room) => {
+          {roomsWithBookings.map((room) => {
             const isExpanded = expandedRooms.has(room.id);
             return (
               <div key={room.id} className="bg-card border rounded-lg p-3">
-                {/* Main Room Row */}
+                {/* Today's Row - Same Structure as Week Rows */}
                 <div className="flex gap-2 min-w-max">
-                  {/* Room Info with Expand Button */}
-                  <div className="flex-shrink-0 w-[200px]">
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleRoomExpansion(room.id)}
-                        className="h-6 w-6 p-0"
-                      >
-                        {isExpanded ? (
-                          <Minimize className="h-3 w-3" />
-                        ) : (
-                          <Expand className="h-3 w-3" />
+                  {/* Room Info with Expand Button - Consistent Width */}
+                  <div className="flex-shrink-0 w-[200px] flex items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleRoomExpansion(room.id)}
+                      className="h-6 w-6 p-0 mr-2"
+                    >
+                      {isExpanded ? (
+                        <Minimize className="h-3 w-3" />
+                      ) : (
+                        <Expand className="h-3 w-3" />
+                      )}
+                    </Button>
+                    <div>
+                      <h3 className="font-medium text-sm">{room.name}</h3>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Users className="h-3 w-3" />
+                        <span>{room.capacity}</span>
+                        {room.location && (
+                          <>
+                            <span>•</span>
+                            <span>{room.location}</span>
+                          </>
                         )}
-                      </Button>
-                      <div>
-                        <h3 className="font-medium text-sm">{room.name}</h3>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Users className="h-3 w-3" />
-                          <span>{room.capacity}</span>
-                          {room.location && (
-                            <>
-                              <span>•</span>
-                              <span>{room.location}</span>
-                            </>
-                          )}
-                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Today's Timeline Slots */}
                   <div className="flex gap-2">
-                    {isExpanded ? (
-                      // When expanded, show today in the same style as other days
-                      <div className="flex flex-col">
-                        <div className="text-sm text-muted-foreground mb-1">
-                          {format(selectedDate, 'EEE, MMM d')} (Today)
-                        </div>
-                        <div className="flex gap-2">
-                          {timeSlots.map(({ time }) => {
-                            const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
-                            const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                            const isCurrent = isCurrentHour(time);
-                            
-                            return (
-                              <div
-                                key={`${room.id}-today-${time}`}
-                                className={`
-                                  flex-shrink-0 w-24 h-10 rounded border cursor-pointer flex items-center justify-center text-xs
-                                  ${isAvailable 
-                                    ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
-                                    : 'border-danger/30 bg-danger/10 text-danger'
-                                  }
-                                  ${isCurrent ? 'ring-1 ring-primary/50' : ''}
-                                `}
-                                onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                    {timeSlots.map(({ time }) => {
+                      const todayKey = format(selectedDate, 'yyyy-MM-dd');
+                      const roomTimeSlot = room.timeSlots.find(ts => 
+                        ts.time === time && ts.date === todayKey
+                      );
+                      const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                      const isCurrent = isCurrentHour(time);
+                      
+                      return (
+                        <div
+                          key={`${room.id}-today-${time}`}
+                          className={`
+                            flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
+                            ${isAvailable 
+                              ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
+                              : 'border-danger/30 bg-danger/10 text-danger'
+                            }
+                            ${isCurrent ? 'ring-1 ring-primary/50' : ''}
+                          `}
+                          onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                        >
+                          {isAvailable ? (
+                            isCurrent ? (
+                              <Button
+                                size="sm"
+                                className="h-8 w-full text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onQuickBook(room.id, time);
+                                }}
                               >
-                                {isAvailable ? (
-                                  isCurrent ? (
-                                    <Button
-                                      size="sm"
-                                      className="h-6 w-full text-xs px-1"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onQuickBook(room.id, time);
-                                      }}
-                                    >
-                                      Book
-                                    </Button>
-                                  ) : (
-                                    <span className="text-success-foreground text-xs">Free</span>
-                                  )
-                                ) : (
-                                  <span className="text-danger-foreground text-xs">Busy</span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ) : (
-                      // When not expanded, show normal horizontal layout
-                      timeSlots.map(({ time }) => {
-                        const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
-                        const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                        const isCurrent = isCurrentHour(time);
-                        
-                        return (
-                          <div
-                            key={`${room.id}-today-${time}`}
-                            className={`
-                              flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
-                              ${isAvailable 
-                                ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
-                                : 'border-danger/30 bg-danger/10 text-danger'
-                              }
-                              ${isCurrent ? 'ring-1 ring-primary/50' : ''}
-                            `}
-                            onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                          >
-                            {isAvailable ? (
-                              isCurrent ? (
-                                <Button
-                                  size="sm"
-                                  className="h-8 w-full text-xs"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    onQuickBook(room.id, time);
-                                  }}
-                                >
-                                  Book
-                                </Button>
-                              ) : (
-                                <span className="text-success-foreground">Free</span>
-                              )
+                                Book
+                              </Button>
                             ) : (
-                              <span className="text-danger-foreground">Busy</span>
-                            )}
-                          </div>
-                        );
-                      })
-                    )}
+                              <span className="text-success-foreground">Free</span>
+                            )
+                          ) : (
+                            <span className="text-danger-foreground">Busy</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Expanded Week View for this Room */}
+                {/* Expanded Week View - Each Row Has Same Structure */}
                 {isExpanded && (
                   <div className="mt-3 pt-3 border-t">
                     <div className="space-y-2">
-                      {weekDays.slice(1).map((day, index) => (
+                      {weekDays.map((day) => (
                         <div key={day.toISOString()} className="flex gap-2 min-w-max">
-                          {/* Date Label */}
-                          <div className="flex-shrink-0 w-[200px] flex items-center">
-                            <div className="text-sm text-muted-foreground pl-8">
-                              {format(day, 'EEE, MMM d')}
+                          {/* Date Label - Same Width as Room Info */}
+                          <div className="flex-shrink-0 w-[200px] flex items-center pl-8">
+                            <div className="text-sm text-muted-foreground">
+                              {isSameDay(day, selectedDate) 
+                                ? `${format(day, 'EEE, MMM d')} (Today)`
+                                : format(day, 'EEE, MMM d')
+                              }
                             </div>
                           </div>
 
-                          {/* Date's Timeline Slots */}
+                          {/* Date's Timeline Slots - Same Structure */}
                           <div className="flex gap-2">
                             {timeSlots.map(({ time }) => {
                               const dayKey = format(day, 'yyyy-MM-dd');
@@ -320,7 +352,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                 <div
                                   key={`${room.id}-${dayKey}-${time}`}
                                   className={`
-                                    flex-shrink-0 w-24 h-10 rounded border cursor-pointer flex items-center justify-center text-xs
+                                    flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
                                     ${isAvailable 
                                       ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
                                       : 'border-danger/30 bg-danger/10 text-danger'
@@ -333,7 +365,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                     isCurrent ? (
                                       <Button
                                         size="sm"
-                                        className="h-6 w-full text-xs px-1"
+                                        className="h-8 w-full text-xs"
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           onQuickBook(room.id, `${dayKey}-${time}`);
@@ -342,10 +374,10 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                         Book
                                       </Button>
                                     ) : (
-                                      <span className="text-success-foreground text-xs">Free</span>
+                                      <span className="text-success-foreground">Free</span>
                                     )
                                   ) : (
-                                    <span className="text-danger-foreground text-xs">Busy</span>
+                                    <span className="text-danger-foreground">Busy</span>
                                   )}
                                 </div>
                               );
