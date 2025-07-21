@@ -29,6 +29,15 @@ interface BookingModalProps {
   onBookingConfirm: (booking: any) => void;
   initialDate?: Date;
   initialStartTime?: string;
+  existingBooking?: {
+    id: string;
+    title: string;
+    description?: string;
+    start_time: string;
+    end_time: string;
+    attendees?: number;
+    recurring: string;
+  } | null;
 }
 
 const timeSlots = [
@@ -37,7 +46,7 @@ const timeSlots = [
   "16:00", "16:30", "17:00", "17:30", "18:00"
 ];
 
-export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime, existingBooking }: BookingModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -58,17 +67,32 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Reset form data when modal opens with new initial values
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        title: "",
-        date: initialDate || new Date(),
-        startTime: initialStartTime || "",
-        endTime: "",
-        attendees: "",
-        description: "",
-        recurring: "none"
-      });
+      if (existingBooking) {
+        // Pre-fill form with existing booking data
+        const startDate = new Date(existingBooking.start_time);
+        const endDate = new Date(existingBooking.end_time);
+        setFormData({
+          title: existingBooking.title || "",
+          date: startDate,
+          startTime: format(startDate, 'HH:mm'),
+          endTime: format(endDate, 'HH:mm'),
+          attendees: existingBooking.attendees?.toString() || "",
+          description: existingBooking.description || "",
+          recurring: existingBooking.recurring || "none"
+        });
+      } else {
+        setFormData({
+          title: "",
+          date: initialDate || new Date(),
+          startTime: initialStartTime || "",
+          endTime: "",
+          attendees: "",
+          description: "",
+          recurring: "none"
+        });
+      }
     }
-  }, [isOpen, initialDate, initialStartTime]);
+  }, [isOpen, initialDate, initialStartTime, existingBooking]);
 
   // Filter end time options to only show times after start time
   const getAvailableEndTimes = () => {
@@ -122,7 +146,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         .from('user_profiles')
         .select('organization_id')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       console.log("Profile fetch result:", { profile, profileError });
 
@@ -131,7 +155,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         throw new Error('User organization not found - please contact admin');
       }
 
-      console.log("About to create booking with:", {
+      const bookingData = {
         room_id: room.id,
         user_id: user.id,
         title: formData.title,
@@ -141,26 +165,34 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         attendees: parseInt(formData.attendees) || 1,
         recurring: formData.recurring,
         organization_id: profile.organization_id
-      });
+      };
 
-      // Create booking in database
-      const { data: booking, error } = await supabase
-        .from('bookings')
-        .insert({
-          room_id: room.id,
-          user_id: user.id,
-          title: formData.title,
-          description: formData.description,
-          start_time: startDateTime,
-          end_time: endDateTime,
-          attendees: parseInt(formData.attendees) || 1,
-          recurring: formData.recurring,
-          organization_id: profile.organization_id
-        })
-        .select()
-        .single();
+      console.log("About to create/update booking with:", bookingData);
 
-      console.log("Booking creation result:", { booking, error });
+      let booking, error;
+
+      if (existingBooking) {
+        // Update existing booking
+        const { data, error: updateError } = await supabase
+          .from('bookings')
+          .update(bookingData)
+          .eq('id', existingBooking.id)
+          .select()
+          .single();
+        booking = data;
+        error = updateError;
+      } else {
+        // Create new booking
+        const { data, error: insertError } = await supabase
+          .from('bookings')
+          .insert(bookingData)
+          .select()
+          .single();
+        booking = data;
+        error = insertError;
+      }
+
+      console.log("Booking operation result:", { booking, error });
 
       if (error) throw error;
 
@@ -168,8 +200,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       onBookingConfirm(booking);
       
       toast({
-        title: "Booking Confirmed!",
-        description: `${room.name} has been booked for ${format(formData.date, "PPP")} from ${formData.startTime} to ${formData.endTime}.`,
+        title: existingBooking ? "Booking Updated!" : "Booking Confirmed!",
+        description: `${room.name} has been ${existingBooking ? 'updated' : 'booked'} for ${format(formData.date, "PPP")} from ${formData.startTime} to ${formData.endTime}.`,
       });
       onClose();
       
@@ -184,10 +216,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         recurring: "none"
       });
     } catch (error) {
-      console.error('Error creating booking:', error);
+      console.error('Error creating/updating booking:', error);
       toast({
-        title: "Booking Failed",
-        description: "There was an error creating your booking. Please try again.",
+        title: existingBooking ? "Update Failed" : "Booking Failed",
+        description: `There was an error ${existingBooking ? 'updating' : 'creating'} your booking. Please try again.`,
         variant: "destructive",
       });
     }
@@ -204,7 +236,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <MapPin className="h-5 w-5 text-primary" />
-            Book {room.name}
+            {existingBooking ? 'Edit Booking' : 'Book'} {room.name}
           </DialogTitle>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
@@ -367,7 +399,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             </Button>
             <Button type="submit" className="flex-1">
               <Clock className="h-4 w-4 mr-2" />
-              Confirm Booking
+              {existingBooking ? 'Update Booking' : 'Confirm Booking'}
             </Button>
           </div>
         </form>

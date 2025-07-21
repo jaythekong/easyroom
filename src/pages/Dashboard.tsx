@@ -27,6 +27,7 @@ interface Room {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [editingBooking, setEditingBooking] = useState<any>(null);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -326,7 +327,7 @@ export default function Dashboard() {
                   const room = booking.room || rooms.find(r => r.id === booking.room_id);
                   if (room) {
                     setSelectedRoom(room);
-                    setSelectedTimeSlot(booking.start_time);
+                    setEditingBooking(booking);
                     setIsBookingModalOpen(true);
                   }
                 }}
@@ -407,11 +408,13 @@ export default function Dashboard() {
         onClose={() => {
           setIsBookingModalOpen(false);
           setSelectedTimeSlot("");
+          setEditingBooking(null);
         }}
         room={selectedRoom}
         onBookingConfirm={handleBookingConfirm}
         initialDate={selectedTimeSlot ? new Date(selectedTimeSlot) : undefined}
         initialStartTime={selectedTimeSlot ? new Date(selectedTimeSlot).toTimeString().slice(0, 5) : undefined}
+        existingBooking={editingBooking}
       />
     </div>
   );
