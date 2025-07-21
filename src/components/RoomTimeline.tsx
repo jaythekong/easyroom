@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize, Info } from "lucide-react";
+import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize } from "lucide-react";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -180,7 +179,6 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   };
 
   return (
-    <TooltipProvider>
     <div className="space-y-4">
       {/* Header */}
       <div className="bg-card border rounded-lg p-4">
@@ -241,37 +239,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           <Expand className="h-3 w-3" />
                         </Button>
                         <div className="min-w-0 flex-1 pr-8">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent side="top" className="max-w-xs">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <Users className="h-3 w-3" />
-                                    <span className="text-xs">Capacity: {room.capacity} people</span>
-                                  </div>
-                                  {room.location && (
-                                    <div className="flex items-center gap-2">
-                                      <MapPin className="h-3 w-3" />
-                                      <span className="text-xs">Location: {room.location}</span>
-                                    </div>
-                                  )}
-                                  {room.amenities?.length > 0 && (
-                                    <div className="flex items-start gap-2">
-                                      <Zap className="h-3 w-3 mt-0.5" />
-                                      <div className="text-xs">
-                                        <div>Amenities:</div>
-                                        <div className="text-muted-foreground">{room.amenities.join(', ')}</div>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
+                          <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                             <Users className="h-3 w-3 flex-shrink-0" />
                             <span>{room.capacity}</span>
@@ -299,34 +267,6 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           <div className="min-w-0 flex-1 pr-8">
                             <div className="flex items-center gap-2">
                               <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="max-w-xs">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                      <Users className="h-3 w-3" />
-                                      <span className="text-xs">Capacity: {room.capacity} people</span>
-                                    </div>
-                                    {room.location && (
-                                      <div className="flex items-center gap-2">
-                                        <MapPin className="h-3 w-3" />
-                                        <span className="text-xs">Location: {room.location}</span>
-                                      </div>
-                                    )}
-                                    {room.amenities?.length > 0 && (
-                                      <div className="flex items-start gap-2">
-                                        <Zap className="h-3 w-3 mt-0.5" />
-                                        <div className="text-xs">
-                                          <div>Amenities:</div>
-                                          <div className="text-muted-foreground">{room.amenities.join(', ')}</div>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </TooltipContent>
-                              </Tooltip>
                               <Badge variant="secondary" className="text-xs font-medium">
                                 <Users className="h-3 w-3 mr-1" />
                                 {room.capacity}
@@ -520,6 +460,5 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
         </div>
       </div>
     </div>
-    </TooltipProvider>
   );
 }
