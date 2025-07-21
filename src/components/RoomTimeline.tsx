@@ -165,10 +165,10 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                         className={`
                           flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
                           ${isAvailable 
-                            ? 'border-green-200 bg-green-50 hover:bg-green-100' 
-                            : 'border-red-200 bg-red-50'
+                            ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
+                            : 'border-danger/30 bg-danger/10 text-danger'
                           }
-                          ${isCurrent ? 'ring-1 ring-blue-300' : ''}
+                          ${isCurrent ? 'ring-1 ring-primary/50' : ''}
                         `}
                         onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
                       >
@@ -185,10 +185,10 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               Book
                             </Button>
                           ) : (
-                            <span className="text-green-600">Free</span>
+                            <span className="text-success-foreground">Free</span>
                           )
                         ) : (
-                          <span className="text-red-600">Busy</span>
+                          <span className="text-danger-foreground">Busy</span>
                         )}
                       </div>
                     );
