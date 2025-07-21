@@ -36,36 +36,36 @@ const App = () => (
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />
                 
-                {/* Organization-specific auth route */}
-                <Route path="/:orgSlug/auth" element={
-                  <OrganizationProvider>
-                    <Auth />
-                  </OrganizationProvider>
-                } />
-                <Route path="/invite/:token" element={<InviteSignup />} />
-                
-                {/* Organization-specific routes */}
-                <Route path="/:orgSlug" element={
-                  <OrganizationProvider>
-                    <OrganizationLayout requireAuth={true}>
-                      <Index />
-                    </OrganizationLayout>
-                  </OrganizationProvider>
-                } />
-                <Route path="/:orgSlug/my-bookings" element={
-                  <OrganizationProvider>
-                    <OrganizationLayout requireAuth={true}>
-                      <MyBookings />
-                    </OrganizationLayout>
-                  </OrganizationProvider>
-                } />
-                <Route path="/:orgSlug/admin" element={
-                  <OrganizationProvider>
-                    <OrganizationLayout requireAuth={true} requireAdmin={true}>
-                      <AdminDashboard />
-                    </OrganizationLayout>
-                  </OrganizationProvider>
-                } />
+              {/* Organization-specific auth route */}
+              <Route path="/:orgSlug/auth" element={
+                <OrganizationProvider>
+                  <Auth />
+                </OrganizationProvider>
+              } />
+              <Route path="/invite/:token" element={<InviteSignup />} />
+              
+              {/* All organization-specific routes under one provider */}
+              <Route path="/:orgSlug/*" element={
+                <OrganizationProvider>
+                  <Routes>
+                    <Route path="" element={
+                      <OrganizationLayout requireAuth={true}>
+                        <Index />
+                      </OrganizationLayout>
+                    } />
+                    <Route path="my-bookings" element={
+                      <OrganizationLayout requireAuth={true}>
+                        <MyBookings />
+                      </OrganizationLayout>
+                    } />
+                    <Route path="admin" element={
+                      <OrganizationLayout requireAuth={true} requireAdmin={true}>
+                        <AdminDashboard />
+                      </OrganizationLayout>
+                    } />
+                  </Routes>
+                </OrganizationProvider>
+              } />
                 
                 {/* Default redirect to kampus organization */}
                 <Route path="/" element={<Navigate to="/kampus" replace />} />
