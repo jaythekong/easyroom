@@ -284,7 +284,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                         
                         {/* Week Day Labels */}
                         {weekDays.map((day) => (
-                          <div key={`day-label-${day.toISOString()}`} className="px-4 py-3 bg-muted/5 h-[60px] flex items-center hover:bg-muted/10 transition-colors border-b last:border-b-0">
+                          <div key={`day-label-${day.toISOString()}`} className="px-4 bg-muted/5 h-[60px] flex items-center hover:bg-muted/10 transition-colors border-b last:border-b-0">
                             <div className="flex items-center gap-3 w-full">
                               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                                 isSameDay(day, selectedDate) 
