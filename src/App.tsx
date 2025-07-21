@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import MyBookings from "./pages/MyBookings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import InviteSignup from "./pages/InviteSignup";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/invite/:token" element={<InviteSignup />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

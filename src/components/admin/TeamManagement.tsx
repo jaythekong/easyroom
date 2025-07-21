@@ -1,0 +1,322 @@
+import { useState, useEffect } from "react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+interface TeamMember {
+  id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  email?: string;
+}
+
+interface Invitation {
+  id: string;
+  email: string;
+  role: string;
+  invite_token: string;
+  expires_at: string;
+  created_at: string;
+  accepted_at?: string;
+}
+
+export function TeamManagement() {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
+  const [isLoading, setIsLoading] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchTeamData();
+  }, []);
+
+  const fetchTeamData = async () => {
+    try {
+      // Fetch team members with their email from auth
+      const { data: members, error: membersError } = await supabase
+        .from('user_profiles')
+        .select(`
+          id,
+          user_id,
+          role,
+          created_at
+        `);
+
+      if (membersError) throw membersError;
+
+      // Get emails for members (this is a simplified approach)
+      const membersWithEmails = await Promise.all(
+        (members || []).map(async (member) => {
+          // In a real app, you'd have emails in your profiles table or fetch from a users view
+          return { ...member, email: `user-${member.user_id.slice(0, 8)}@example.com` };
+        })
+      );
+
+      setTeamMembers(membersWithEmails);
+
+      // Fetch pending invitations
+      const { data: invites, error: invitesError } = await supabase
+        .from('invitations')
+        .select('*')
+        .is('accepted_at', null)
+        .gt('expires_at', new Date().toISOString());
+
+      if (invitesError) throw invitesError;
+      setInvitations(invites || []);
+    } catch (error) {
+      console.error('Error fetching team data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load team data",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const sendInvite = async () => {
+    if (!inviteEmail || !user) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('invitations')
+        .insert({
+          email: inviteEmail,
+          role: inviteRole as 'admin' | 'member',
+          invited_by: user.id,
+          organization_id: '00000000-0000-0000-0000-000000000000', // This should be dynamic
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Invite sent!",
+        description: `Invitation sent to ${inviteEmail}`,
+      });
+
+      setInviteEmail("");
+      setInviteRole("member");
+      setIsInviteDialogOpen(false);
+      fetchTeamData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send invite",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copyInviteLink = async (token: string) => {
+    const inviteUrl = `${window.location.origin}/invite/${token}`;
+    await navigator.clipboard.writeText(inviteUrl);
+    setCopiedToken(token);
+    toast({
+      title: "Copied!",
+      description: "Invite link copied to clipboard",
+    });
+    setTimeout(() => setCopiedToken(null), 2000);
+  };
+
+  const revokeInvite = async (inviteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('invitations')
+        .delete()
+        .eq('id', inviteId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Invite revoked",
+        description: "The invitation has been revoked",
+      });
+      fetchTeamData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to revoke invite",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Team Members */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Team Members</CardTitle>
+            <CardDescription>Manage your organization's team members</CardDescription>
+          </div>
+          <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Invite Member
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite Team Member</DialogTitle>
+                <DialogDescription>
+                  Send an invitation to join your organization
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="colleague@company.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="role">Role</Label>
+                  <Select value={inviteRole} onValueChange={setInviteRole}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsInviteDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={sendInvite} disabled={isLoading || !inviteEmail}>
+                    {isLoading ? "Sending..." : "Send Invite"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Joined</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {teamMembers.map((member) => (
+                <TableRow key={member.id}>
+                  <TableCell className="font-medium">{member.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
+                      {member.role}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {new Date(member.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" disabled>
+                      <UserCheck className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Pending Invitations */}
+      {invitations.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pending Invitations</CardTitle>
+            <CardDescription>Manage outstanding team invitations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Sent</TableHead>
+                  <TableHead>Expires</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invitations.map((invite) => (
+                  <TableRow key={invite.id}>
+                    <TableCell className="font-medium">{invite.email}</TableCell>
+                    <TableCell>
+                      <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
+                        {invite.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(invite.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(invite.expires_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyInviteLink(invite.invite_token)}
+                          className="flex items-center gap-1"
+                        >
+                          {copiedToken === invite.invite_token ? (
+                            <Check className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => revokeInvite(invite.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <UserX className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

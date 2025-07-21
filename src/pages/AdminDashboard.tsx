@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RoomManagement } from "@/components/admin/RoomManagement";
 import { AdminStats } from "@/components/admin/AdminStats";
+import { TeamManagement } from "@/components/admin/TeamManagement";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -74,19 +75,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  Manage user access and permissions
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  User management features coming soon...
-                </p>
-              </CardContent>
-            </Card>
+            <TeamManagement />
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
