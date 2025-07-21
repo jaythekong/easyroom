@@ -18,12 +18,18 @@ interface ProfileModalProps {
     email?: string;
   } | null;
   onProfileUpdate: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function ProfileModal({ profile, onProfileUpdate }: ProfileModalProps) {
+export function ProfileModal({ profile, onProfileUpdate, isOpen: externalIsOpen, onClose: externalOnClose }: ProfileModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = externalOnClose !== undefined 
+    ? (open: boolean) => !open && externalOnClose() 
+    : setInternalIsOpen;
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   
@@ -115,6 +121,103 @@ export function ProfileModal({ profile, onProfileUpdate }: ProfileModalProps) {
     return 'U';
   };
 
+  const content = (
+    <DialogContent className="sm:max-w-[500px]">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <User className="h-5 w-5" />
+          Edit Profile
+        </DialogTitle>
+      </DialogHeader>
+
+      <div className="space-y-6 py-4">
+        {/* Avatar Upload */}
+        <div className="flex flex-col items-center gap-4">
+          <Avatar className="h-20 w-20">
+            <AvatarImage src={avatarUrl} alt={displayName || profile?.email} />
+            <AvatarFallback className="text-lg">
+              {getInitials(displayName, profile?.email)}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div>
+            <input
+              type="file"
+              id="avatar-upload"
+              accept="image/*"
+              onChange={uploadAvatar}
+              className="hidden"
+              disabled={uploading}
+            />
+            <Label htmlFor="avatar-upload">
+              <Button variant="outline" size="sm" asChild>
+                <span className="flex items-center gap-2 cursor-pointer">
+                  <Upload className="h-4 w-4" />
+                  {uploading ? "Uploading..." : "Upload Photo"}
+                </span>
+              </Button>
+            </Label>
+          </div>
+        </div>
+
+        {/* Display Name */}
+        <div className="space-y-2">
+          <Label htmlFor="display-name">Display Name</Label>
+          <Input
+            id="display-name"
+            placeholder="Enter your name"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+        </div>
+
+        {/* Email (read-only) */}
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            value={profile?.email || ""}
+            disabled
+            className="bg-muted"
+          />
+        </div>
+
+        {/* Bio */}
+        <div className="space-y-2">
+          <Label htmlFor="bio">Bio</Label>
+          <Textarea
+            id="bio"
+            placeholder="Tell us about yourself..."
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pt-4">
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={loading}>
+            <Save className="h-4 w-4 mr-2" />
+            {loading ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  );
+
+  // If externally controlled, don't show the trigger
+  if (externalIsOpen !== undefined) {
+    return (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        {content}
+      </Dialog>
+    );
+  }
+
+  // Default behavior with trigger
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -127,91 +230,7 @@ export function ProfileModal({ profile, onProfileUpdate }: ProfileModalProps) {
           </Avatar>
         </Button>
       </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Edit Profile
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Avatar Upload */}
-          <div className="flex flex-col items-center gap-4">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={avatarUrl} alt={displayName || profile?.email} />
-              <AvatarFallback className="text-lg">
-                {getInitials(displayName, profile?.email)}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div>
-              <input
-                type="file"
-                id="avatar-upload"
-                accept="image/*"
-                onChange={uploadAvatar}
-                className="hidden"
-                disabled={uploading}
-              />
-              <Label htmlFor="avatar-upload">
-                <Button variant="outline" size="sm" asChild>
-                  <span className="flex items-center gap-2 cursor-pointer">
-                    <Upload className="h-4 w-4" />
-                    {uploading ? "Uploading..." : "Upload Photo"}
-                  </span>
-                </Button>
-              </Label>
-            </div>
-          </div>
-
-          {/* Display Name */}
-          <div className="space-y-2">
-            <Label htmlFor="display-name">Display Name</Label>
-            <Input
-              id="display-name"
-              placeholder="Enter your name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-            />
-          </div>
-
-          {/* Email (read-only) */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              value={profile?.email || ""}
-              disabled
-              className="bg-muted"
-            />
-          </div>
-
-          {/* Bio */}
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell us about yourself..."
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} disabled={loading}>
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
+      {content}
     </Dialog>
   );
 }
