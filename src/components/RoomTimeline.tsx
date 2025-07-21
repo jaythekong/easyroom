@@ -177,9 +177,14 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           
           // Check if there's a booking for this room and time slot
           const booking = bookings.find(b => {
+            // Convert stored UTC times to local time for comparison
+            const bookingStart = new Date(b.start_time.replace('Z', '').replace('+00:00', ''));
+            const bookingEnd = new Date(b.end_time.replace('Z', '').replace('+00:00', ''));
+            const slotStart = new Date(startDateTime);
+            
             const matches = b.room_id === room.id &&
-              new Date(b.start_time) <= new Date(startDateTime) &&
-              new Date(b.end_time) > new Date(startDateTime);
+              bookingStart <= slotStart &&
+              bookingEnd > slotStart;
             
             if (matches) {
               console.log(`Found booking match:`, {
@@ -195,11 +200,16 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           });
 
           // Check if there's downtime for this room and time slot
-          const roomDowntime = downtime.find(d => 
-            d.room_id === room.id &&
-            new Date(d.start_time) <= new Date(startDateTime) &&
-            new Date(d.end_time) > new Date(startDateTime)
-          );
+          const roomDowntime = downtime.find(d => {
+            // Convert stored UTC times to local time for comparison
+            const downtimeStart = new Date(d.start_time.replace('Z', '').replace('+00:00', ''));
+            const downtimeEnd = new Date(d.end_time.replace('Z', '').replace('+00:00', ''));
+            const slotStart = new Date(startDateTime);
+            
+            return d.room_id === room.id &&
+              downtimeStart <= slotStart &&
+              downtimeEnd > slotStart;
+          });
           
           const timeSlot: TimeSlot = {
             time,
