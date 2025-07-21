@@ -55,6 +55,7 @@ export function OrganizationSettings() {
     { value: "Asia/Tokyo", label: "Tokyo (JST)", city: "Tokyo" },
     { value: "Asia/Shanghai", label: "Shanghai (CST)", city: "Shanghai" },
     { value: "Asia/Kolkata", label: "Mumbai (IST)", city: "Mumbai" },
+    { value: "Asia/Phnom_Penh", label: "Phnom Penh (ICT)", city: "Phnom Penh" },
     { value: "Australia/Sydney", label: "Sydney (AEST/AEDT)", city: "Sydney" },
     { value: "America/Toronto", label: "Toronto (EST/EDT)", city: "Toronto" },
     { value: "America/Vancouver", label: "Vancouver (PST/PDT)", city: "Vancouver" }
