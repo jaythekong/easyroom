@@ -58,11 +58,28 @@ interface RoomTimelineProps {
 
 export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [selectedHourRange, setSelectedHourRange] = useState({ start: 8, end: 18 });
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [downtime, setDowntime] = useState<Downtime[]>([]);
   const [roomsWithBookings, setRoomsWithBookings] = useState<TimelineRoom[]>([]);
+
+  // Responsive hour range based on screen size
+  const getResponsiveHourRange = () => {
+    const screenWidth = window.innerWidth;
+    if (screenWidth >= 1920) {
+      return { start: 6, end: 22 }; // 16 hours for large screens
+    } else if (screenWidth >= 1440) {
+      return { start: 7, end: 21 }; // 14 hours for desktop
+    } else if (screenWidth >= 1024) {
+      return { start: 8, end: 20 }; // 12 hours for laptop
+    } else if (screenWidth >= 768) {
+      return { start: 8, end: 18 }; // 10 hours for tablet
+    } else {
+      return { start: 9, end: 17 }; // 8 hours for mobile
+    }
+  };
+
+  const [selectedHourRange, setSelectedHourRange] = useState(getResponsiveHourRange());
 
   // Generate week days
   const generateWeekDays = () => {
@@ -173,6 +190,16 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     return () => clearInterval(timer);
   }, []);
 
+  // Update hour range on screen resize
+  useEffect(() => {
+    const handleResize = () => {
+      setSelectedHourRange(getResponsiveHourRange());
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     fetchBookings();
     fetchDowntime();
@@ -180,7 +207,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
   useEffect(() => {
     generateRoomsWithBookings();
-  }, [rooms, bookings, downtime, selectedDate]);
+  }, [rooms, bookings, downtime, selectedDate, selectedHourRange]);
 
   const getCurrentHour = () => {
     return new Date().getHours();
@@ -354,7 +381,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                 }
                                 ${isCurrent ? 'ring-1 ring-primary/40 bg-primary/10' : ''}
                               `}
-                              onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                              onClick={() => isAvailable && onTimeSlotSelect(room.id, `${format(selectedDate, 'yyyy-MM-dd')}T${time}:00`)}
                               title={
                                 isAvailable 
                                   ? 'Available for booking' 
@@ -424,7 +451,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                       }
                                       ${isCurrent ? 'ring-1 ring-primary/40 bg-primary/10' : ''}
                                     `}
-                                    onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                                    onClick={() => isAvailable && onTimeSlotSelect(room.id, `${dayKey}T${time}:00`)}
                                     title={
                                       isAvailable 
                                         ? 'Available for booking' 
