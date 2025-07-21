@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize, Wrench } from "lucide-react";
+import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize, Wrench, CalendarIcon } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -54,9 +57,10 @@ interface RoomTimelineProps {
   onQuickBook: (roomId: string, timeSlot: string) => void;
   onTimeSlotSelect: (roomId: string, timeSlot: string) => void;
   onBookingUpdate?: () => void;
+  onDateSelect: (date: Date) => void;
 }
 
-export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate }: RoomTimelineProps) {
+export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -283,6 +287,32 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* Date Picker */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "h-7 px-2 text-xs justify-start font-normal",
+                            !selectedDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="h-3 w-3 mr-1" />
+                          {format(selectedDate, "MMM d")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => date && onDateSelect(date)}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+
                     {/* Time Range Picker for this room */}
                     <div className="flex items-center gap-1 border rounded px-2 py-1">
                       <Button

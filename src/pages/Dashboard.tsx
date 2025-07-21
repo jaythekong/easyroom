@@ -315,6 +315,7 @@ export default function Dashboard() {
                 onQuickBook={handleQuickBook}
                 onTimeSlotSelect={handleTimeSlotSelect}
                 onBookingUpdate={fetchRooms}
+                onDateSelect={() => {}} // Add empty handler since we're using fixed date for now
               />
             )}
           </TabsContent>
