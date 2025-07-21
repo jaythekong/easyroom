@@ -248,39 +248,6 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div className="bg-card border rounded-lg p-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">Room Timeline</h2>
-            <p className="text-xs text-muted-foreground">
-              {selectedDate.toLocaleDateString()}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => shiftTimeRange('earlier')}
-              disabled={selectedHourRange.start <= 6}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm font-medium">
-              {selectedHourRange.start}:00 - {selectedHourRange.end}:00
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => shiftTimeRange('later')}
-              disabled={selectedHourRange.end >= 22}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
       {/* Room Cards */}
       <div className="space-y-3">
         {roomsWithBookings.map((room) => {
@@ -316,6 +283,31 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* Time Range Picker for this room */}
+                    <div className="flex items-center gap-1 border rounded px-2 py-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => shiftTimeRange('earlier')}
+                        disabled={selectedHourRange.start <= 6}
+                        className="h-6 w-6 p-0"
+                      >
+                        <ChevronLeft className="h-3 w-3" />
+                      </Button>
+                      <span className="text-xs font-medium">
+                        {selectedHourRange.start}:00 - {selectedHourRange.end}:00
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => shiftTimeRange('later')}
+                        disabled={selectedHourRange.end >= 22}
+                        className="h-6 w-6 p-0"
+                      >
+                        <ChevronRight className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    
                     {room.amenities.length > 0 && (
                       <div className="flex items-center gap-1">
                         <Zap className="h-3 w-3 text-muted-foreground" />
