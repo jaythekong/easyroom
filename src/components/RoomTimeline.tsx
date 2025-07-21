@@ -112,13 +112,22 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   // Fetch bookings and downtime from database
   const fetchBookings = async () => {
     try {
+      const startDate = new Date().toISOString().split('T')[0];
+      const endDate = format(addDays(selectedDate, 7), 'yyyy-MM-dd');
+      
+      console.log("Fetching bookings between:", startDate, "and", endDate);
+      
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .gte('start_time', new Date().toISOString().split('T')[0])
-        .lte('start_time', format(addDays(selectedDate, 7), 'yyyy-MM-dd'));
+        .gte('start_time', startDate)
+        .lte('start_time', endDate);
       
       if (error) throw error;
+      
+      console.log("Fetched bookings:", data);
+      console.log("Total bookings fetched:", data?.length || 0);
+      
       setBookings(data || []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
@@ -142,6 +151,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
   // Generate rooms with real booking and downtime data
   const generateRoomsWithBookings = () => {
+    console.log("Generating rooms with bookings. Current bookings:", bookings);
+    console.log("Current downtime:", downtime);
+    
     const roomsWithTimeSlots = rooms.map(room => ({
       ...room,
       timeSlots: []
@@ -149,6 +161,8 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
     // For each room, generate time slots for the full week
     roomsWithTimeSlots.forEach(room => {
+      console.log(`Processing room: ${room.name} (${room.id})`);
+      
       weekDays.forEach(date => {
         timeSlots.forEach(({ time, endTime }) => {
           const dateStr = format(date, 'yyyy-MM-dd');
@@ -156,11 +170,23 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           const endDateTime = `${dateStr}T${endTime}:00`;
           
           // Check if there's a booking for this room and time slot
-          const booking = bookings.find(b => 
-            b.room_id === room.id &&
-            new Date(b.start_time) <= new Date(startDateTime) &&
-            new Date(b.end_time) > new Date(startDateTime)
-          );
+          const booking = bookings.find(b => {
+            const matches = b.room_id === room.id &&
+              new Date(b.start_time) <= new Date(startDateTime) &&
+              new Date(b.end_time) > new Date(startDateTime);
+            
+            if (matches) {
+              console.log(`Found booking match:`, {
+                bookingTitle: b.title,
+                bookingStart: b.start_time,
+                bookingEnd: b.end_time,
+                slotStart: startDateTime,
+                roomName: room.name
+              });
+            }
+            
+            return matches;
+          });
 
           // Check if there's downtime for this room and time slot
           const roomDowntime = downtime.find(d => 
