@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,8 @@ interface BookingModalProps {
   onClose: () => void;
   room: Room | null;
   onBookingConfirm: (booking: any) => void;
+  initialDate?: Date;
+  initialStartTime?: string;
 }
 
 const timeSlots = [
@@ -35,22 +37,38 @@ const timeSlots = [
   "16:00", "16:30", "17:00", "17:30", "18:00"
 ];
 
-export function BookingModal({ isOpen, onClose, room, onBookingConfirm }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime }: BookingModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     title: "",
-    date: new Date(),
-    startTime: "",
+    date: initialDate || new Date(),
+    startTime: initialStartTime || "",
     endTime: "",
     attendees: "",
     description: "",
     recurring: "none"
   });
 
+  // Update form data when initial props change
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
   };
+
+  // Reset form data when modal opens with new initial values
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        title: "",
+        date: initialDate || new Date(),
+        startTime: initialStartTime || "",
+        endTime: "",
+        attendees: "",
+        description: "",
+        recurring: "none"
+      });
+    }
+  }, [isOpen, initialDate, initialStartTime]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

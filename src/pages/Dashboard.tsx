@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookings, setBookings] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -168,6 +169,7 @@ export default function Dashboard() {
     const room = rooms.find(r => r.id === roomId);
     if (room) {
       setSelectedRoom(room);
+      setSelectedTimeSlot(timeSlot);
       setIsBookingModalOpen(true);
     }
   };
@@ -391,9 +393,14 @@ export default function Dashboard() {
       {/* Booking Modal */}
       <BookingModal
         isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
+        onClose={() => {
+          setIsBookingModalOpen(false);
+          setSelectedTimeSlot("");
+        }}
         room={selectedRoom}
         onBookingConfirm={handleBookingConfirm}
+        initialDate={selectedTimeSlot ? new Date(selectedTimeSlot) : undefined}
+        initialStartTime={selectedTimeSlot ? new Date(selectedTimeSlot).toTimeString().slice(0, 5) : undefined}
       />
     </div>
   );
