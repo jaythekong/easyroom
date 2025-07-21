@@ -98,7 +98,7 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
         </div>
 
         {/* Date and Time */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label>Date</Label>
             <Popover>
@@ -106,7 +106,7 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal bg-background",
+                    "w-full justify-start text-left font-normal bg-background border-border",
                     !filters.date && "text-muted-foreground"
                   )}
                 >
@@ -114,7 +114,7 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
                   {filters.date ? format(filters.date, "PPP") : "Pick a date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
+              <PopoverContent className="w-auto p-0 bg-popover border-border shadow-lg z-50" align="start">
                 <Calendar
                   mode="single"
                   selected={filters.date}
@@ -126,32 +126,34 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="startTime">Start Time</Label>
-            <Select value={filters.startTime} onValueChange={(value) => updateFilters({ startTime: value })}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Start time" />
-              </SelectTrigger>
-              <SelectContent>
-                {timeSlots.map((time) => (
-                  <SelectItem key={time} value={time}>{time}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start Time</Label>
+              <Select value={filters.startTime} onValueChange={(value) => updateFilters({ startTime: value })}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="Start time" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border shadow-lg z-50">
+                  {timeSlots.map((time) => (
+                    <SelectItem key={time} value={time} className="hover:bg-accent">{time}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="endTime">End Time</Label>
-            <Select value={filters.endTime} onValueChange={(value) => updateFilters({ endTime: value })}>
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="End time" />
-              </SelectTrigger>
-              <SelectContent>
-                {timeSlots.map((time) => (
-                  <SelectItem key={time} value={time}>{time}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End Time</Label>
+              <Select value={filters.endTime} onValueChange={(value) => updateFilters({ endTime: value })}>
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue placeholder="End time" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border shadow-lg z-50">
+                  {timeSlots.map((time) => (
+                    <SelectItem key={time} value={time} className="hover:bg-accent">{time}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -159,16 +161,16 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
         <div className="space-y-2">
           <Label htmlFor="capacity">Minimum Capacity</Label>
           <Select value={filters.capacity} onValueChange={(value) => updateFilters({ capacity: value })}>
-            <SelectTrigger className="bg-background">
+            <SelectTrigger className="bg-background border-border">
               <SelectValue placeholder="Select capacity" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2">2+ people</SelectItem>
-              <SelectItem value="4">4+ people</SelectItem>
-              <SelectItem value="6">6+ people</SelectItem>
-              <SelectItem value="8">8+ people</SelectItem>
-              <SelectItem value="12">12+ people</SelectItem>
-              <SelectItem value="20">20+ people</SelectItem>
+            <SelectContent className="bg-popover border-border shadow-lg z-50">
+              <SelectItem value="2" className="hover:bg-accent">2+ people</SelectItem>
+              <SelectItem value="4" className="hover:bg-accent">4+ people</SelectItem>
+              <SelectItem value="6" className="hover:bg-accent">6+ people</SelectItem>
+              <SelectItem value="8" className="hover:bg-accent">8+ people</SelectItem>
+              <SelectItem value="12" className="hover:bg-accent">12+ people</SelectItem>
+              <SelectItem value="20" className="hover:bg-accent">20+ people</SelectItem>
             </SelectContent>
           </Select>
         </div>

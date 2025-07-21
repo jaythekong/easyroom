@@ -392,18 +392,41 @@ export default function Dashboard() {
           </TabsContent>
 
           <TabsContent value="filters" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-1">
                 <SearchFilters onFiltersChange={handleFiltersChange} />
               </div>
-              <div className="lg:col-span-3">
-                <div className="timeline-card p-6 text-center">
-                  <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-foreground mb-2">Use filters to find rooms</h3>
-                  <p className="text-muted-foreground">
-                    Set your preferences on the left to see filtered results here.
-                  </p>
-                </div>
+              <div className="lg:col-span-2">
+                {filteredRooms.length > 0 ? (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium text-foreground">
+                      Found {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''}
+                    </h3>
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                      {filteredRooms.map((room) => (
+                        <EnhancedRoomCard
+                          key={room.id}
+                          room={{
+                            ...room,
+                            status: 'available',
+                            amenities: room.amenities || []
+                          }}
+                          onBook={handleBookRoom}
+                          onViewDetails={handleViewDetails}
+                          showQuickActions={false}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="timeline-card p-8 text-center">
+                    <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">No rooms found</h3>
+                    <p className="text-muted-foreground">
+                      Try adjusting your filters to find available rooms.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
