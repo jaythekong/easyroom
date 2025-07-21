@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { Loader2, Building, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export function OrganizationLayout({
 }: OrganizationLayoutProps) {
   const { organization, isLoading, error, isUserInOrganization, userRole } = useOrganization();
   const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
 
   // Show loading while fetching data
   if (isLoading || authLoading) {
@@ -58,7 +59,7 @@ export function OrganizationLayout({
 
   // Check authentication requirements
   if (requireAuth && !user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to={`/auth?redirectTo=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   // Check organization membership

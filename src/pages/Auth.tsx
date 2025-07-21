@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,24 +13,27 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     // Check if user is already logged in
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/");
+        const redirectTo = searchParams.get('redirectTo') || '/';
+        navigate(redirectTo);
       }
     };
     checkUser();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectTo = searchParams.get('redirectTo') || '/';
+      const redirectUrl = `${window.location.origin}${redirectTo}`;
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -73,7 +76,8 @@ const Auth = () => {
           toast.error(error.message);
         }
       } else {
-        navigate("/");
+        const redirectTo = searchParams.get('redirectTo') || '/';
+        navigate(redirectTo);
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
