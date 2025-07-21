@@ -305,52 +305,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     return currentHour === slotHour;
   };
 
-  const totalBookingsThisWeek = bookings.length;
-
   return (
     <div className="space-y-6">
-      {/* Header with Date Navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigateWeek('prev')}
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="min-w-[200px]">
-                <Calendar className="h-4 w-4 mr-2" />
-                Week of {format(startOfWeek(selectedDate, { weekStartsOn: 1 }), 'MMM d, yyyy')}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <CalendarComponent
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => date && handleDateSelect(date)}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigateWeek('next')}
-          >
-            <ArrowRight className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <Badge variant="secondary">
-          {totalBookingsThisWeek} booking{totalBookingsThisWeek !== 1 ? 's' : ''} this week
-        </Badge>
-      </div>
 
       {/* Timeline Grid */}
       <div className="space-y-4">
