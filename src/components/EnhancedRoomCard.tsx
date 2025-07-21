@@ -170,25 +170,14 @@ export function EnhancedRoomCard({
 
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
-          {room.status === 'available' && showQuickActions && onQuickBook && (
-            <Button 
-              className="quick-book-button flex-1 h-9"
-              onClick={() => onQuickBook(room.id)}
-            >
-              <Zap className="h-4 w-4 mr-2" />
-              Quick Book
-            </Button>
-          )}
-          
           <Button
-            variant={room.status === 'available' && showQuickActions ? "outline" : "default"}
-            className={`${room.status === 'available' && showQuickActions ? 'flex-none' : 'flex-1'} h-9`}
+            className={`${room.status === 'available' ? 'quick-book-button' : ''} flex-1 h-9`}
             onClick={() => room.status === 'available' ? onBook(room.id) : onViewDetails(room.id)}
           >
             {room.status === 'available' ? (
               <>
                 <Calendar className="h-4 w-4 mr-2" />
-                {showQuickActions ? 'Book' : 'Book Room'}
+                Book Room
               </>
             ) : (
               <>
