@@ -288,27 +288,34 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           </div>
                           
                           {/* Week Day Labels */}
-                          {weekDays.map((day) => (
-                            <div key={`day-label-${day.toISOString()}`} className="h-[60px] flex hover:bg-muted/10 transition-colors border-b last:border-b-0">
-                              <div className="w-12 border-r bg-muted/5"></div>
-                              <div className="flex-1 px-4 bg-muted/5 flex items-center">
-                                <div className="flex items-center gap-3 w-full">
-                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                                    isSameDay(day, selectedDate) 
-                                      ? 'bg-primary text-primary-foreground shadow-sm' 
-                                      : 'bg-muted text-muted-foreground'
-                                  }`}>
-                                    {format(day, 'd')}
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <div className="text-sm font-medium">
-                                      {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'EEE MMM d')}
+                          {weekDays.map((day) => {
+                            const isWeekend = day.getDay() === 0 || day.getDay() === 6; // Sunday or Saturday
+                            return (
+                              <div key={`day-label-${day.toISOString()}`} className="h-[60px] flex hover:bg-muted/10 transition-colors border-b last:border-b-0">
+                                <div className={`w-12 border-r flex items-center justify-center text-xs font-bold ${
+                                  isWeekend ? 'bg-red-50 text-red-600' : 'bg-muted/5 text-muted-foreground'
+                                }`}>
+                                  {format(day, 'EEE')}
+                                </div>
+                                <div className="flex-1 px-4 bg-muted/5 flex items-center">
+                                  <div className="flex items-center gap-3 w-full">
+                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                                      isSameDay(day, selectedDate) 
+                                        ? 'bg-primary text-primary-foreground shadow-sm' 
+                                        : 'bg-muted text-muted-foreground'
+                                    }`}>
+                                      {format(day, 'd')}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-sm font-medium">
+                                        {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'MMM d')}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                       </>
                     )}
                   </div>
