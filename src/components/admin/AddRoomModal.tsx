@@ -100,6 +100,13 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
         return;
       }
 
+      // Get user's organization ID
+      const { data: orgData, error: orgError } = await supabase
+        .rpc('get_user_organization_id');
+
+      if (orgError) throw new Error('Failed to get organization');
+      if (!orgData) throw new Error('No organization found for user');
+
       // Insert room
       const { data: room, error: roomError } = await supabase
         .from("rooms")
@@ -110,6 +117,7 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
           description: formData.description || null,
           photo_url: formData.photo_url || null,
           status: formData.status,
+          organization_id: orgData,
         })
         .select()
         .single();
