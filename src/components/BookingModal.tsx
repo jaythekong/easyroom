@@ -262,12 +262,21 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
       if (existingBooking) {
         // Update existing booking
+        console.log("📝 UPDATING EXISTING BOOKING:", {
+          bookingId: existingBooking.id,
+          updateData: bookingData,
+          user: user?.id,
+          room: room.id
+        });
+        
         const { data, error: updateError } = await supabase
           .from('bookings')
           .update(bookingData)
           .eq('id', existingBooking.id)
           .select()
           .single();
+          
+        console.log("📝 UPDATE RESULT:", { data, error: updateError });
         booking = data;
         error = updateError;
       } else {
@@ -305,7 +314,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         recurring: "none"
       });
     } catch (error) {
-      console.error('Error creating/updating booking:', error);
+      console.error('📝 BOOKING ERROR DETAILS:', {
+        error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+        errorDetails: error?.details,
+        errorHint: error?.hint,
+        bookingData: formData,
+        existingBooking: existingBooking?.id,
+        user: user?.id
+      });
       toast({
         title: existingBooking ? "Update Failed" : "Booking Failed",
         description: `There was an error ${existingBooking ? 'updating' : 'creating'} your booking. Please try again.`,
