@@ -200,45 +200,96 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
                   {/* Today's Timeline Slots */}
                   <div className="flex gap-2">
-                    {timeSlots.map(({ time }) => {
-                      const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
-                      const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                      const isCurrent = isCurrentHour(time);
-                      
-                      return (
-                        <div
-                          key={`${room.id}-today-${time}`}
-                          className={`
-                            flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
-                            ${isAvailable 
-                              ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
-                              : 'border-danger/30 bg-danger/10 text-danger'
-                            }
-                            ${isCurrent ? 'ring-1 ring-primary/50' : ''}
-                          `}
-                          onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                        >
-                          {isAvailable ? (
-                            isCurrent ? (
-                              <Button
-                                size="sm"
-                                className="h-8 w-full text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onQuickBook(room.id, time);
-                                }}
-                              >
-                                Book
-                              </Button>
-                            ) : (
-                              <span className="text-success-foreground">Free</span>
-                            )
-                          ) : (
-                            <span className="text-danger-foreground">Busy</span>
-                          )}
+                    {isExpanded ? (
+                      // When expanded, show today in the same style as other days
+                      <div className="flex flex-col">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          {format(selectedDate, 'EEE, MMM d')} (Today)
                         </div>
-                      );
-                    })}
+                        <div className="flex gap-2">
+                          {timeSlots.map(({ time }) => {
+                            const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
+                            const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                            const isCurrent = isCurrentHour(time);
+                            
+                            return (
+                              <div
+                                key={`${room.id}-today-${time}`}
+                                className={`
+                                  flex-shrink-0 w-24 h-10 rounded border cursor-pointer flex items-center justify-center text-xs
+                                  ${isAvailable 
+                                    ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
+                                    : 'border-danger/30 bg-danger/10 text-danger'
+                                  }
+                                  ${isCurrent ? 'ring-1 ring-primary/50' : ''}
+                                `}
+                                onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                              >
+                                {isAvailable ? (
+                                  isCurrent ? (
+                                    <Button
+                                      size="sm"
+                                      className="h-6 w-full text-xs px-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onQuickBook(room.id, time);
+                                      }}
+                                    >
+                                      Book
+                                    </Button>
+                                  ) : (
+                                    <span className="text-success-foreground text-xs">Free</span>
+                                  )
+                                ) : (
+                                  <span className="text-danger-foreground text-xs">Busy</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      // When not expanded, show normal horizontal layout
+                      timeSlots.map(({ time }) => {
+                        const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
+                        const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                        const isCurrent = isCurrentHour(time);
+                        
+                        return (
+                          <div
+                            key={`${room.id}-today-${time}`}
+                            className={`
+                              flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
+                              ${isAvailable 
+                                ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
+                                : 'border-danger/30 bg-danger/10 text-danger'
+                              }
+                              ${isCurrent ? 'ring-1 ring-primary/50' : ''}
+                            `}
+                            onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                          >
+                            {isAvailable ? (
+                              isCurrent ? (
+                                <Button
+                                  size="sm"
+                                  className="h-8 w-full text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onQuickBook(room.id, time);
+                                  }}
+                                >
+                                  Book
+                                </Button>
+                              ) : (
+                                <span className="text-success-foreground">Free</span>
+                              )
+                            ) : (
+                              <span className="text-danger-foreground">Busy</span>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
