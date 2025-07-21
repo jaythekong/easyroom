@@ -114,16 +114,16 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     }
   }, [rooms, expandedRooms.size, onExpandedRoomsChange]);
 
-  // Generate 24-hour time slots
+  // Generate business hours time slots (8 AM to 8 PM)
   const timeSlots = useMemo(() => {
     const slots = [];
-    for (let hour = 0; hour < 24; hour++) {
+    for (let hour = 8; hour <= 20; hour++) {
       slots.push({
         time: `${hour.toString().padStart(2, '0')}:00`,
-        endTime: `${((hour + 1) % 24).toString().padStart(2, '0')}:00`
+        endTime: `${((hour + 1)).toString().padStart(2, '0')}:00`
       });
     }
-    console.log('📅 Generated time slots:', slots.length, 'hours');
+    console.log('📅 Generated business hours time slots:', slots.length, 'hours (8 AM - 8 PM)');
     return slots;
   }, []);
 
@@ -191,10 +191,10 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       weekDays.forEach(date => {
         const dateStr = format(date, 'yyyy-MM-dd');
         
-        // For each hour of the day
-        for (let hour = 0; hour < 24; hour++) {
+        // For each business hour (8 AM to 8 PM)
+        for (let hour = 8; hour <= 20; hour++) {
           const timeStr = `${hour.toString().padStart(2, '0')}:00`;
-          const endTimeStr = `${((hour + 1) % 24).toString().padStart(2, '0')}:00`;
+          const endTimeStr = `${(hour + 1).toString().padStart(2, '0')}:00`;
           
           // Find booking that overlaps this time slot
           const booking = roomBookings.find(b => doesBookingOverlapSlot(b, dateStr, hour));
