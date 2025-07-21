@@ -7,7 +7,6 @@ import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./hooks/useAuth";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
 import { OrganizationLayout } from "./components/OrganizationLayout";
-import { OrganizationSelector } from "./components/OrganizationSelector";
 import Index from "./pages/Index";
 import AdminDashboard from "./pages/AdminDashboard";
 import MyBookings from "./pages/MyBookings";
@@ -61,8 +60,8 @@ const App = () => (
                 </OrganizationProvider>
               } />
               
-              {/* Fallback route for root - show organization selector */}
-              <Route path="/" element={<OrganizationSelector />} />
+              {/* Fallback route for root - redirect to a default org or show 404 */}
+              <Route path="/" element={<NotFound />} />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
