@@ -217,9 +217,12 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
       <div className="border rounded-lg overflow-hidden bg-card shadow-sm">
         <div className="flex">
           {/* Fixed Room Names Column */}
-          <div className="flex-shrink-0 w-[220px] border-r bg-muted/30">
+          <div className="flex-shrink-0 w-[260px] border-r bg-muted/30">
             {/* Header space */}
-            <div className="h-16 border-b bg-background/95 backdrop-blur"></div>
+            <div className="h-16 border-b bg-background/95 backdrop-blur flex">
+              <div className="w-12 border-r"></div>
+              <div className="flex-1"></div>
+            </div>
             
             {/* Room Names */}
             <div className="divide-y divide-border/50">
@@ -229,71 +232,83 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                   <div key={`room-name-${room.id}`}>
                     {!isExpanded ? (
                       // Collapsed: Room name only
-                      <div className="p-4 bg-card/80 backdrop-blur min-h-[80px] flex items-center hover:bg-muted/20 transition-colors relative">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleRoomExpansion(room.id)}
-                          className="absolute top-2 right-2 h-6 w-6 p-0 hover:bg-muted/50"
-                        >
-                          <Expand className="h-3 w-3" />
-                        </Button>
-                        <div className="min-w-0 flex-1 pr-8">
-                          <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                            <Users className="h-3 w-3 flex-shrink-0" />
-                            <span>{room.capacity}</span>
-                            {room.location && (
-                              <>
-                                <span className="text-muted-foreground/50">•</span>
-                                <span className="truncate">{room.location}</span>
-                              </>
-                            )}
+                      <div className="min-h-[80px] flex hover:bg-muted/20 transition-colors">
+                        <div className="w-12 border-r bg-muted/10 flex items-center justify-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleRoomExpansion(room.id)}
+                            className="h-6 w-6 p-0 hover:bg-muted/50"
+                          >
+                            <Expand className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex-1 p-4 bg-card/80 backdrop-blur flex items-center">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                              <Users className="h-3 w-3 flex-shrink-0" />
+                              <span>{room.capacity}</span>
+                              {room.location && (
+                                <>
+                                  <span className="text-muted-foreground/50">•</span>
+                                  <span className="truncate">{room.location}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     ) : (
                       // Expanded: Room header + week days
-                      <>
-                        <div className="p-4 border-b bg-muted/10 min-h-[64px] flex items-center hover:bg-muted/20 transition-colors relative">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRoomExpansion(room.id)}
-                            className="absolute top-2 right-2 h-6 w-6 p-0 hover:bg-muted/50"
-                          >
-                            <Minimize className="h-3 w-3" />
-                          </Button>
-                          <div className="min-w-0 flex-1 pr-8">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
-                              <Badge variant="secondary" className="text-xs font-medium">
-                                <Users className="h-3 w-3 mr-1" />
-                                {room.capacity}
-                              </Badge>
+                        <>
+                          {/* Room Header */}
+                          <div className="min-h-[64px] flex border-b bg-muted/10 hover:bg-muted/20 transition-colors">
+                            <div className="w-12 border-r bg-muted/10 flex items-center justify-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleRoomExpansion(room.id)}
+                                className="h-6 w-6 p-0 hover:bg-muted/50"
+                              >
+                                <Minimize className="h-3 w-3" />
+                              </Button>
                             </div>
-                          </div>
-                        </div>
-                        
-                        {/* Week Day Labels */}
-                        {weekDays.map((day) => (
-                          <div key={`day-label-${day.toISOString()}`} className="px-4 bg-muted/5 h-[60px] flex items-center hover:bg-muted/10 transition-colors border-b last:border-b-0">
-                            <div className="flex items-center gap-3 w-full">
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                                isSameDay(day, selectedDate) 
-                                  ? 'bg-primary text-primary-foreground shadow-sm' 
-                                  : 'bg-muted text-muted-foreground'
-                              }`}>
-                                {format(day, 'd')}
-                              </div>
+                            <div className="flex-1 p-4 flex items-center">
                               <div className="min-w-0 flex-1">
-                                <div className="text-sm font-medium">
-                                  {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'EEE MMM d')}
+                                <div className="flex items-center gap-2">
+                                  <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
+                                  <Badge variant="secondary" className="text-xs font-medium">
+                                    <Users className="h-3 w-3 mr-1" />
+                                    {room.capacity}
+                                  </Badge>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        ))}
+                          
+                          {/* Week Day Labels */}
+                          {weekDays.map((day) => (
+                            <div key={`day-label-${day.toISOString()}`} className="h-[60px] flex hover:bg-muted/10 transition-colors border-b last:border-b-0">
+                              <div className="w-12 border-r bg-muted/5"></div>
+                              <div className="flex-1 px-4 bg-muted/5 flex items-center">
+                                <div className="flex items-center gap-3 w-full">
+                                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                                    isSameDay(day, selectedDate) 
+                                      ? 'bg-primary text-primary-foreground shadow-sm' 
+                                      : 'bg-muted text-muted-foreground'
+                                  }`}>
+                                    {format(day, 'd')}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-medium">
+                                      {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'EEE MMM d')}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                       </>
                     )}
                   </div>
