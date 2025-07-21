@@ -50,7 +50,6 @@ export default function MyBookings() {
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [confirmingBookings, setConfirmingBookings] = useState<Set<string>>(new Set());
-  const [deletingBookingId, setDeletingBookingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -382,12 +381,11 @@ export default function MyBookings() {
                               </Button>
                             )}
                             
-                            <AlertDialog open={deletingBookingId === booking.id} onOpenChange={() => setDeletingBookingId(null)}>
+                            <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  onClick={() => setDeletingBookingId(booking.id)}
                                   className="text-destructive hover:text-destructive"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
