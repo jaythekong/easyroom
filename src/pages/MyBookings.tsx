@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
+import { BookingModal } from "@/components/BookingModal";
 
 interface Booking {
   id: string;
@@ -32,6 +33,9 @@ export default function MyBookings() {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<any>(null);
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -102,6 +106,19 @@ export default function MyBookings() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditBooking = (booking: Booking) => {
+    setEditingBooking(booking);
+    setSelectedRoom(booking.room);
+    setIsBookingModalOpen(true);
+  };
+
+  const handleBookingUpdate = () => {
+    fetchMyBookings(); // Refresh the bookings list
+    setIsBookingModalOpen(false);
+    setEditingBooking(null);
+    setSelectedRoom(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -266,7 +283,11 @@ export default function MyBookings() {
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEditBooking(booking)}
+                        >
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </Button>
@@ -344,6 +365,19 @@ export default function MyBookings() {
           </div>
         )}
       </div>
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => {
+          setIsBookingModalOpen(false);
+          setEditingBooking(null);
+          setSelectedRoom(null);
+        }}
+        room={selectedRoom}
+        onBookingConfirm={handleBookingUpdate}
+        existingBooking={editingBooking}
+      />
     </div>
   );
 }
