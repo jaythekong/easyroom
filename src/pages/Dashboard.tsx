@@ -117,19 +117,20 @@ export default function Dashboard() {
   const availableRooms = rooms.length; // All fetched rooms are active
   const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
 
-  // Mock timeline data for demonstration
+  // Mock timeline data for demonstration - now with hourly slots
   const timelineRooms = rooms.map(room => ({
     ...room,
     amenities: room.amenities || [], // Ensure amenities is always an array
-    timeSlots: Array.from({ length: 24 }, (_, i) => {
-      const hour = Math.floor(i / 2) + 8;
-      const minute = (i % 2) * 30;
-      const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    timeSlots: Array.from({ length: 14 }, (_, i) => { // 8 AM to 10 PM = 14 hours
+      const hour = i + 8;
+      const time = `${hour.toString().padStart(2, '0')}:00`;
+      const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
       
       // Mock some bookings for demonstration
       const isBooked = Math.random() > 0.7;
       return {
         time,
+        endTime,
         available: !isBooked,
         meeting: isBooked ? 'Team Meeting' : undefined,
         bookedBy: isBooked ? 'John Doe' : undefined,

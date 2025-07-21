@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, MapPin, Zap } from "lucide-react";
+import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface TimeSlot {
   time: string;
+  endTime: string;
   available: boolean;
   meeting?: string;
   bookedBy?: string;
@@ -29,199 +30,262 @@ interface RoomTimelineProps {
 
 export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedHourRange, setSelectedHourRange] = useState({ start: 8, end: 18 });
 
-  // Generate time slots from 8 AM to 8 PM
-  const timeSlots = Array.from({ length: 24 }, (_, i) => {
-    const hour = Math.floor(i / 2) + 8;
-    const minute = (i % 2) * 30;
-    return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
-  });
+  // Generate hourly time slots
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = selectedHourRange.start; hour < selectedHourRange.end; hour++) {
+      const timeStr = `${hour.toString().padStart(2, '0')}:00`;
+      const endTimeStr = `${(hour + 1).toString().padStart(2, '0')}:00`;
+      slots.push({ time: timeStr, endTime: endTimeStr });
+    }
+    return slots;
+  };
+
+  const timeSlots = generateTimeSlots();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
 
-  const getCurrentTimePosition = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    
-    if (hours < 8 || hours >= 20) return -1;
-    
-    const totalMinutes = (hours - 8) * 60 + minutes;
-    const totalTimelineMinutes = 12 * 60; // 8 AM to 8 PM = 12 hours
-    return (totalMinutes / totalTimelineMinutes) * 100;
+  const getCurrentHour = () => {
+    return new Date().getHours();
   };
 
-  const isCurrentTimeSlot = (timeSlot: string) => {
-    const now = new Date();
-    const [hours, minutes] = timeSlot.split(':').map(Number);
-    const slotTime = new Date();
-    slotTime.setHours(hours, minutes, 0, 0);
-    
-    const diffInMinutes = Math.abs((now.getTime() - slotTime.getTime()) / (1000 * 60));
-    return diffInMinutes < 30;
+  const isCurrentHour = (timeSlot: string) => {
+    const hour = parseInt(timeSlot.split(':')[0]);
+    return hour === getCurrentHour();
+  };
+
+  const shiftTimeRange = (direction: 'earlier' | 'later') => {
+    if (direction === 'earlier' && selectedHourRange.start > 6) {
+      setSelectedHourRange(prev => ({
+        start: Math.max(6, prev.start - 2),
+        end: Math.max(8, prev.end - 2)
+      }));
+    } else if (direction === 'later' && selectedHourRange.end < 22) {
+      setSelectedHourRange(prev => ({
+        start: Math.min(20, prev.start + 2),
+        end: Math.min(22, prev.end + 2)
+      }));
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold gradient-text">Room Timeline</h2>
-          <p className="text-muted-foreground">
-            {selectedDate.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
+      {/* Enhanced Header */}
+      <div className="glass-card p-6 rounded-2xl">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-3xl font-bold gradient-text">Room Timeline</h2>
+            <p className="text-muted-foreground text-lg">
+              {selectedDate.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span>Updated: {currentTime.toLocaleTimeString()}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span>Last updated: {currentTime.toLocaleTimeString()}</span>
+
+        {/* Time Range Controls */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => shiftTimeRange('earlier')}
+              disabled={selectedHourRange.start <= 6}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Earlier
+            </Button>
+            <div className="text-sm font-medium px-4 py-2 bg-muted/50 rounded-lg">
+              {selectedHourRange.start}:00 - {selectedHourRange.end}:00
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => shiftTimeRange('later')}
+              disabled={selectedHourRange.end >= 22}
+            >
+              Later
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-success/20 border border-success/30 rounded"></div>
+              <span className="text-sm">Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-danger/20 border border-danger/30 rounded"></div>
+              <span className="text-sm">Booked</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-primary/20 border border-primary rounded animate-pulse"></div>
+              <span className="text-sm">Available Now</span>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Time Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm border-b border-border pb-4">
-        <div className="flex items-center">
-          <div className="w-64 shrink-0"></div> {/* Room info column */}
-          <div className="flex-1 relative">
-            <div className="grid grid-cols-24 gap-0 text-xs text-muted-foreground">
-              {timeSlots.map((time, index) => (
-                <div 
-                  key={time} 
-                  className={`p-1 text-center border-r border-border/50 ${
-                    index % 2 === 0 ? 'font-medium' : 'opacity-50'
-                  }`}
-                >
-                  {index % 2 === 0 ? time : ''}
-                </div>
-              ))}
-            </div>
-            {/* Current time indicator */}
-            {getCurrentTimePosition() > 0 && (
+      <div className="sticky top-20 z-10 glass-card p-4 rounded-xl">
+        <div className="grid gap-2" style={{ gridTemplateColumns: '280px 1fr' }}>
+          <div className="font-medium text-muted-foreground">Rooms</div>
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${timeSlots.length}, 1fr)` }}>
+            {timeSlots.map(({ time }) => (
               <div 
-                className="absolute top-0 bottom-0 w-0.5 bg-primary z-20 animate-pulse"
-                style={{ left: `${getCurrentTimePosition()}%` }}
+                key={time} 
+                className={`text-center p-3 rounded-lg font-medium text-sm transition-all ${
+                  isCurrentHour(time) 
+                    ? 'bg-primary/10 text-primary border border-primary/30' 
+                    : 'bg-muted/30 text-muted-foreground'
+                }`}
               >
-                <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary rounded-full animate-pulse"></div>
+                {time}
               </div>
-            )}
+            ))}
           </div>
         </div>
       </div>
 
       {/* Room Rows */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {rooms.map((room) => (
           <Card key={room.id} className="timeline-card overflow-hidden">
-            <div className="flex items-center">
+            <div className="grid gap-4 p-6" style={{ gridTemplateColumns: '280px 1fr' }}>
               {/* Room Info */}
-              <div className="w-64 shrink-0 p-4 border-r border-border">
-                <div className="space-y-2">
-                  <div>
-                    <h3 className="font-semibold text-foreground">{room.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="h-3 w-3" />
-                      <span>{room.capacity} people</span>
-                    </div>
+              <div className="space-y-3">
+                <div>
+                  <h3 className="font-bold text-lg text-foreground">{room.name}</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{room.capacity} people</span>
                   </div>
-                  
-                  {room.location && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      <span>{room.location}</span>
-                    </div>
-                  )}
+                </div>
+                
+                {room.location && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{room.location}</span>
+                  </div>
+                )}
 
-                  <div className="flex flex-wrap gap-1">
-                    {room.amenities.slice(0, 2).map((amenity) => (
-                      <Badge key={amenity} variant="secondary" className="text-xs">
-                        {amenity}
-                      </Badge>
-                    ))}
-                    {room.amenities.length > 2 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{room.amenities.length - 2}
-                      </Badge>
-                    )}
-                  </div>
+                <div className="flex flex-wrap gap-1">
+                  {room.amenities.slice(0, 3).map((amenity) => (
+                    <Badge key={amenity} variant="secondary" className="text-xs">
+                      {amenity}
+                    </Badge>
+                  ))}
+                  {room.amenities.length > 3 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{room.amenities.length - 3}
+                    </Badge>
+                  )}
                 </div>
               </div>
 
-              {/* Timeline */}
-              <div className="flex-1 relative">
-                <div className="grid grid-cols-24 gap-0 h-16">
-                  {timeSlots.map((time, index) => {
-                    const isAvailable = !room.timeSlots.find(ts => ts.time === time && !ts.available);
-                    const timeSlot = room.timeSlots.find(ts => ts.time === time);
-                    const isCurrent = isCurrentTimeSlot(time);
-                    
-                    return (
-                      <div
-                        key={`${room.id}-${time}`}
-                        className={`
-                          relative border-r border-border/20 h-full cursor-pointer transition-all duration-200
-                          ${isAvailable 
-                            ? 'bg-success/5 hover:bg-success/20' 
-                            : 'bg-danger/10 hover:bg-danger/20'
-                          }
-                          ${isCurrent ? 'ring-2 ring-primary/50' : ''}
-                        `}
-                        onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                      >
-                        {!isAvailable && timeSlot?.meeting && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-full h-8 bg-danger/20 border border-danger/30 rounded text-xs text-danger flex items-center justify-center px-1 mx-0.5">
-                              <span className="truncate font-medium">
-                                {timeSlot.meeting}
-                              </span>
-                            </div>
+              {/* Timeline Slots */}
+              <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${timeSlots.length}, 1fr)` }}>
+                {timeSlots.map(({ time, endTime }) => {
+                  const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
+                  const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                  const isCurrent = isCurrentHour(time);
+                  
+                  return (
+                    <div
+                      key={`${room.id}-${time}`}
+                      className={`
+                        relative min-h-[80px] rounded-lg border-2 cursor-pointer transition-all duration-200 p-3
+                        ${isAvailable 
+                          ? 'border-success/30 bg-success/5 hover:bg-success/15 hover:border-success/50' 
+                          : 'border-danger/30 bg-danger/5 hover:bg-danger/15'
+                        }
+                        ${isCurrent ? 'ring-2 ring-primary/50 animate-pulse' : ''}
+                      `}
+                      onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                    >
+                      {isAvailable ? (
+                        <div className="h-full flex flex-col justify-between">
+                          <div className="text-xs text-muted-foreground font-medium">
+                            {time} - {endTime}
                           </div>
-                        )}
-                        
-                        {isAvailable && isCurrent && (
-                          <div className="absolute inset-0 flex items-center justify-center">
+                          {isCurrent && (
                             <Button
                               size="sm"
-                              className="quick-book-button h-6 text-xs px-2"
+                              className="quick-book-button w-full mt-2"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onQuickBook(room.id, time);
                               }}
                             >
                               <Zap className="h-3 w-3 mr-1" />
-                              Book
+                              Book Now
                             </Button>
+                          )}
+                          {!isCurrent && (
+                            <div className="text-center">
+                              <Badge variant="outline" className="text-xs text-success">
+                                Available
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="h-full flex flex-col justify-between">
+                          <div className="text-xs text-muted-foreground font-medium">
+                            {time} - {endTime}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                          <div className="text-center">
+                            <Badge variant="outline" className="text-xs text-danger mb-1">
+                              Booked
+                            </Badge>
+                            {roomTimeSlot?.meeting && (
+                              <div className="text-xs text-danger font-medium truncate">
+                                {roomTimeSlot.meeting}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </Card>
         ))}
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center justify-center gap-6 pt-4 border-t border-border">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-success/20 border border-success/30 rounded"></div>
-          <span className="text-sm text-muted-foreground">Available</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-danger/20 border border-danger/30 rounded"></div>
-          <span className="text-sm text-muted-foreground">Booked</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-primary/20 border border-primary rounded"></div>
-          <span className="text-sm text-muted-foreground">Available Now</span>
+      {/* Quick Actions */}
+      <div className="glass-card p-6 rounded-2xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-foreground mb-1">Quick Actions</h3>
+            <p className="text-sm text-muted-foreground">
+              Need something specific? Try these shortcuts
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              View Calendar
+            </Button>
+            <Button className="quick-book-button">
+              <Zap className="h-4 w-4 mr-2" />
+              Book Any Available
+            </Button>
+          </div>
         </div>
       </div>
     </div>
