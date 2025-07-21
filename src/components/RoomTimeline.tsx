@@ -439,7 +439,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               className={`
                                 flex-shrink-0 w-16 h-10 border rounded cursor-pointer flex items-center justify-center text-xs font-medium transition-all duration-200
                                 ${isPast 
-                                  ? 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed border-muted/30' 
+                                  ? 'bg-muted/50 cursor-not-allowed border-muted/30' 
                                   : isAvailable 
                                     ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
                                     : isDowntime
@@ -451,7 +451,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               onClick={() => !isPast && isAvailable && onTimeSlotSelect(room.id, `${format(selectedDate, 'yyyy-MM-dd')}T${time}:00`)}
                               title={
                                 isPast 
-                                  ? 'Past time slot' 
+                                  ? isAvailable 
+                                    ? 'Past time slot' 
+                                    : `Past booking: ${roomTimeSlot?.meeting || 'Meeting'}`
                                   : isAvailable 
                                     ? 'Available for booking' 
                                     : isDowntime 
@@ -460,7 +462,13 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               }
                             >
                               {isPast ? (
-                                <span className="text-muted-foreground/50 font-semibold text-[10px]">Past</span>
+                                isAvailable ? (
+                                  <span className="text-muted-foreground/50 font-semibold">Past</span>
+                                ) : (
+                                  <span className="text-destructive/40 font-semibold text-[10px] truncate px-1">
+                                    {roomTimeSlot?.meeting?.substring(0, 6) || 'Booked'}
+                                  </span>
+                                )
                               ) : isAvailable ? (
                                 <span className="text-success font-semibold">Free</span>
                               ) : isDowntime ? (
@@ -516,7 +524,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                     className={`
                                       flex-shrink-0 w-16 h-10 border rounded cursor-pointer flex items-center justify-center text-xs font-medium transition-all duration-200
                                       ${isPast 
-                                        ? 'bg-muted/50 text-muted-foreground/50 cursor-not-allowed border-muted/30' 
+                                        ? 'bg-muted/50 cursor-not-allowed border-muted/30' 
                                         : isAvailable 
                                           ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
                                           : isDowntime
@@ -528,7 +536,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                     onClick={() => !isPast && isAvailable && onTimeSlotSelect(room.id, `${dayKey}T${time}:00`)}
                                     title={
                                       isPast 
-                                        ? 'Past time slot' 
+                                        ? isAvailable 
+                                          ? 'Past time slot' 
+                                          : `Past booking: ${roomTimeSlot?.meeting || 'Meeting'}`
                                         : isAvailable 
                                           ? 'Available for booking' 
                                           : isDowntime 
@@ -537,7 +547,13 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                     }
                                   >
                                     {isPast ? (
-                                      <span className="text-muted-foreground/50 font-semibold text-[10px]">Past</span>
+                                      isAvailable ? (
+                                        <span className="text-muted-foreground/50 font-semibold text-[10px]">Past</span>
+                                      ) : (
+                                        <span className="text-destructive/40 font-semibold text-[10px] truncate px-1">
+                                          {roomTimeSlot?.meeting?.substring(0, 6) || 'Booked'}
+                                        </span>
+                                      )
                                     ) : isAvailable ? (
                                       <span className="text-success font-semibold">Free</span>
                                     ) : isDowntime ? (
