@@ -203,25 +203,11 @@ export default function Dashboard() {
 
   // Moved to memoized values above
 
-  // Mock timeline data for demonstration - now with hourly slots
+  // Prepare rooms for timeline - let RoomTimeline handle the real booking data
   const timelineRooms = rooms.map(room => ({
     ...room,
     amenities: room.amenities || [], // Ensure amenities is always an array
-    timeSlots: Array.from({ length: 14 }, (_, i) => { // 8 AM to 10 PM = 14 hours
-      const hour = i + 8;
-      const time = `${hour.toString().padStart(2, '0')}:00`;
-      const endTime = `${(hour + 1).toString().padStart(2, '0')}:00`;
-      
-      // Mock some bookings for demonstration
-      const isBooked = Math.random() > 0.7;
-      return {
-        time,
-        endTime,
-        available: !isBooked,
-        meeting: isBooked ? 'Team Meeting' : undefined,
-        bookedBy: isBooked ? 'John Doe' : undefined,
-      };
-    })
+    timeSlots: [] // RoomTimeline will populate this with real data
   }));
 
   const handleQuickBook = (roomId: string, timeSlot?: string) => {
