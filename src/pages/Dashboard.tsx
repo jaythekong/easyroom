@@ -129,7 +129,7 @@ export default function Dashboard() {
     setIsBookingModalOpen(false);
     setSelectedRoom(null);
     setEditingBooking(null);
-    // Force refresh of timeline data
+    // Trigger refresh of timeline data
     setRefreshKey(prev => prev + 1);
   };
 
@@ -338,6 +338,7 @@ export default function Dashboard() {
                 }}
                 expandedRooms={expandedRooms}
                 onExpandedRoomsChange={setExpandedRooms}
+                refreshTrigger={refreshKey}
               />
             )}
           </TabsContent>

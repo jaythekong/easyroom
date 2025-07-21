@@ -62,9 +62,10 @@ interface RoomTimelineProps {
   onEditBooking?: (booking: any) => void;
   expandedRooms: Set<string>;
   onExpandedRoomsChange: (expandedRooms: Set<string>) => void;
+  refreshTrigger?: number;
 }
 
-export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect, onEditBooking, expandedRooms, onExpandedRoomsChange }: RoomTimelineProps) {
+export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect, onEditBooking, expandedRooms, onExpandedRoomsChange, refreshTrigger }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [downtime, setDowntime] = useState<Downtime[]>([]);
@@ -250,7 +251,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   useEffect(() => {
     fetchBookings();
     fetchDowntime();
-  }, [selectedDate]);
+  }, [selectedDate, refreshTrigger]);
 
   useEffect(() => {
     generateRoomsWithBookings();
