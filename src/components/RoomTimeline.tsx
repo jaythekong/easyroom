@@ -101,12 +101,14 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
   // Generate hourly time slots
   const generateTimeSlots = () => {
+    console.log("Generating time slots with hour range:", selectedHourRange);
     const slots = [];
     for (let hour = selectedHourRange.start; hour < selectedHourRange.end; hour++) {
       const timeStr = `${hour.toString().padStart(2, '0')}:00`;
       const endTimeStr = `${(hour + 1).toString().padStart(2, '0')}:00`;
       slots.push({ time: timeStr, endTime: endTimeStr });
     }
+    console.log("Generated time slots:", slots.map(s => s.time));
     return slots;
   };
 
