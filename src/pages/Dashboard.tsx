@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import { RoomCard } from "@/components/RoomCard";
+import { EnhancedRoomCard } from "@/components/EnhancedRoomCard";
+import { RoomTimeline } from "@/components/RoomTimeline";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
 import { Button } from "@/components/ui/button";
-import { Building2, Calendar, Clock, Users, Settings } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
@@ -85,7 +88,7 @@ export default function Dashboard() {
     // Filter by amenities
     if (filters.amenities.length > 0) {
       filtered = filtered.filter(room => 
-        filters.amenities.every(amenity => room.amenities.includes(amenity))
+        filters.amenities.every(amenity => (room.amenities || []).includes(amenity))
       );
     }
 
@@ -111,26 +114,71 @@ export default function Dashboard() {
     setSelectedRoom(null);
   };
 
-  // Get current stats
   const availableRooms = rooms.length; // All fetched rooms are active
   const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
 
+  // Mock timeline data for demonstration
+  const timelineRooms = rooms.map(room => ({
+    ...room,
+    amenities: room.amenities || [], // Ensure amenities is always an array
+    timeSlots: Array.from({ length: 24 }, (_, i) => {
+      const hour = Math.floor(i / 2) + 8;
+      const minute = (i % 2) * 30;
+      const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      
+      // Mock some bookings for demonstration
+      const isBooked = Math.random() > 0.7;
+      return {
+        time,
+        available: !isBooked,
+        meeting: isBooked ? 'Team Meeting' : undefined,
+        bookedBy: isBooked ? 'John Doe' : undefined,
+      };
+    })
+  }));
+
+  const handleQuickBook = (roomId: string, timeSlot?: string) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (room) {
+      setSelectedRoom(room);
+      setIsBookingModalOpen(true);
+      toast({
+        title: "Quick Book",
+        description: `Booking ${room.name}${timeSlot ? ` for ${timeSlot}` : ''}`,
+      });
+    }
+  };
+
+  const handleTimeSlotSelect = (roomId: string, timeSlot: string) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (room) {
+      setSelectedRoom(room);
+      setIsBookingModalOpen(true);
+      toast({
+        title: "Time Slot Selected",
+        description: `Selected ${room.name} at ${timeSlot}`,
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card">
+      {/* Enhanced Header */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <Building2 className="h-8 w-8 text-primary" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">Meeting Room Booker</h1>
+                <h1 className="text-xl font-bold gradient-text">Meeting Room Booker</h1>
                 <p className="text-sm text-muted-foreground">Find and book your perfect meeting space</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Calendar className="h-4 w-4 mr-2" />
                 My Bookings
               </Button>
@@ -140,7 +188,7 @@ export default function Dashboard() {
                   Admin
                 </Link>
               </Button>
-              <Button size="sm">
+              <Button size="sm" className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
                 <Users className="h-4 w-4 mr-2" />
                 Alex Manager
               </Button>
@@ -150,54 +198,124 @@ export default function Dashboard() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="bg-card p-4 rounded-lg border border-border">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-success rounded-full"></div>
-              <span className="text-sm font-medium text-foreground">Available Rooms</span>
+        {/* Welcome Section with Statistics */}
+        <div className="mb-8">
+          <div className="glass-card p-6 rounded-2xl mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  Good morning, Alex! ☀️
+                </h2>
+                <p className="text-muted-foreground">
+                  {new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button className="quick-book-button">
+                  <Zap className="h-4 w-4 mr-2" />
+                  Quick Book
+                </Button>
+                <Button variant="outline">
+                  <Coffee className="h-4 w-4 mr-2" />
+                  Coffee Break
+                </Button>
+              </div>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-1">{availableRooms}</p>
           </div>
 
-          <div className="bg-card p-4 rounded-lg border border-border">
-            <div className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Total Rooms</span>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="timeline-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-success/10 rounded-lg">
+                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Available Now</span>
+                  <p className="text-2xl font-bold text-success">{availableRooms}</p>
+                </div>
+              </div>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-1">{rooms.length}</p>
-          </div>
+            
+            <div className="timeline-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Building2 className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Total Rooms</span>
+                  <p className="text-2xl font-bold text-foreground">{rooms.length}</p>
+                </div>
+              </div>
+            </div>
 
-          <div className="bg-card p-4 rounded-lg border border-border">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-foreground">Total Capacity</span>
+            <div className="timeline-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-accent/10 rounded-lg">
+                  <Users className="w-4 h-4 text-accent-foreground" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Total Capacity</span>
+                  <p className="text-2xl font-bold text-foreground">{totalCapacity}</p>
+                </div>
+              </div>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-1">{totalCapacity}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Search Filters */}
-          <div className="lg:col-span-1">
-            <SearchFilters onFiltersChange={handleFiltersChange} />
-          </div>
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="timeline" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-3">
+            <TabsTrigger value="timeline" className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Timeline View
+            </TabsTrigger>
+            <TabsTrigger value="grid" className="flex items-center gap-2">
+              <Grid3X3 className="h-4 w-4" />
+              Grid View
+            </TabsTrigger>
+            <TabsTrigger value="filters" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Filters
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Room Grid */}
-          <div className="lg:col-span-3">
-            <div className="flex items-center justify-between mb-6">
+          <TabsContent value="timeline" className="space-y-6">
+            {loading ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-20 bg-muted rounded-lg"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <RoomTimeline
+                rooms={timelineRooms}
+                selectedDate={new Date()}
+                onQuickBook={handleQuickBook}
+                onTimeSlotSelect={handleTimeSlotSelect}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="grid" className="space-y-6">
+            <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-foreground">Available Rooms</h2>
+                <h3 className="text-lg font-semibold text-foreground">Available Rooms</h3>
                 <p className="text-muted-foreground">
                   Showing {filteredRooms.length} of {rooms.length} rooms
                 </p>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Last updated: {new Date().toLocaleTimeString()}
-                </span>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>Updated {new Date().toLocaleTimeString()}</span>
               </div>
             </div>
 
@@ -205,7 +323,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="animate-pulse">
-                    <div className="bg-muted h-48 rounded-lg"></div>
+                    <div className="bg-muted h-64 rounded-lg"></div>
                   </div>
                 ))}
               </div>
@@ -218,21 +336,39 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredRooms.map((room) => (
-                  <RoomCard
+                  <EnhancedRoomCard
                     key={room.id}
                     room={{
                       ...room,
-                      status: 'available', // Convert to expected format for RoomCard
+                      status: 'available',
                       amenities: room.amenities || []
                     }}
                     onBook={handleBookRoom}
                     onViewDetails={handleViewDetails}
+                    onQuickBook={handleQuickBook}
                   />
                 ))}
               </div>
             )}
-          </div>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="filters" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              <div className="lg:col-span-1">
+                <SearchFilters onFiltersChange={handleFiltersChange} />
+              </div>
+              <div className="lg:col-span-3">
+                <div className="timeline-card p-6 text-center">
+                  <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Use filters to find rooms</h3>
+                  <p className="text-muted-foreground">
+                    Set your preferences on the left to see filtered results here.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Booking Modal */}
