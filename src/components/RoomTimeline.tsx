@@ -304,30 +304,30 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
+                {/* Single time header for the room */}
+                <div className="flex gap-2 mb-4 text-xs text-muted-foreground border-b pb-2">
+                  <div className="flex-shrink-0 w-16"></div> {/* Space for day labels */}
+                  {timeSlots.map(({ time }) => (
+                    <div key={`header-${time}`} className="flex-shrink-0 w-20 text-center font-medium">
+                      {time}
+                    </div>
+                  ))}
+                </div>
+
                 {!isExpanded ? (
                   // Collapsed: Show today's time slots
                   <div>
                     <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        Today - {format(selectedDate, 'MMM d, yyyy')}
-                      </span>
-                    </div>
-                    <div className="relative">
-                      {/* Time labels above slots for reference */}
-                      <div className="flex gap-2 mb-2 text-xs text-muted-foreground">
-                        {timeSlots.map(({ time }) => (
-                          <div key={`label-${time}`} className="flex-shrink-0 w-20 text-center">
-                            {time}
-                          </div>
-                        ))}
+                      <div className="flex-shrink-0 w-16 flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                          {format(selectedDate, 'd')}
+                        </div>
                       </div>
-                      
-                      <ScrollArea className="w-full">
+                      <ScrollArea className="flex-1">
                         <div className="flex gap-2 min-w-max pb-2">
                           {timeSlots.map(({ time }) => {
                             const roomTimeSlot = room.timeSlots.find(ts => 
-                              ts.time === time && ts.date === todayKey
+                              ts.time === time && ts.date === format(selectedDate, 'yyyy-MM-dd')
                             );
                             const isAvailable = !roomTimeSlot || roomTimeSlot.available;
                             const isCurrent = isCurrentHour(time);
@@ -397,7 +397,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                 ) : (
                   // Expanded: Show full week
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-4">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium">
                         Full Week - {format(weekDays[0], 'MMM d')} to {format(weekDays[6], 'MMM d, yyyy')}
@@ -409,8 +409,8 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                       const isToday = isSameDay(day, selectedDate);
                       
                       return (
-                        <div key={`${room.id}-${dayKey}`} className="border rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div key={`${room.id}-${dayKey}`} className="flex items-center gap-2">
+                          <div className="flex-shrink-0 w-16 flex items-center gap-2">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                               isToday 
                                 ? 'bg-primary text-primary-foreground' 
@@ -420,98 +420,52 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                             }`}>
                               {format(day, 'd')}
                             </div>
-                            <span className={`text-sm font-medium ${
-                              isToday ? 'text-primary' : isWeekend ? 'text-red-600' : 'text-foreground'
-                            }`}>
-                              {isToday ? `Today, ${format(day, 'EEEE MMM d')}` : format(day, 'EEEE MMM d')}
-                            </span>
                           </div>
-                           <div className="relative">
-                             {/* Time labels for week view */}
-                             <div className="flex gap-2 mb-2 text-xs text-muted-foreground">
-                               {timeSlots.map(({ time }) => (
-                                 <div key={`label-${time}-${dayKey}`} className="flex-shrink-0 w-20 text-center">
-                                   {time}
-                                 </div>
-                               ))}
-                             </div>
-                             
-                             <ScrollArea className="w-full">
-                               <div className="flex gap-2 min-w-max">
-                                 {timeSlots.map(({ time }) => {
-                                   const roomTimeSlot = room.timeSlots.find(ts => 
-                                     ts.time === time && ts.date === dayKey
-                                   );
-                                   const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                                   const isCurrent = isCurrentHour(time, day);
-                                   const isDowntime = roomTimeSlot?.isDowntime;
-                                   
-                                   return (
-                                     <div
-                                       key={`${room.id}-${dayKey}-${time}`}
-                                       className={`
-                                         flex-shrink-0 w-20 h-14 border rounded-lg cursor-pointer flex flex-col items-center justify-center text-xs font-medium transition-all duration-200
-                                         ${isAvailable 
-                                           ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] hover:shadow-sm border-success/20' 
-                                           : isDowntime
-                                             ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
-                                             : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
-                                         }
-                                         ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10 shadow-inner' : ''}
-                                       `}
-                                       onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                                     >
-                                       {isAvailable ? (
-                                         isCurrent ? (
-                                           <Button
-                                             size="sm"
-                                             className="h-10 w-16 text-xs font-medium animate-pulse shadow-sm p-1"
-                                             onClick={(e) => {
-                                               e.stopPropagation();
-                                               onQuickBook(room.id, time);
-                                             }}
-                                           >
-                                             Book Now
-                                           </Button>
-                                          ) : (
-                                           <>
-                                             <div className="text-success font-bold">Free</div>
-                                             <div className="text-xs text-muted-foreground">Available</div>
-                                           </>
-                                         )
-                                       ) : (
-                                         <div className="text-center p-1">
-                                           {isDowntime ? (
-                                             <>
-                                               <Wrench className="h-3 w-3 mx-auto mb-1 text-warning" />
-                                               <div className="text-warning font-bold text-xs">
-                                                 {roomTimeSlot?.downtimeType || 'Downtime'}
-                                               </div>
-                                             </>
-                                           ) : (
-                                             <>
-                                               <div className="text-destructive font-bold">Booked</div>
-                                               {roomTimeSlot?.meeting && (
-                                                 <div className="text-xs text-muted-foreground truncate max-w-[60px] leading-tight">
-                                                   {roomTimeSlot.meeting}
-                                                 </div>
-                                               )}
-                                             </>
-                                           )}
-                                         </div>
-                                       )}
-                                     </div>
-                                   );
-                                 })}
-                               </div>
-                              </ScrollArea>
+                          <ScrollArea className="flex-1">
+                            <div className="flex gap-2 min-w-max pb-2">
+                              {timeSlots.map(({ time }) => {
+                                const roomTimeSlot = room.timeSlots.find(ts => 
+                                  ts.time === time && ts.date === dayKey
+                                );
+                                const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                                const isCurrent = isCurrentHour(time, day);
+                                const isDowntime = roomTimeSlot?.isDowntime;
+                                
+                                return (
+                                  <div
+                                    key={`${room.id}-${dayKey}-${time}`}
+                                    className={`
+                                      flex-shrink-0 w-20 h-14 border rounded-lg cursor-pointer flex items-center justify-center transition-all duration-200
+                                      ${isAvailable 
+                                        ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
+                                        : isDowntime
+                                          ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
+                                          : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
+                                      }
+                                      ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10' : ''}
+                                    `}
+                                    onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                                  >
+                                    <div
+                                      className={`w-3 h-3 rounded-full ${
+                                        isAvailable 
+                                          ? 'bg-success' 
+                                          : isDowntime 
+                                            ? 'bg-warning' 
+                                            : 'bg-destructive'
+                                      }`}
+                                    />
+                                  </div>
+                                );
+                              })}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
+                          </ScrollArea>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
               </Card>
             );
           })}
