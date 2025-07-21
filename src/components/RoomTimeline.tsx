@@ -220,17 +220,17 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
-      <div className="bg-card border rounded-lg p-4">
+      <div className="bg-card border rounded-lg p-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Room Timeline</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-lg font-semibold">Room Timeline</h2>
+            <p className="text-xs text-muted-foreground">
               {selectedDate.toLocaleDateString()}
             </p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
@@ -255,33 +255,33 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
       </div>
 
       {/* Room Cards */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {roomsWithBookings.map((room) => {
           const isExpanded = expandedRooms.has(room.id);
           const todayKey = format(selectedDate, 'yyyy-MM-dd');
           
           return (
             <Card key={room.id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
+              <CardHeader className="pb-2 px-4 pt-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg">{room.name}</CardTitle>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                    <CardTitle className="text-base">{room.name}</CardTitle>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
                       <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
+                        <Users className="h-3 w-3" />
                         <span>{room.capacity} people</span>
                       </div>
                       {room.location && (
                         <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4" />
+                          <MapPin className="h-3 w-3" />
                           <span>{room.location}</span>
                         </div>
                       )}
                     </div>
                     {/* Show week range when expanded */}
                     {isExpanded && (
-                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
+                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
                         <span>
                           Full Week - {format(weekDays[0], 'MMM d')} to {format(weekDays[6], 'MMM d, yyyy')}
                         </span>
@@ -291,9 +291,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                   <div className="flex items-center gap-2">
                     {room.amenities.length > 0 && (
                       <div className="flex items-center gap-1">
-                        <Zap className="h-4 w-4 text-muted-foreground" />
-                        <Badge variant="secondary" className="text-xs">
-                          {room.amenities.length} amenities
+                        <Zap className="h-3 w-3 text-muted-foreground" />
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                          {room.amenities.length}
                         </Badge>
                       </div>
                     )}
@@ -301,20 +301,20 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                       variant="outline"
                       size="sm"
                       onClick={() => toggleRoomExpansion(room.id)}
-                      className="h-8 w-8 p-0"
+                      className="h-7 w-7 p-0"
                     >
                       {isExpanded ? (
-                        <Minimize className="h-4 w-4" />
+                        <Minimize className="h-3 w-3" />
                       ) : (
-                        <Expand className="h-4 w-4" />
+                        <Expand className="h-3 w-3" />
                       )}
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 px-4 pb-3">
                 {/* Single time header for the room */}
-                <div className="flex gap-1 mb-4 text-xs text-muted-foreground border-b pb-2">
+                <div className="flex gap-1 mb-2 text-xs text-muted-foreground border-b pb-1">
                   <div className="flex-shrink-0 w-16 text-center font-medium">Day</div>
                   {timeSlots.map(({ time }) => (
                     <div key={`header-${time}`} className="flex-shrink-0 w-16 text-center font-medium">
