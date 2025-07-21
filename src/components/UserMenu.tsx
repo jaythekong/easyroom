@@ -70,13 +70,6 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </DropdownMenuItem>
-          
-          <DropdownMenuItem asChild>
-            <Link to={`/${orgSlug}/my-bookings`} className="w-full">
-              <Calendar className="mr-2 h-4 w-4" />
-              <span>My Bookings</span>
-            </Link>
-          </DropdownMenuItem>
 
           {userRole === 'admin' && (
             <DropdownMenuItem asChild>

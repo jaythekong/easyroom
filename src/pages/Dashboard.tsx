@@ -7,7 +7,7 @@ import { BookingModal } from "@/components/BookingModal";
 import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Clock, Users, Settings, Grid3X3, CalendarDays, Building } from "lucide-react";
+import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useParams } from "react-router-dom";
@@ -243,6 +243,12 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
+                <Link to={`/${orgSlug}/my-bookings`}>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  My Bookings
+                </Link>
+              </Button>
               <UserMenu 
                 profile={userProfile} 
                 onProfileUpdate={fetchUserProfile}
