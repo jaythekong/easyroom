@@ -5,6 +5,7 @@ import { RoomTimeline } from "@/components/RoomTimeline";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { RoomDowntimeCard } from "@/components/RoomDowntimeCard";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee, LogOut } from "lucide-react";
@@ -284,7 +285,7 @@ export default function Dashboard() {
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="timeline" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-4">
             <TabsTrigger value="timeline" className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4" />
               Timeline View
@@ -292,6 +293,10 @@ export default function Dashboard() {
             <TabsTrigger value="grid" className="flex items-center gap-2">
               <Grid3X3 className="h-4 w-4" />
               Grid View
+            </TabsTrigger>
+            <TabsTrigger value="downtime" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Downtime
             </TabsTrigger>
             <TabsTrigger value="filters" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -381,6 +386,18 @@ export default function Dashboard() {
                   </p>
                 </div>
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="downtime" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredRooms.map((room) => (
+                <RoomDowntimeCard
+                  key={`downtime-${room.id}`}
+                  roomId={room.id}
+                  roomName={room.name}
+                />
+              ))}
             </div>
           </TabsContent>
         </Tabs>
