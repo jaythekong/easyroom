@@ -8,7 +8,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { OrganizationClock } from "@/components/OrganizationClock";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building } from "lucide-react";
+import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building, User } from "lucide-react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -103,10 +103,15 @@ export default function Dashboard() {
   // Fetch user's bookings for this week
   const { data: userBookings = [] } = useBookings(new Date());
   
-  // Count user's bookings for this week
-  const userWeeklyBookings = useMemo(() => {
+  // Count user's personal bookings for this week
+  const personalWeeklyBookings = useMemo(() => {
     return userBookings.filter(booking => booking.user_id === userId).length;
   }, [userBookings, userId]);
+
+  // Count organization-wide bookings for this week
+  const organizationWeeklyBookings = useMemo(() => {
+    return userBookings.length;
+  }, [userBookings]);
 
   const fetchUserProfile = useCallback(async () => {
     if (!userId) return;
@@ -292,7 +297,7 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="timeline-card p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-success/10 rounded-lg">
@@ -320,11 +325,23 @@ export default function Dashboard() {
             <div className="timeline-card p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-accent/10 rounded-lg">
-                  <Users className="w-4 h-4 text-accent-foreground" />
+                  <User className="w-4 h-4 text-accent-foreground" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Your Booking This Week</span>
-                  <p className="text-2xl font-bold text-foreground">{userWeeklyBookings}</p>
+                  <span className="text-sm font-medium text-muted-foreground">My Personal Bookings</span>
+                  <p className="text-2xl font-bold text-foreground">{personalWeeklyBookings}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="timeline-card p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Building className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-muted-foreground">Organization Bookings</span>
+                  <p className="text-2xl font-bold text-foreground">{organizationWeeklyBookings}</p>
                 </div>
               </div>
             </div>
