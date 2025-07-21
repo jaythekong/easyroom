@@ -422,7 +422,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                             </div>
                           </div>
                           <ScrollArea className="flex-1">
-                            <div className="flex gap-2 min-w-max pb-2">
+                            <div className="flex gap-1 min-w-max pb-1">
                               {timeSlots.map(({ time }) => {
                                 const roomTimeSlot = room.timeSlots.find(ts => 
                                   ts.time === time && ts.date === dayKey
@@ -435,26 +435,35 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                   <div
                                     key={`${room.id}-${dayKey}-${time}`}
                                     className={`
-                                      flex-shrink-0 w-20 h-14 border rounded-lg cursor-pointer flex items-center justify-center transition-all duration-200
+                                      flex-shrink-0 w-16 h-10 border rounded cursor-pointer flex items-center justify-center text-xs font-medium transition-all duration-200
                                       ${isAvailable 
                                         ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] border-success/20' 
                                         : isDowntime
                                           ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
                                           : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
                                       }
-                                      ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10' : ''}
+                                      ${isCurrent ? 'ring-1 ring-primary/40 bg-primary/10' : ''}
                                     `}
                                     onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                                    title={
+                                      isAvailable 
+                                        ? 'Available for booking' 
+                                        : isDowntime 
+                                          ? `${roomTimeSlot?.downtimeType || 'Downtime'}: ${roomTimeSlot?.meeting || 'Maintenance'}` 
+                                          : `Booked: ${roomTimeSlot?.meeting || 'Meeting'}`
+                                    }
                                   >
-                                    <div
-                                      className={`w-3 h-3 rounded-full ${
-                                        isAvailable 
-                                          ? 'bg-success' 
-                                          : isDowntime 
-                                            ? 'bg-warning' 
-                                            : 'bg-destructive'
-                                      }`}
-                                    />
+                                    {isAvailable ? (
+                                      <span className="text-success font-semibold">Free</span>
+                                    ) : isDowntime ? (
+                                      <span className="text-warning font-semibold text-[10px]">
+                                        {roomTimeSlot?.downtimeType?.substring(0, 4) || 'Down'}
+                                      </span>
+                                    ) : (
+                                      <span className="text-destructive font-semibold text-[10px] truncate px-1">
+                                        {roomTimeSlot?.meeting?.substring(0, 6) || 'Booked'}
+                                      </span>
+                                    )}
                                   </div>
                                 );
                               })}
