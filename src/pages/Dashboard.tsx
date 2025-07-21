@@ -4,6 +4,7 @@ import { EnhancedRoomCard } from "@/components/EnhancedRoomCard";
 import { RoomTimeline } from "@/components/RoomTimeline";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee, LogOut } from "lucide-react";
@@ -192,6 +193,7 @@ export default function Dashboard() {
               <span className="text-sm text-muted-foreground hidden sm:inline">
                 Welcome, {user?.email}
               </span>
+              <ThemeToggle />
               <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Calendar className="h-4 w-4 mr-2" />
                 My Bookings

@@ -1,21 +1,34 @@
 import { useState } from "react";
-import { Plus, Settings, Users, Calendar } from "lucide-react";
+import { Plus, Settings, Users, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RoomManagement } from "@/components/admin/RoomManagement";
 import { AdminStats } from "@/components/admin/AdminStats";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Link } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage rooms, view analytics, and configure your meeting room booking system
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
+            <p className="text-muted-foreground">
+              Manage rooms, view analytics, and configure your meeting room booking system
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Button variant="outline" asChild>
+              <Link to="/">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <AdminStats />
