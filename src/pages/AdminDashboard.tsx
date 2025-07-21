@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { memo } from "react";
 import { Plus, Settings, Users, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,11 +9,11 @@ import { AdminStats } from "@/components/admin/AdminStats";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { QueryProvider } from "@/components/QueryProvider";
 import { Link } from "react-router-dom";
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 
-export default function AdminDashboard() {
+const AdminDashboardContent = memo(function AdminDashboardContent() {
   useOrganizationTheme(); // Apply organization theme
   
   return (
@@ -108,5 +109,13 @@ export default function AdminDashboard() {
         </Tabs>
       </div>
     </div>
+  );
+});
+
+export default function AdminDashboard() {
+  return (
+    <QueryProvider>
+      <AdminDashboardContent />
+    </QueryProvider>
   );
 }

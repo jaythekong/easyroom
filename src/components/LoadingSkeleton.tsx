@@ -1,8 +1,9 @@
+
 import { memo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface LoadingSkeletonProps {
-  type: 'room-cards' | 'timeline' | 'stats';
+  type: 'room-cards' | 'timeline' | 'stats' | 'table';
   count?: number;
 }
 
@@ -30,6 +31,25 @@ export const LoadingSkeleton = memo(function LoadingSkeleton({
                   <Skeleton className="h-6 w-14" />
                 </div>
                 <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+
+    case 'table':
+      return (
+        <div className="space-y-2">
+          {Array.from({ length: count }).map((_, i) => (
+            <div key={i} className="flex items-center space-x-4 p-4 border rounded">
+              <Skeleton className="h-6 w-1/4" />
+              <Skeleton className="h-6 w-1/5" />
+              <Skeleton className="h-6 w-1/6" />
+              <Skeleton className="h-6 w-16" />
+              <div className="flex space-x-2 ml-auto">
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-8" />
+                <Skeleton className="h-8 w-8" />
               </div>
             </div>
           ))}
