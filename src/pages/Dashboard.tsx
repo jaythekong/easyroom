@@ -4,10 +4,11 @@ import { EnhancedRoomCard } from "@/components/EnhancedRoomCard";
 import { RoomTimeline } from "@/components/RoomTimeline";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
+import { ProfileModal } from "@/components/ProfileModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee, LogOut, Building } from "lucide-react";
+import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, LogOut, Building } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useParams } from "react-router-dom";
@@ -25,11 +26,19 @@ interface Room {
   amenities?: string[];
 }
 
+interface UserProfile {
+  display_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  email?: string;
+}
+
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const { organization, userRole } = useOrganization();
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
@@ -44,15 +53,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchRooms();
+    fetchUserProfile();
     
     // Refresh data when user returns to the page
     const handleFocus = () => {
       fetchRooms();
+      fetchUserProfile();
     };
     
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
-  }, []);
+  }, [user]);
 
   const fetchRooms = async () => {
     try {
@@ -87,6 +98,41 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('display_name, avatar_url, bio, email')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const getUserDisplayName = () => {
+    if (userProfile?.display_name) return userProfile.display_name;
+    if (userProfile?.email) return userProfile.email.split('@')[0];
+    if (user?.email) return user.email.split('@')[0];
+    return "there";
   };
 
   const handleFiltersChange = (filters: any) => {
@@ -198,9 +244,10 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground hidden sm:inline">
-                {user ? `Welcome, ${user.email}` : "Not signed in"}
-              </span>
+              <ProfileModal 
+                profile={userProfile} 
+                onProfileUpdate={fetchUserProfile} 
+              />
               <ThemeToggle />
               <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
                 <Link to={`/${orgSlug}/my-bookings`}>
@@ -232,7 +279,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Good morning, Alex! ☀️
+                  {getTimeBasedGreeting()}, {getUserDisplayName()}! ☀️
                 </h2>
                 <p className="text-muted-foreground">
                   {new Date().toLocaleDateString('en-US', { 
