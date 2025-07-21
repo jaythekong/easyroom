@@ -321,6 +321,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
   const handleBookingEdit = (booking: any) => {
     onEditBooking?.(booking);
+    setIsBookingDetailsOpen(false);
   };
 
   const isToday = isSameDay(selectedDate, new Date());
