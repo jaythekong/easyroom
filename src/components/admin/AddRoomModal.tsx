@@ -100,12 +100,16 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
         return;
       }
 
-      // Get user's organization ID
-      const { data: orgData, error: orgError } = await supabase
-        .rpc('get_user_organization_id');
+      // Get user's organization ID from user_profiles
+      const { data: userProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
 
-      if (orgError) throw new Error('Failed to get organization');
-      if (!orgData) throw new Error('No organization found for user');
+      if (profileError || !userProfile) {
+        throw new Error('User profile not found. Please contact admin.');
+      }
 
       // Insert room
       const { data: room, error: roomError } = await supabase
@@ -117,7 +121,7 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
           description: formData.description || null,
           photo_url: formData.photo_url || null,
           status: formData.status,
-          organization_id: orgData,
+          organization_id: userProfile.organization_id,
         })
         .select()
         .single();
