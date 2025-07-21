@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,37 +37,40 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [isUserInOrganization, setIsUserInOrganization] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
+  // Memoize orgSlug to prevent unnecessary re-fetches
+  const memoizedOrgSlug = useMemo(() => orgSlug, [orgSlug]);
+
   useEffect(() => {
-    if (orgSlug) {
-      console.log('OrganizationProvider: Starting fetch for orgSlug:', orgSlug);
+    if (memoizedOrgSlug) {
+      console.log('OrganizationProvider: Starting fetch for orgSlug:', memoizedOrgSlug);
       fetchOrganization();
     } else {
       console.log('OrganizationProvider: No orgSlug provided');
       setIsLoading(false);
     }
-  }, [orgSlug]);
+  }, [memoizedOrgSlug]);
 
   // Separate effect for user membership check that depends on both org and user
   useEffect(() => {
-    if (organization && !authLoading) {
-      console.log('OrganizationProvider: Checking user membership for org:', organization.name, 'user:', user?.email);
+    if (organization?.id && user?.id && !authLoading) {
+      console.log('OrganizationProvider: Checking user membership for org:', organization.name, 'user:', user.email);
       checkUserMembership();
     }
-  }, [organization, user, authLoading]);
+  }, [organization?.id, user?.id, authLoading]);
 
-  const fetchOrganization = async () => {
-    if (!orgSlug) return;
+  const fetchOrganization = useCallback(async () => {
+    if (!memoizedOrgSlug) return;
 
     try {
       setIsLoading(true);
       setError(null);
-      console.log('OrganizationProvider: Fetching organization with slug:', orgSlug);
+      console.log('OrganizationProvider: Fetching organization with slug:', memoizedOrgSlug);
 
       // Fetch organization by slug
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('*')
-        .eq('slug', orgSlug)
+        .eq('slug', memoizedOrgSlug)
         .single();
 
       if (orgError) {
@@ -88,10 +91,10 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [memoizedOrgSlug]);
 
-  const checkUserMembership = async () => {
-    if (!organization || !user) {
+  const checkUserMembership = useCallback(async () => {
+    if (!organization?.id || !user?.id) {
       console.log('OrganizationProvider: Skipping membership check - no org or user');
       setIsUserInOrganization(false);
       setUserRole(null);
@@ -127,15 +130,16 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
       setIsUserInOrganization(false);
       setUserRole(null);
     }
-  };
+  }, [organization?.id, organization?.name, user?.id, user?.email]);
 
-  const contextValue = {
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     organization,
     isLoading: isLoading || authLoading,
     error,
     isUserInOrganization,
     userRole,
-  };
+  }), [organization, isLoading, authLoading, error, isUserInOrganization, userRole]);
 
   console.log('OrganizationProvider: Context value:', contextValue);
 

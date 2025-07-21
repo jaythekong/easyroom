@@ -1,5 +1,5 @@
 
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext, useMemo, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     console.log('useAuth: Signing out user');
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -56,14 +56,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       console.log('useAuth: Successfully signed out');
     }
-  };
+  }, []);
 
-  const contextValue = {
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
     user,
     session,
     loading,
     signOut,
-  };
+  }), [user, session, loading, signOut]);
 
   console.log('useAuth: Context value:', { 
     hasUser: !!user, 

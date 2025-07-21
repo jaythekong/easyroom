@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { RoomCard } from "@/components/RoomCard";
 import { EnhancedRoomCard } from "@/components/EnhancedRoomCard";
 import { RoomTimeline } from "@/components/RoomTimeline";
@@ -8,6 +8,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building } from "lucide-react";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useParams } from "react-router-dom";
@@ -52,21 +53,17 @@ export default function Dashboard() {
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
+  // Memoize user ID to prevent unnecessary re-fetches
+  const userId = useMemo(() => user?.id, [user?.id]);
+
   useEffect(() => {
-    fetchRooms();
-    fetchUserProfile();
-    
-    // Refresh data when user returns to the page
-    const handleFocus = () => {
+    if (userId) {
       fetchRooms();
       fetchUserProfile();
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [user]);
+    }
+  }, [userId]);
 
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
     try {
       const { data: roomsData, error: roomsError } = await supabase
         .from("rooms")
@@ -99,16 +96,16 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchUserProfile = async () => {
-    if (!user) return;
+  const fetchUserProfile = useCallback(async () => {
+    if (!userId) return;
     
     try {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('display_name, avatar_url, bio, email')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .single();
 
       if (error) {
@@ -120,7 +117,7 @@ export default function Dashboard() {
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
-  };
+  }, [userId]);
 
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
@@ -129,14 +126,21 @@ export default function Dashboard() {
     return "Good evening";
   };
 
-  const getUserDisplayName = () => {
+  // Memoize expensive computations
+  const userDisplayName = useMemo(() => {
     if (userProfile?.display_name) return userProfile.display_name;
     if (userProfile?.email) return userProfile.email.split('@')[0];
     if (user?.email) return user.email.split('@')[0];
     return "there";
-  };
+  }, [userProfile?.display_name, userProfile?.email, user?.email]);
 
-  const handleFiltersChange = (filters: any) => {
+  const availableRooms = useMemo(() => rooms.length, [rooms.length]);
+  const totalCapacity = useMemo(() => 
+    rooms.reduce((sum, room) => sum + room.capacity, 0), 
+    [rooms]
+  );
+
+  const handleFiltersChange = useCallback((filters: any) => {
     let filtered = [...rooms];
 
     // Filter by search term
@@ -159,7 +163,7 @@ export default function Dashboard() {
     }
 
     setFilteredRooms(filtered);
-  };
+  }, [rooms]);
 
   const handleBookRoom = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
@@ -183,8 +187,7 @@ export default function Dashboard() {
     setRefreshKey(prev => prev + 1);
   };
 
-  const availableRooms = rooms.length; // All fetched rooms are active
-  const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
+  // Moved to memoized values above
 
   // Mock timeline data for demonstration - now with hourly slots
   const timelineRooms = rooms.map(room => ({
@@ -272,7 +275,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                  {getTimeBasedGreeting()}, {getUserDisplayName()}! ☀️
+                  {getTimeBasedGreeting()}, {userDisplayName}! ☀️
                 </h2>
                 <p className="text-muted-foreground">
                   {new Date().toLocaleDateString('en-US', { 
@@ -345,13 +348,7 @@ export default function Dashboard() {
 
           <TabsContent value="timeline" className="space-y-6">
             {loading ? (
-              <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="h-20 bg-muted rounded-lg"></div>
-                  </div>
-                ))}
-              </div>
+              <LoadingSkeleton type="timeline" count={3} />
             ) : (
               <RoomTimeline
                 rooms={timelineRooms}
@@ -394,13 +391,7 @@ export default function Dashboard() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="animate-pulse">
-                    <div className="bg-muted h-64 rounded-lg"></div>
-                  </div>
-                ))}
-              </div>
+              <LoadingSkeleton type="room-cards" count={6} />
             ) : filteredRooms.length === 0 ? (
               <div className="text-center py-12">
                 <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
