@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, MapPin, Trash2, Edit, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Trash2, Edit, ArrowLeft, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -121,6 +121,32 @@ export default function MyBookings() {
     setEditingBooking(booking);
     setSelectedRoom(booking.room);
     setIsBookingModalOpen(true);
+  };
+
+  const handleConfirmBooking = async (bookingId: string) => {
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'confirmed' })
+        .eq('id', bookingId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking Confirmed",
+        description: "Your booking has been confirmed.",
+      });
+
+      fetchMyBookings();
+    } catch (error) {
+      console.error('Error confirming booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to confirm booking",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBookingUpdate = () => {
@@ -292,23 +318,49 @@ export default function MyBookings() {
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleEditBooking(booking)}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleCancelBooking(booking.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Cancel
-                        </Button>
+                        {/* Only show edit/cancel for future bookings */}
+                        {isUpcoming(booking.start_time) && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleEditBooking(booking)}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit
+                            </Button>
+                            
+                            {/* Show confirm button for pending bookings */}
+                            {booking.status === 'pending' && (
+                              <Button 
+                                variant="default" 
+                                size="sm"
+                                onClick={() => handleConfirmBooking(booking.id)}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                <Check className="h-4 w-4 mr-2" />
+                                Confirm
+                              </Button>
+                            )}
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleCancelBooking(booking.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                        
+                        {/* For past bookings, show read-only status */}
+                        {!isUpcoming(booking.start_time) && (
+                          <Badge variant="secondary" className="text-xs">
+                            Completed
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </CardContent>
