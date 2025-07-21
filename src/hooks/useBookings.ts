@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
-import { format, addDays } from "date-fns";
+import { format, addDays, startOfWeek } from "date-fns";
 
 interface Booking {
   id: string;
@@ -18,8 +18,14 @@ export function useBookings(selectedDate: Date) {
   return useQuery({
     queryKey: ['bookings', format(selectedDate, 'yyyy-MM-dd')],
     queryFn: async () => {
-      const startDate = new Date().toISOString().split('T')[0];
-      const endDate = format(addDays(selectedDate, 7), 'yyyy-MM-dd');
+      // Calculate the full week range around the selected date
+      const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday
+      const weekEnd = addDays(weekStart, 6); // Sunday
+      
+      const startDate = format(weekStart, 'yyyy-MM-dd');
+      const endDate = format(weekEnd, 'yyyy-MM-dd');
+      
+      console.log(`Fetching bookings from ${startDate} to ${endDate} for selected date:`, format(selectedDate, 'yyyy-MM-dd'));
       
       const { data, error } = await supabase
         .from('bookings')
@@ -32,7 +38,12 @@ export function useBookings(selectedDate: Date) {
         .gte('start_time', startDate)
         .lte('start_time', endDate);
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching bookings:', error);
+        throw error;
+      }
+      
+      console.log(`Found ${data?.length || 0} bookings in date range`);
       return data as Booking[];
     },
     staleTime: 1000 * 30, // 30 seconds
@@ -54,11 +65,20 @@ export function useDowntime(selectedDate: Date) {
   return useQuery({
     queryKey: ['downtime', format(selectedDate, 'yyyy-MM-dd')],
     queryFn: async () => {
+      // Calculate the full week range around the selected date  
+      const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday
+      const weekEnd = addDays(weekStart, 6); // Sunday
+      
+      const startDate = format(weekStart, 'yyyy-MM-dd');
+      const endDate = format(weekEnd, 'yyyy-MM-dd');
+      
+      console.log(`Fetching downtime from ${startDate} to ${endDate} for selected date:`, format(selectedDate, 'yyyy-MM-dd'));
+      
       const { data, error } = await supabase
         .from('room_downtime' as any)
         .select('*')
-        .gte('start_time', new Date().toISOString().split('T')[0])
-        .lte('start_time', format(addDays(selectedDate, 7), 'yyyy-MM-dd'));
+        .gte('start_time', startDate)
+        .lte('start_time', endDate);
       
       if (error) throw error;
       return ((data || []) as unknown) as Downtime[];
