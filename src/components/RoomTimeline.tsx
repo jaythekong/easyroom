@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize } from "lucide-react";
+import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize, Wrench } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +15,9 @@ interface TimeSlot {
   bookedBy?: string;
   date?: string; // For week view
   bookingId?: string;
+  isDowntime?: boolean;
+  downtimeType?: string;
+  downtimeId?: string;
 }
 
 interface Booking {
@@ -23,6 +27,16 @@ interface Booking {
   end_time: string;
   room_id: string;
   user_id: string;
+}
+
+interface Downtime {
+  id: string;
+  title: string;
+  description: string;
+  start_time: string;
+  end_time: string;
+  room_id: string;
+  downtime_type: string;
 }
 
 interface TimelineRoom {
@@ -47,6 +61,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   const [selectedHourRange, setSelectedHourRange] = useState({ start: 8, end: 18 });
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [downtime, setDowntime] = useState<Downtime[]>([]);
   const [roomsWithBookings, setRoomsWithBookings] = useState<TimelineRoom[]>([]);
 
   // Generate week days
@@ -73,7 +88,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   const timeSlots = generateTimeSlots();
   const weekDays = generateWeekDays();
 
-  // Fetch bookings from database
+  // Fetch bookings and downtime from database
   const fetchBookings = async () => {
     try {
       const { data, error } = await supabase
@@ -89,7 +104,22 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     }
   };
 
-  // Generate rooms with real booking data
+  const fetchDowntime = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('room_downtime' as any)
+        .select('*')
+        .gte('start_time', new Date().toISOString().split('T')[0])
+        .lte('start_time', format(addDays(selectedDate, 7), 'yyyy-MM-dd'));
+      
+      if (error) throw error;
+      setDowntime((data as any) || []);
+    } catch (error) {
+      console.error('Error fetching downtime:', error);
+    }
+  };
+
+  // Generate rooms with real booking and downtime data
   const generateRoomsWithBookings = () => {
     const roomsWithTimeSlots = rooms.map(room => ({
       ...room,
@@ -110,13 +140,23 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
             new Date(b.start_time) <= new Date(startDateTime) &&
             new Date(b.end_time) > new Date(startDateTime)
           );
+
+          // Check if there's downtime for this room and time slot
+          const roomDowntime = downtime.find(d => 
+            d.room_id === room.id &&
+            new Date(d.start_time) <= new Date(startDateTime) &&
+            new Date(d.end_time) > new Date(startDateTime)
+          );
           
           const timeSlot: TimeSlot = {
             time,
             endTime,
-            available: !booking,
-            meeting: booking?.title,
+            available: !booking && !roomDowntime,
+            meeting: booking?.title || (roomDowntime && `${roomDowntime.title} (${roomDowntime.downtime_type})`),
             bookingId: booking?.id,
+            isDowntime: !!roomDowntime,
+            downtimeType: roomDowntime?.downtime_type,
+            downtimeId: roomDowntime?.id,
             date: dateStr
           };
           
@@ -135,11 +175,12 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
   useEffect(() => {
     fetchBookings();
+    fetchDowntime();
   }, [selectedDate]);
 
   useEffect(() => {
     generateRoomsWithBookings();
-  }, [rooms, bookings, selectedDate]);
+  }, [rooms, bookings, downtime, selectedDate]);
 
   const getCurrentHour = () => {
     return new Date().getHours();
@@ -221,7 +262,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
             <span className="text-sm font-medium">Time Slots</span>
           </div>
         </div>
-        <div className="p-4 overflow-x-auto">
+        <ScrollArea className="p-4">
           <div className="flex gap-2 min-w-max">
             {timeSlots.map(({ time }) => (
               <div 
@@ -236,7 +277,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
               </div>
             ))}
           </div>
-        </div>
+        </ScrollArea>
       </div>
 
       {/* Room Cards */}
@@ -298,7 +339,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                         Today - {format(selectedDate, 'MMM d, yyyy')}
                       </span>
                     </div>
-                    <div className="overflow-x-auto">
+                    <ScrollArea className="w-full">
                       <div className="flex gap-2 min-w-max pb-2">
                         {timeSlots.map(({ time }) => {
                           const roomTimeSlot = room.timeSlots.find(ts => 
@@ -306,6 +347,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           );
                           const isAvailable = !roomTimeSlot || roomTimeSlot.available;
                           const isCurrent = isCurrentHour(time);
+                          const isDowntime = roomTimeSlot?.isDowntime;
                           
                           return (
                             <div
@@ -314,7 +356,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                 flex-shrink-0 w-20 h-16 border rounded-lg cursor-pointer flex flex-col items-center justify-center text-xs font-medium transition-all duration-200
                                 ${isAvailable 
                                   ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] hover:shadow-sm border-success/20' 
-                                  : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
+                                  : isDowntime
+                                    ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
+                                    : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
                                 }
                                 ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10 shadow-inner' : ''}
                               `}
@@ -340,11 +384,22 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                 )
                               ) : (
                                 <div className="text-center p-1">
-                                  <div className="text-destructive font-bold">Booked</div>
-                                  {roomTimeSlot?.meeting && (
-                                    <div className="text-xs text-muted-foreground truncate max-w-[60px] leading-tight">
-                                      {roomTimeSlot.meeting}
-                                    </div>
+                                  {isDowntime ? (
+                                    <>
+                                      <Wrench className="h-3 w-3 mx-auto mb-1 text-warning" />
+                                      <div className="text-warning font-bold text-xs">
+                                        {roomTimeSlot?.downtimeType || 'Downtime'}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="text-destructive font-bold">Booked</div>
+                                      {roomTimeSlot?.meeting && (
+                                        <div className="text-xs text-muted-foreground truncate max-w-[60px] leading-tight">
+                                          {roomTimeSlot.meeting}
+                                        </div>
+                                      )}
+                                    </>
                                   )}
                                 </div>
                               )}
@@ -352,7 +407,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           );
                         })}
                       </div>
-                    </div>
+                    </ScrollArea>
                   </div>
                 ) : (
                   // Expanded: Show full week
@@ -386,61 +441,75 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               {isToday ? `Today, ${format(day, 'EEEE MMM d')}` : format(day, 'EEEE MMM d')}
                             </span>
                           </div>
-                          <div className="overflow-x-auto">
-                            <div className="flex gap-2 min-w-max">
-                              {timeSlots.map(({ time }) => {
-                                const roomTimeSlot = room.timeSlots.find(ts => 
-                                  ts.time === time && ts.date === dayKey
-                                );
-                                const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                                const isCurrent = isCurrentHour(time, day);
-                                
-                                return (
-                                  <div
-                                    key={`${room.id}-${dayKey}-${time}`}
-                                    className={`
-                                      flex-shrink-0 w-20 h-14 border rounded-lg cursor-pointer flex flex-col items-center justify-center text-xs font-medium transition-all duration-200
-                                      ${isAvailable 
-                                        ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] hover:shadow-sm border-success/20' 
-                                        : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
-                                      }
-                                      ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10 shadow-inner' : ''}
-                                    `}
-                                    onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                                  >
-                                    {isAvailable ? (
-                                      isCurrent ? (
-                                        <Button
-                                          size="sm"
-                                          className="h-10 w-16 text-xs font-medium animate-pulse shadow-sm p-1"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            onQuickBook(room.id, time);
-                                          }}
-                                        >
-                                          Book Now
-                                        </Button>
-                                      ) : (
-                                        <>
-                                          <div className="text-success font-bold">Free</div>
-                                          <div className="text-xs text-muted-foreground">Available</div>
-                                        </>
-                                      )
-                                    ) : (
-                                      <div className="text-center p-1">
-                                        <div className="text-destructive font-bold">Booked</div>
-                                        {roomTimeSlot?.meeting && (
-                                          <div className="text-xs text-muted-foreground truncate max-w-[60px] leading-tight">
-                                            {roomTimeSlot.meeting}
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
+                           <ScrollArea className="w-full">
+                             <div className="flex gap-2 min-w-max">
+                               {timeSlots.map(({ time }) => {
+                                 const roomTimeSlot = room.timeSlots.find(ts => 
+                                   ts.time === time && ts.date === dayKey
+                                 );
+                                 const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                                 const isCurrent = isCurrentHour(time, day);
+                                 const isDowntime = roomTimeSlot?.isDowntime;
+                                 
+                                 return (
+                                   <div
+                                     key={`${room.id}-${dayKey}-${time}`}
+                                     className={`
+                                       flex-shrink-0 w-20 h-14 border rounded-lg cursor-pointer flex flex-col items-center justify-center text-xs font-medium transition-all duration-200
+                                       ${isAvailable 
+                                         ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] hover:shadow-sm border-success/20' 
+                                         : isDowntime
+                                           ? 'bg-warning/10 text-warning-foreground hover:bg-warning/15 cursor-not-allowed border-warning/20'
+                                           : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
+                                       }
+                                       ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10 shadow-inner' : ''}
+                                     `}
+                                     onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                                   >
+                                     {isAvailable ? (
+                                       isCurrent ? (
+                                         <Button
+                                           size="sm"
+                                           className="h-10 w-16 text-xs font-medium animate-pulse shadow-sm p-1"
+                                           onClick={(e) => {
+                                             e.stopPropagation();
+                                             onQuickBook(room.id, time);
+                                           }}
+                                         >
+                                           Book Now
+                                         </Button>
+                                        ) : (
+                                         <>
+                                           <div className="text-success font-bold">Free</div>
+                                           <div className="text-xs text-muted-foreground">Available</div>
+                                         </>
+                                       )
+                                     ) : (
+                                       <div className="text-center p-1">
+                                         {isDowntime ? (
+                                           <>
+                                             <Wrench className="h-3 w-3 mx-auto mb-1 text-warning" />
+                                             <div className="text-warning font-bold text-xs">
+                                               {roomTimeSlot?.downtimeType || 'Downtime'}
+                                             </div>
+                                           </>
+                                         ) : (
+                                           <>
+                                             <div className="text-destructive font-bold">Booked</div>
+                                             {roomTimeSlot?.meeting && (
+                                               <div className="text-xs text-muted-foreground truncate max-w-[60px] leading-tight">
+                                                 {roomTimeSlot.meeting}
+                                               </div>
+                                             )}
+                                           </>
+                                         )}
+                                       </div>
+                                     )}
+                                   </div>
+                                 );
+                               })}
+                             </div>
+                           </ScrollArea>
                         </div>
                       );
                     })}
