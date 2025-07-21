@@ -92,11 +92,26 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           endDate: endDate.toISOString()
         });
 
+        const formattedStartTime = format(startDate, 'HH:mm');
+        const formattedEndTime = format(endDate, 'HH:mm');
+        
+        console.log('📝 Time formatting:', {
+          originalStartTime: existingBooking.start_time,
+          originalEndTime: existingBooking.end_time,
+          parsedStartDate: startDate,
+          parsedEndDate: endDate,
+          formattedStartTime,
+          formattedEndTime,
+          availableTimeSlots: timeSlots,
+          startTimeInSlots: timeSlots.includes(formattedStartTime),
+          endTimeInSlots: timeSlots.includes(formattedEndTime)
+        });
+
         const newFormData = {
           title: existingBooking.title || "",
           date: startDate,
-          startTime: format(startDate, 'HH:mm'),
-          endTime: format(endDate, 'HH:mm'),
+          startTime: formattedStartTime,
+          endTime: formattedEndTime,
           attendees: existingBooking.attendees?.toString() || "",
           description: existingBooking.description || "",
           recurring: existingBooking.recurring || "none"
@@ -122,22 +137,38 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
   // Filter end time options to only show times after start time
   const getAvailableEndTimes = () => {
+    console.log('📝 getAvailableEndTimes called:', {
+      formDataStartTime: formData.startTime,
+      formDataEndTime: formData.endTime,
+      existingBooking: !!existingBooking,
+      allTimeSlots: timeSlots
+    });
+
     if (!formData.startTime) return timeSlots;
     
     const startIndex = timeSlots.findIndex(time => time === formData.startTime);
     const availableTimes = timeSlots.slice(startIndex + 1); // Only show times after start time
     
+    console.log('📝 Available times after start:', {
+      startIndex,
+      availableTimes,
+      endTimeIncluded: availableTimes.includes(formData.endTime)
+    });
+    
     // When editing an existing booking, ensure the original end time is always available
     if (existingBooking && formData.endTime && !availableTimes.includes(formData.endTime)) {
+      console.log('📝 Adding missing end time to available options');
       // Add the original end time to the available options and sort them
       const allTimes = [...availableTimes, formData.endTime].sort((a, b) => {
         const [aHour, aMin] = a.split(':').map(Number);
         const [bHour, bMin] = b.split(':').map(Number);
         return (aHour * 60 + aMin) - (bHour * 60 + bMin);
       });
+      console.log('📝 Final available times with end time added:', allTimes);
       return allTimes;
     }
     
+    console.log('📝 Returning standard available times:', availableTimes);
     return availableTimes;
   };
 
