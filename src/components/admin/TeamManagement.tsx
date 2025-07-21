@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Mail, UserCheck, UserX, Copy, Check } from "lucide-react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,8 +34,10 @@ export function TeamManagement() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
+  const [linkRole, setLinkRole] = useState("member");
   const [isLoading, setIsLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -124,6 +126,45 @@ export function TeamManagement() {
     }
   };
 
+  const generateInviteLink = async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('invitations')
+        .insert({
+          email: '', // Empty email for link-only invites
+          role: linkRole as 'admin' | 'member',
+          invited_by: user.id,
+          organization_id: '00000000-0000-0000-0000-000000000000', // This should be dynamic
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const inviteUrl = `${window.location.origin}/invite/${data.invite_token}`;
+      await navigator.clipboard.writeText(inviteUrl);
+      
+      toast({
+        title: "Invite link created!",
+        description: "Link copied to clipboard - share it with your team member",
+      });
+
+      setIsLinkDialogOpen(false);
+      fetchTeamData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to generate invite link",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const copyInviteLink = async (token: string) => {
     const inviteUrl = `${window.location.origin}/invite/${token}`;
     await navigator.clipboard.writeText(inviteUrl);
@@ -167,57 +208,100 @@ export function TeamManagement() {
             <CardTitle>Team Members</CardTitle>
             <CardDescription>Manage your organization's team members</CardDescription>
           </div>
-          <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Invite Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite Team Member</DialogTitle>
-                <DialogDescription>
-                  Send an invitation to join your organization
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="colleague@company.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                  />
+          <div className="flex items-center gap-2">
+            <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2">
+                  <Link2 className="h-4 w-4" />
+                  Generate Link
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Generate Invite Link</DialogTitle>
+                  <DialogDescription>
+                    Create a shareable invite link for your organization
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="linkRole">Role</Label>
+                    <Select value={linkRole} onValueChange={setLinkRole}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsLinkDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={generateInviteLink} disabled={isLoading}>
+                      {isLoading ? "Generating..." : "Generate & Copy Link"}
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="role">Role</Label>
-                  <Select value={inviteRole} onValueChange={setInviteRole}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="member">Member</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Invite
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite Team Member</DialogTitle>
+                  <DialogDescription>
+                    Send an invitation to join your organization
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="role">Role</Label>
+                    <Select value={inviteRole} onValueChange={setInviteRole}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsInviteDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={sendInvite} disabled={isLoading || !inviteEmail}>
+                      {isLoading ? "Sending..." : "Send Invite"}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsInviteDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button onClick={sendInvite} disabled={isLoading || !inviteEmail}>
-                    {isLoading ? "Sending..." : "Send Invite"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -274,7 +358,9 @@ export function TeamManagement() {
               <TableBody>
                 {invitations.map((invite) => (
                   <TableRow key={invite.id}>
-                    <TableCell className="font-medium">{invite.email}</TableCell>
+                    <TableCell className="font-medium">
+                      {invite.email || <span className="italic text-muted-foreground">Link invite</span>}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
                         {invite.role}
