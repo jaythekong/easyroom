@@ -290,12 +290,15 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                             <Minimize className="h-3.5 w-3.5" />
                           </Button>
                           <div className="min-w-0 flex-1">
-                            <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                              <Users className="h-3 w-3 flex-shrink-0" />
-                              <span>{room.capacity}</span>
-                              <span className="text-muted-foreground/50">•</span>
-                              <span className="text-muted-foreground font-medium">Week View</span>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
+                              <Badge variant="secondary" className="text-xs font-medium">
+                                <Users className="h-3 w-3 mr-1" />
+                                {room.capacity}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium mt-1">
+                              Week View
                             </div>
                           </div>
                         </div>
@@ -303,9 +306,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                       
                       {/* Week Day Labels */}
                       {weekDays.map((day) => (
-                        <div key={`day-label-${day.toISOString()}`} className="p-3 bg-muted/5 min-h-[60px] flex items-center hover:bg-muted/10 transition-colors border-b last:border-b-0">
+                        <div key={`day-label-${day.toISOString()}`} className="px-4 py-3 bg-muted/5 min-h-[60px] flex items-center hover:bg-muted/10 transition-colors border-b last:border-b-0">
                           <div className="flex items-center gap-3 w-full">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                               isSameDay(day, selectedDate) 
                                 ? 'bg-primary text-primary-foreground shadow-sm' 
                                 : 'bg-muted text-muted-foreground'
@@ -313,11 +316,8 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               {format(day, 'd')}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <div className="text-sm font-semibold">
-                                {isSameDay(day, selectedDate) ? 'Today' : format(day, 'EEE')}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {format(day, 'MMM d')}
+                              <div className="text-sm font-medium">
+                                {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'EEE MMM d')}
                               </div>
                             </div>
                           </div>
