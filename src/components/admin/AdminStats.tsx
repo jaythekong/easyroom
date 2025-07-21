@@ -1,22 +1,26 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building, Users, Calendar, TrendingUp } from "lucide-react";
+import { Building, Users, Calendar, TrendingUp, User, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface StatsData {
   totalRooms: number;
   activeRooms: number;
   totalAmenities: number;
-  bookingsToday: number;
+  personalBookings: number;
+  organizationBookings: number;
 }
 
 export function AdminStats() {
+  const { user } = useAuth();
   const [stats, setStats] = useState<StatsData>({
     totalRooms: 0,
     activeRooms: 0,
     totalAmenities: 0,
-    bookingsToday: 0,
+    personalBookings: 0,
+    organizationBookings: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -32,15 +36,25 @@ export function AdminStats() {
           .from("amenities")
           .select("id");
 
+        // Get booking statistics
+        const { data: allBookings } = await supabase
+          .from("bookings")
+          .select("user_id");
+
         const totalRooms = rooms?.length || 0;
         const activeRooms = rooms?.filter(room => room.status === 'active').length || 0;
         const totalAmenities = amenities?.length || 0;
+        
+        // Calculate personal and organization bookings
+        const personalBookings = allBookings?.filter(booking => booking.user_id === user?.id).length || 0;
+        const organizationBookings = allBookings?.length || 0;
 
         setStats({
           totalRooms,
           activeRooms,
           totalAmenities,
-          bookingsToday: 0, // Placeholder for future bookings table
+          personalBookings,
+          organizationBookings,
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -49,8 +63,10 @@ export function AdminStats() {
       }
     };
 
-    fetchStats();
-  }, []);
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
 
   const statsCards = [
     {
@@ -72,17 +88,23 @@ export function AdminStats() {
       description: "Available equipment",
     },
     {
-      title: "Today's Bookings",
-      value: stats.bookingsToday,
-      icon: Calendar,
-      description: "Scheduled for today",
+      title: "My Bookings",
+      value: stats.personalBookings,
+      icon: User,
+      description: "Your personal bookings",
+    },
+    {
+      title: "Organization Bookings",
+      value: stats.organizationBookings,
+      icon: Building2,
+      description: "All team bookings",
     },
   ];
 
   if (loading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
+        {[...Array(5)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardContent className="p-6">
               <div className="h-20 bg-muted rounded"></div>
@@ -94,7 +116,7 @@ export function AdminStats() {
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
       {statsCards.map((stat) => {
         const Icon = stat.icon;
         return (
