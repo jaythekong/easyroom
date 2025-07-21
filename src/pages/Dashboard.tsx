@@ -321,6 +321,14 @@ export default function Dashboard() {
                 onTimeSlotSelect={handleTimeSlotSelect}
                 onBookingUpdate={fetchRooms}
                 onDateSelect={setSelectedDate}
+                onEditBooking={(booking) => {
+                  const room = rooms.find(r => r.id === booking.room_id);
+                  if (room) {
+                    setSelectedRoom(room);
+                    setSelectedTimeSlot(booking.start_time);
+                    setIsBookingModalOpen(true);
+                  }
+                }}
               />
             )}
           </TabsContent>

@@ -9,6 +9,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay, addDays as addDaysUtil, subDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { BookingDetailsModal } from "@/components/BookingDetailsModal";
 
 interface TimeSlot {
   time: string;
@@ -58,14 +59,17 @@ interface RoomTimelineProps {
   onTimeSlotSelect: (roomId: string, timeSlot: string) => void;
   onBookingUpdate?: () => void;
   onDateSelect: (date: Date) => void;
+  onEditBooking?: (booking: any) => void;
 }
 
-export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect }: RoomTimelineProps) {
+export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect, onEditBooking }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [downtime, setDowntime] = useState<Downtime[]>([]);
   const [roomsWithBookings, setRoomsWithBookings] = useState<TimelineRoom[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
 
   // Responsive hour range based on screen size
   const getResponsiveHourRange = () => {
@@ -310,6 +314,15 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     onDateSelect(new Date());
   };
 
+  const handleBookingClick = (booking: Booking, room: any) => {
+    setSelectedBooking({ ...booking, room });
+    setIsBookingDetailsOpen(true);
+  };
+
+  const handleBookingEdit = (booking: any) => {
+    onEditBooking?.(booking);
+  };
+
   const isToday = isSameDay(selectedDate, new Date());
 
   return (
@@ -500,7 +513,17 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                 }
                                 ${isCurrent ? 'ring-1 ring-primary/40 bg-primary/10' : ''}
                               `}
-                              onClick={() => !isPast && isAvailable && onTimeSlotSelect(room.id, `${format(selectedDate, 'yyyy-MM-dd')}T${time}:00`)}
+                              onClick={() => {
+                                if (!isPast && isAvailable) {
+                                  onTimeSlotSelect(room.id, `${format(selectedDate, 'yyyy-MM-dd')}T${time}:00`);
+                                } else if (!isAvailable && !isDowntime && roomTimeSlot) {
+                                  // Find the full booking data
+                                  const fullBooking = bookings.find(b => b.id === roomTimeSlot.bookingId);
+                                  if (fullBooking) {
+                                    handleBookingClick(fullBooking, room);
+                                  }
+                                }
+                              }}
                               title={
                                 isPast 
                                   ? isAvailable 
@@ -585,7 +608,17 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                       }
                                       ${isCurrent ? 'ring-1 ring-primary/40 bg-primary/10' : ''}
                                     `}
-                                    onClick={() => !isPast && isAvailable && onTimeSlotSelect(room.id, `${dayKey}T${time}:00`)}
+                                    onClick={() => {
+                                      if (!isPast && isAvailable) {
+                                        onTimeSlotSelect(room.id, `${dayKey}T${time}:00`);
+                                      } else if (!isAvailable && !isDowntime && roomTimeSlot) {
+                                        // Find the full booking data
+                                        const fullBooking = bookings.find(b => b.id === roomTimeSlot.bookingId);
+                                        if (fullBooking) {
+                                          handleBookingClick(fullBooking, room);
+                                        }
+                                      }
+                                    }}
                                     title={
                                       isPast 
                                         ? isAvailable 
@@ -624,14 +657,27 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           </ScrollArea>
                         </div>
                       );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                     })}
+                   </div>
+                 )}
+               </CardContent>
+            </Card>
+          );
+        })}
       </div>
-    );
-  }
+
+      {/* Booking Details Modal */}
+      <BookingDetailsModal
+        isOpen={isBookingDetailsOpen}
+        onClose={() => {
+          setIsBookingDetailsOpen(false);
+          setSelectedBooking(null);
+        }}
+        booking={selectedBooking}
+        room={selectedBooking?.room}
+        onEdit={handleBookingEdit}
+        onBookingUpdate={onBookingUpdate}
+      />
+    </div>
+  );
+}
