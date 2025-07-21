@@ -11,6 +11,8 @@ interface Booking {
   user_id: string;
   user_profiles: {
     email: string;
+    display_name?: string;
+    avatar_url?: string;
   };
 }
 
@@ -34,7 +36,9 @@ export function useBookings(selectedDate: Date) {
         .select(`
           *,
           user_profiles!bookings_user_id_fkey (
-            email
+            email,
+            display_name,
+            avatar_url
           )
         `)
         .gte('start_time', startDateTime)

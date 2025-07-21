@@ -18,6 +18,8 @@ interface TimeSlot {
   available: boolean;
   meeting?: string;
   bookedBy?: string;
+  bookerAvatar?: string;
+  bookerDisplayName?: string;
   date?: string;
   bookingId?: string;
   isDowntime?: boolean;
@@ -34,6 +36,8 @@ interface Booking {
   user_id: string;
   user_profiles?: {
     email: string;
+    display_name?: string;
+    avatar_url?: string;
   };
 }
 
@@ -221,6 +225,9 @@ const RoomTimelineComponent = memo(function RoomTimeline({
             endTime: endTimeStr,
             available: !booking && !downtime,
             meeting: booking?.title || (downtime && `${downtime.title} (${downtime.downtime_type})`),
+            bookedBy: booking?.user_profiles?.email,
+            bookerAvatar: booking?.user_profiles?.avatar_url,
+            bookerDisplayName: booking?.user_profiles?.display_name,
             bookingId: booking?.id,
             isDowntime: !!downtime,
             downtimeType: downtime?.downtime_type,
@@ -446,8 +453,30 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                     title={slot?.meeting || (slot?.available ? 'Available' : 'Unavailable')}
                                   >
                                     {slot?.meeting && (
-                                      <div className="font-medium text-foreground truncate">
-                                        {slot.meeting}
+                                      <div className="space-y-1">
+                                        <div className="font-medium text-foreground truncate">
+                                          {slot.meeting}
+                                        </div>
+                                        {slot.bookerAvatar || slot.bookerDisplayName ? (
+                                          <div className="flex items-center gap-1">
+                                            {slot.bookerAvatar ? (
+                                              <img 
+                                                src={slot.bookerAvatar} 
+                                                alt="Booker avatar" 
+                                                className="w-3 h-3 rounded-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="w-3 h-3 rounded-full bg-primary/30 flex items-center justify-center">
+                                                <span className="text-[8px] font-medium text-primary">
+                                                  {(slot.bookerDisplayName || slot.bookedBy)?.charAt(0).toUpperCase()}
+                                                </span>
+                                              </div>
+                                            )}
+                                            <span className="text-[10px] text-muted-foreground truncate">
+                                              {slot.bookerDisplayName || slot.bookedBy}
+                                            </span>
+                                          </div>
+                                        ) : null}
                                       </div>
                                     )}
                                     {slot?.available && (

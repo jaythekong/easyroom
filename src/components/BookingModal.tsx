@@ -37,6 +37,11 @@ interface BookingModalProps {
     end_time: string;
     attendees?: number;
     recurring: string;
+    user_profiles?: {
+      email: string;
+      display_name?: string;
+      avatar_url?: string;
+    };
   } | null;
 }
 
@@ -334,6 +339,30 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               <span>{room.location}</span>
             </div>
           </div>
+          {existingBooking?.user_profiles && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 rounded-lg p-3 mt-2">
+              <div className="flex items-center gap-2">
+                {existingBooking.user_profiles.avatar_url ? (
+                  <img 
+                    src={existingBooking.user_profiles.avatar_url} 
+                    alt="Creator avatar" 
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary">
+                      {(existingBooking.user_profiles.display_name || existingBooking.user_profiles.email)?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <span>
+                  Created by: <strong>
+                    {existingBooking.user_profiles.display_name || existingBooking.user_profiles.email}
+                  </strong>
+                </span>
+              </div>
+            </div>
+          )}
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
