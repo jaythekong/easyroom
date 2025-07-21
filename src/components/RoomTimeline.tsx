@@ -371,49 +371,38 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                     const isToday = isSameDay(day, selectedDate);
                     
                     return (
-                      <div key={`${room.id}-${dayKey}`} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${isToday ? 'bg-primary' : 'bg-muted'}`}></div>
-                          <span className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
-                            {format(day, 'EEE MMM d')}
-                          </span>
-                        </div>
-                        <ScrollArea className="w-full">
-                          <div className="flex gap-1 min-w-max">
-                            {timeSlots.map(({ time }) => {
-                              const roomTimeSlot = room.timeSlots.find(ts => 
-                                ts.time === time && ts.date === dayKey
-                              );
-                              const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                              const isCurrent = isCurrentHour(time, day);
-                              const isDowntime = roomTimeSlot?.isDowntime;
-                              
-                              return (
-                                <div
-                                  key={`${room.id}-${dayKey}-${time}`}
-                                  className={`
-                                    flex-shrink-0 w-12 h-8 rounded cursor-pointer flex items-center justify-center text-xs transition-all duration-200
-                                    ${isAvailable 
-                                      ? 'bg-success/5 hover:bg-success/10 text-success-foreground' 
-                                      : isDowntime
-                                        ? 'bg-orange-50 text-orange-700'
-                                        : 'bg-destructive/5 text-destructive-foreground'
-                                    }
-                                    ${isCurrent ? 'ring-1 ring-primary/50' : ''}
-                                  `}
-                                  onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                                >
-                                  {isAvailable ? (
-                                    <div className="w-1 h-1 bg-success rounded-full"></div>
-                                  ) : (
-                                    <div className="w-1 h-1 bg-current rounded-full opacity-50"></div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </ScrollArea>
-                      </div>
+                       <div key={`${room.id}-${dayKey}`} className="flex items-center gap-3">
+                         <div className="flex items-center gap-2 w-24">
+                           <div className={`w-2 h-2 rounded-full ${isToday ? 'bg-primary' : 'bg-muted'}`}></div>
+                           <span className={`text-sm ${isToday ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                             {format(day, 'EEE')}
+                           </span>
+                         </div>
+                         <div className="flex gap-1">
+                           {timeSlots.map(({ time }) => {
+                             const roomTimeSlot = room.timeSlots.find(ts => 
+                               ts.time === time && ts.date === dayKey
+                             );
+                             const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                             const isDowntime = roomTimeSlot?.isDowntime;
+                             
+                             return (
+                               <div
+                                 key={`${room.id}-${dayKey}-${time}`}
+                                 className={`w-2 h-2 rounded-full cursor-pointer transition-all duration-200 ${
+                                   isAvailable 
+                                     ? 'bg-success hover:scale-125' 
+                                     : isDowntime
+                                       ? 'bg-orange-400'
+                                       : 'bg-destructive/60'
+                                 }`}
+                                 onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                                 title={`${time} - ${isAvailable ? 'Available' : isDowntime ? 'Downtime' : 'Booked'}`}
+                               />
+                             );
+                           })}
+                         </div>
+                       </div>
                     );
                   })}
                 </div>
