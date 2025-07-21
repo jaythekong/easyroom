@@ -129,9 +129,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
         .from('bookings')
         .select(`
           *,
-          user_profiles!bookings_user_id_fkey (
-            email
-          )
+          user_profiles!inner(email)
         `)
         .gte('start_time', startDate)
         .lte('start_time', endDate);
