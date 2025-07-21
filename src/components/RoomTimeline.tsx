@@ -86,6 +86,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+  const [roomDates, setRoomDates] = useState<Record<string, Date>>({});
   const { organization } = useOrganization();
 
   // Fetch booking data
@@ -105,14 +106,28 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     totalRooms: rooms.length
   });
 
-  // Expand all rooms by default on first load
+  // Initialize room dates and expand all rooms by default on first load
   useEffect(() => {
-    if (rooms.length > 0 && expandedRooms.size === 0) {
-      const allRoomIds = new Set(rooms.map(room => room.id));
-      onExpandedRoomsChange(allRoomIds);
-      console.log('📅 Auto-expanding all rooms:', allRoomIds);
+    if (rooms.length > 0) {
+      // Initialize room dates with selected date
+      const initialRoomDates: Record<string, Date> = {};
+      rooms.forEach(room => {
+        if (!roomDates[room.id]) {
+          initialRoomDates[room.id] = selectedDate;
+        }
+      });
+      if (Object.keys(initialRoomDates).length > 0) {
+        setRoomDates(prev => ({ ...prev, ...initialRoomDates }));
+      }
+      
+      // Auto-expand rooms
+      if (expandedRooms.size === 0) {
+        const allRoomIds = new Set(rooms.map(room => room.id));
+        onExpandedRoomsChange(allRoomIds);
+        console.log('📅 Auto-expanding all rooms:', allRoomIds);
+      }
     }
-  }, [rooms, expandedRooms.size, onExpandedRoomsChange]);
+  }, [rooms, expandedRooms.size, onExpandedRoomsChange, selectedDate]);
 
   // Generate business hours time slots (8 AM to 8 PM)
   const timeSlots = useMemo(() => {
@@ -127,16 +142,16 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     return slots;
   }, []);
 
-  // Generate week days starting Monday
-  const weekDays = useMemo(() => {
-    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+  // Generate week days for each room
+  const getRoomWeekDays = useCallback((roomId: string) => {
+    const roomDate = roomDates[roomId] || selectedDate;
+    const weekStart = startOfWeek(roomDate, { weekStartsOn: 1 });
     const days = [];
     for (let i = 0; i < 7; i++) {
       days.push(addDays(weekStart, i));
     }
-    console.log('📅 Week days:', days.map(d => format(d, 'yyyy-MM-dd')));
     return days;
-  }, [selectedDate]);
+  }, [roomDates, selectedDate]);
 
   // CRITICAL: Simple and bulletproof booking overlap check
   const doesBookingOverlapSlot = useCallback((booking: Booking, slotDate: string, slotHour: number): boolean => {
@@ -178,6 +193,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       // Get bookings for this specific room
       const roomBookings = bookings.filter(b => b.room_id === room.id);
       const roomDowntime = downtime.filter(d => d.room_id === room.id);
+      const roomWeekDays = getRoomWeekDays(room.id);
       
       console.log(`🏠 Room: "${room.name}" (${room.id})`);
       console.log(`   📋 Bookings for this room: ${roomBookings.length}`);
@@ -187,8 +203,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
 
       const timeSlots: TimeSlot[] = [];
       
-      // For each day of the week
-      weekDays.forEach(date => {
+      // For each day of the week for this room
+      roomWeekDays.forEach(date => {
         const dateStr = format(date, 'yyyy-MM-dd');
         
         // For each business hour (8 AM to 8 PM)
@@ -219,10 +235,11 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       
       return {
         ...room,
-        timeSlots
+        timeSlots,
+        weekDays: roomWeekDays
       };
     });
-  }, [rooms, bookings, downtime, weekDays, doesBookingOverlapSlot]);
+  }, [rooms, bookings, downtime, getRoomWeekDays, doesBookingOverlapSlot]);
 
   // Refresh data when trigger changes
   useEffect(() => {
@@ -250,6 +267,15 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       : addDays(selectedDate, 7);
     console.log('📅 Navigating week:', direction, 'to', format(newDate, 'yyyy-MM-dd'));
     onDateSelect(newDate);
+  };
+
+  const navigateRoomWeek = (roomId: string, direction: 'prev' | 'next') => {
+    const currentRoomDate = roomDates[roomId] || selectedDate;
+    const newDate = direction === 'prev' 
+      ? subDays(currentRoomDate, 7)
+      : addDays(currentRoomDate, 7);
+    console.log('📅 Navigating room week:', roomId, direction, 'to', format(newDate, 'yyyy-MM-dd'));
+    setRoomDates(prev => ({ ...prev, [roomId]: newDate }));
   };
 
   const toggleRoomExpansion = (roomId: string) => {
@@ -367,13 +393,38 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                     </div>
                   </div>
                   
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onQuickBook(room.id, '')}
-                  >
-                    Book Room
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {/* Room Week Navigation */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigateRoomWeek(room.id, 'prev')}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      
+                      <div className="text-sm text-muted-foreground min-w-[120px] text-center">
+                        Week of {format(startOfWeek(roomDates[room.id] || selectedDate, { weekStartsOn: 1 }), 'MMM d')}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigateRoomWeek(room.id, 'next')}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onQuickBook(room.id, '')}
+                    >
+                      Book Room
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
 
@@ -384,7 +435,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                       {/* Day Headers */}
                       <div className="grid grid-cols-8 gap-1 mb-2">
                         <div className="p-2 text-sm font-medium">Time</div>
-                        {weekDays.map((day) => (
+                        {room.weekDays.map((day) => (
                           <div
                             key={format(day, 'yyyy-MM-dd')}
                             className={cn(
@@ -403,8 +454,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                       {/* Time Slots Grid */}
                       <div className="space-y-1">
                         {timeSlots.map(({ time }) => {
-                          // Get the slots for this time across all days of the week
-                          const daySlots = weekDays.map(day => {
+                          // Get the slots for this time across all days of the week for this room
+                          const daySlots = room.weekDays.map(day => {
                             const dateStr = format(day, 'yyyy-MM-dd');
                             return room.timeSlots.find(
                               slot => slot.time === time && slot.date === dateStr
@@ -420,7 +471,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                               
                               {/* Slots for each day */}
                               {daySlots.map((slot, dayIndex) => {
-                                const day = weekDays[dayIndex];
+                                const day = room.weekDays[dayIndex];
                                 const isCurrent = isCurrentTime(day, time);
                                 
                                 return (
