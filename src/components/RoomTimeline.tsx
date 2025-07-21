@@ -254,16 +254,22 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     const checkDate = date || selectedDate;
     const today = new Date();
     
-    // Only gray out past times for today
-    if (!isSameDay(checkDate, today)) {
-      return false;
+    // If the entire date is in the past, all slots are past
+    if (checkDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+      return true;
     }
     
-    const [hours, minutes] = timeSlot.split(':').map(Number);
-    const slotTime = new Date();
-    slotTime.setHours(hours, minutes, 0, 0);
+    // For today only, check if the specific time slot is past
+    if (isSameDay(checkDate, today)) {
+      const [hours, minutes] = timeSlot.split(':').map(Number);
+      const slotTime = new Date();
+      slotTime.setHours(hours, minutes, 0, 0);
+      
+      return slotTime < today;
+    }
     
-    return slotTime < today;
+    // Future dates are never past
+    return false;
   };
 
   const shiftTimeRange = (direction: 'earlier' | 'later') => {
