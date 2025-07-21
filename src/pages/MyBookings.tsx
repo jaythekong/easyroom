@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, MapPin, Trash2, Edit, ArrowLeft, Check } from "lucide-react";
+import { Calendar, Clock, Users, MapPin, Trash2, Edit, ArrowLeft, Check, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { BookingModal } from "@/components/BookingModal";
+import { cn } from "@/lib/utils";
 
 interface Booking {
   id: string;
@@ -37,6 +38,7 @@ export default function MyBookings() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  const [confirmingBookings, setConfirmingBookings] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (user) {
@@ -127,6 +129,11 @@ export default function MyBookings() {
   };
 
   const handleConfirmBooking = async (bookingId: string) => {
+    // Prevent multiple submissions for the same booking
+    if (confirmingBookings.has(bookingId)) return;
+    
+    setConfirmingBookings(prev => new Set(prev).add(bookingId));
+    
     try {
       const { error } = await supabase
         .from('bookings')
@@ -148,6 +155,12 @@ export default function MyBookings() {
         title: "Error",
         description: "Failed to confirm booking",
         variant: "destructive",
+      });
+    } finally {
+      setConfirmingBookings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(bookingId);
+        return newSet;
       });
     }
   };
@@ -343,10 +356,17 @@ export default function MyBookings() {
                                 variant="default" 
                                 size="sm"
                                 onClick={() => handleConfirmBooking(booking.id)}
-                                className="bg-green-600 hover:bg-green-700"
+                                className={cn(
+                                  "bg-green-600 hover:bg-green-700 transition-all duration-200",
+                                  confirmingBookings.has(booking.id) && "animate-pulse scale-95"
+                                )}
+                                disabled={confirmingBookings.has(booking.id)}
                               >
-                                <Check className="h-4 w-4 mr-2" />
-                                Confirm
+                                <Check className={cn(
+                                  "h-4 w-4 mr-2",
+                                  confirmingBookings.has(booking.id) && "animate-spin"
+                                )} />
+                                {confirmingBookings.has(booking.id) ? 'Confirming...' : 'Confirm'}
                               </Button>
                             )}
                             

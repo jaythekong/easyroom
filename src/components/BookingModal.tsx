@@ -49,6 +49,7 @@ const timeSlots = [
 export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime, existingBooking }: BookingModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     date: initialDate || new Date(),
@@ -105,6 +106,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
     console.log("Booking attempt - User:", user, "Room:", room);
     
     if (!user || !room) {
@@ -114,6 +119,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         description: "Please sign in to book a room.",
         variant: "destructive"
       });
+      setIsSubmitting(false);
       return;
     }
     
@@ -129,6 +135,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         description: "Please fill in all required fields.",
         variant: "destructive"
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -222,6 +229,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         description: `There was an error ${existingBooking ? 'updating' : 'creating'} your booking. Please try again.`,
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -394,12 +403,22 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              <Clock className="h-4 w-4 mr-2" />
-              {existingBooking ? 'Update Booking' : 'Confirm Booking'}
+            <Button 
+              type="submit" 
+              className={cn(
+                "flex-1 transition-all duration-200",
+                isSubmitting && "animate-pulse scale-95"
+              )}
+              disabled={isSubmitting}
+            >
+              <Clock className={cn("h-4 w-4 mr-2", isSubmitting && "animate-spin")} />
+              {isSubmitting 
+                ? (existingBooking ? 'Updating...' : 'Booking...')
+                : (existingBooking ? 'Update Booking' : 'Confirm Booking')
+              }
             </Button>
           </div>
         </form>
