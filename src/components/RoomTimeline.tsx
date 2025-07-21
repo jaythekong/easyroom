@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, Users, MapPin, Zap, Calendar, ChevronLeft, ChevronRight, Expand, Minimize } from "lucide-react";
+import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 
 interface TimeSlot {
   time: string;
@@ -10,6 +11,7 @@ interface TimeSlot {
   available: boolean;
   meeting?: string;
   bookedBy?: string;
+  date?: string; // For week view
 }
 
 interface TimelineRoom {
@@ -31,6 +33,17 @@ interface RoomTimelineProps {
 export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedHourRange, setSelectedHourRange] = useState({ start: 8, end: 18 });
+  const [isWeekView, setIsWeekView] = useState(false);
+
+  // Generate week days
+  const generateWeekDays = () => {
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday start
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      days.push(addDays(weekStart, i));
+    }
+    return days;
+  };
 
   // Generate hourly time slots
   const generateTimeSlots = () => {
@@ -44,6 +57,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   };
 
   const timeSlots = generateTimeSlots();
+  const weekDays = generateWeekDays();
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -54,9 +68,11 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     return new Date().getHours();
   };
 
-  const isCurrentHour = (timeSlot: string) => {
+  const isCurrentHour = (timeSlot: string, date?: Date) => {
     const hour = parseInt(timeSlot.split(':')[0]);
-    return hour === getCurrentHour();
+    const today = new Date();
+    const checkDate = date || selectedDate;
+    return hour === getCurrentHour() && isSameDay(checkDate, today);
   };
 
   const shiftTimeRange = (direction: 'earlier' | 'later') => {
@@ -81,10 +97,30 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           <div>
             <h2 className="text-xl font-semibold">Room Timeline</h2>
             <p className="text-sm text-muted-foreground">
-              {selectedDate.toLocaleDateString()}
+              {isWeekView 
+                ? `Week of ${format(weekDays[0], 'MMM d')} - ${format(weekDays[6], 'MMM d, yyyy')}`
+                : selectedDate.toLocaleDateString()
+              }
             </p>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsWeekView(!isWeekView)}
+            >
+              {isWeekView ? (
+                <>
+                  <Minimize className="h-4 w-4 mr-2" />
+                  Day View
+                </>
+              ) : (
+                <>
+                  <Expand className="h-4 w-4 mr-2" />
+                  Week View
+                </>
+              )}
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -115,18 +151,44 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           <div className="flex gap-2 min-w-max">
             <div className="flex-shrink-0 w-[200px] text-sm font-medium text-muted-foreground">Rooms</div>
             <div className="flex gap-2">
-              {timeSlots.map(({ time }) => (
-                <div 
-                  key={time} 
-                  className={`flex-shrink-0 w-24 text-center p-2 text-xs ${
-                    isCurrentHour(time) 
-                      ? 'text-primary font-medium' 
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  {time}
-                </div>
-              ))}
+              {isWeekView ? (
+                // Week view header with days and times
+                weekDays.map((day) => (
+                  <div key={day.toISOString()} className="flex flex-col">
+                    <div className="text-center p-2 text-xs font-medium text-foreground border-b">
+                      {format(day, 'EEE MMM d')}
+                    </div>
+                    <div className="flex gap-1">
+                      {timeSlots.map(({ time }) => (
+                        <div 
+                          key={`${day.toISOString()}-${time}`}
+                          className={`flex-shrink-0 w-16 text-center p-1 text-xs ${
+                            isCurrentHour(time, day) 
+                              ? 'text-primary font-medium' 
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {time}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                // Day view header with just times
+                timeSlots.map(({ time }) => (
+                  <div 
+                    key={time} 
+                    className={`flex-shrink-0 w-24 text-center p-2 text-xs ${
+                      isCurrentHour(time) 
+                        ? 'text-primary font-medium' 
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {time}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -153,45 +215,96 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
                 {/* Timeline Slots */}
                 <div className="flex gap-2">
-                  {timeSlots.map(({ time }) => {
-                    const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
-                    const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                    const isCurrent = isCurrentHour(time);
-                    
-                    return (
-                      <div
-                        key={`${room.id}-${time}`}
-                        className={`
-                          flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
-                          ${isAvailable 
-                            ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
-                            : 'border-danger/30 bg-danger/10 text-danger'
-                          }
-                          ${isCurrent ? 'ring-1 ring-primary/50' : ''}
-                        `}
-                        onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                      >
-                        {isAvailable ? (
-                          isCurrent ? (
-                            <Button
-                              size="sm"
-                              className="h-8 w-full text-xs"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onQuickBook(room.id, time);
-                              }}
+                  {isWeekView ? (
+                    // Week view slots
+                    weekDays.map((day) => (
+                      <div key={day.toISOString()} className="flex gap-1">
+                        {timeSlots.map(({ time }) => {
+                          const dayKey = format(day, 'yyyy-MM-dd');
+                          const roomTimeSlot = room.timeSlots.find(ts => 
+                            ts.time === time && ts.date === dayKey
+                          );
+                          const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                          const isCurrent = isCurrentHour(time, day);
+                          
+                          return (
+                            <div
+                              key={`${room.id}-${dayKey}-${time}`}
+                              className={`
+                                flex-shrink-0 w-16 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
+                                ${isAvailable 
+                                  ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
+                                  : 'border-danger/30 bg-danger/10 text-danger'
+                                }
+                                ${isCurrent ? 'ring-1 ring-primary/50' : ''}
+                              `}
+                              onClick={() => isAvailable && onTimeSlotSelect(room.id, `${dayKey}-${time}`)}
                             >
-                              Book
-                            </Button>
-                          ) : (
-                            <span className="text-success-foreground">Free</span>
-                          )
-                        ) : (
-                          <span className="text-danger-foreground">Busy</span>
-                        )}
+                              {isAvailable ? (
+                                isCurrent ? (
+                                  <Button
+                                    size="sm"
+                                    className="h-6 w-full text-xs px-1"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onQuickBook(room.id, `${dayKey}-${time}`);
+                                    }}
+                                  >
+                                    Book
+                                  </Button>
+                                ) : (
+                                  <span className="text-success-foreground text-xs">Free</span>
+                                )
+                              ) : (
+                                <span className="text-danger-foreground text-xs">Busy</span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    // Day view slots
+                    timeSlots.map(({ time }) => {
+                      const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
+                      const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                      const isCurrent = isCurrentHour(time);
+                      
+                      return (
+                        <div
+                          key={`${room.id}-${time}`}
+                          className={`
+                            flex-shrink-0 w-24 h-12 rounded border cursor-pointer flex items-center justify-center text-xs
+                            ${isAvailable 
+                              ? 'border-success/30 bg-success/10 hover:bg-success/20 text-success' 
+                              : 'border-danger/30 bg-danger/10 text-danger'
+                            }
+                            ${isCurrent ? 'ring-1 ring-primary/50' : ''}
+                          `}
+                          onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                        >
+                          {isAvailable ? (
+                            isCurrent ? (
+                              <Button
+                                size="sm"
+                                className="h-8 w-full text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onQuickBook(room.id, time);
+                                }}
+                              >
+                                Book
+                              </Button>
+                            ) : (
+                              <span className="text-success-foreground">Free</span>
+                            )
+                          ) : (
+                            <span className="text-danger-foreground">Busy</span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             </div>
