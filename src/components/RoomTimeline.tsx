@@ -278,6 +278,15 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                         </div>
                       )}
                     </div>
+                    {/* Show week range when expanded */}
+                    {isExpanded && (
+                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          Full Week - {format(weekDays[0], 'MMM d')} to {format(weekDays[6], 'MMM d, yyyy')}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {room.amenities.length > 0 && (
@@ -373,13 +382,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                   </div>
                 ) : (
                   // Expanded: Show full week
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">
-                        Full Week - {format(weekDays[0], 'MMM d')} to {format(weekDays[6], 'MMM d, yyyy')}
-                      </span>
-                    </div>
+                  <div>
                     {weekDays.map((day) => {
                       const dayKey = format(day, 'yyyy-MM-dd');
                       const isWeekend = day.getDay() === 0 || day.getDay() === 6;
