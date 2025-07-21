@@ -103,14 +103,20 @@ export default function Dashboard() {
   // Fetch user's bookings for this week
   const { data: userBookings = [] } = useBookings(new Date());
   
-  // Count user's personal bookings for this week
-  const personalWeeklyBookings = useMemo(() => {
-    return userBookings.filter(booking => booking.user_id === userId).length;
+  // Count user's personal upcoming bookings
+  const personalUpcomingBookings = useMemo(() => {
+    const now = new Date();
+    return userBookings.filter(booking => 
+      booking.user_id === userId && new Date(booking.start_time) > now
+    ).length;
   }, [userBookings, userId]);
 
-  // Count organization-wide bookings for this week
-  const organizationWeeklyBookings = useMemo(() => {
-    return userBookings.length;
+  // Count organization-wide upcoming bookings
+  const organizationUpcomingBookings = useMemo(() => {
+    const now = new Date();
+    return userBookings.filter(booking => 
+      new Date(booking.start_time) > now
+    ).length;
   }, [userBookings]);
 
   const fetchUserProfile = useCallback(async () => {
@@ -328,8 +334,8 @@ export default function Dashboard() {
                   <User className="w-4 h-4 text-accent-foreground" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">My Personal Bookings</span>
-                  <p className="text-2xl font-bold text-foreground">{personalWeeklyBookings}</p>
+                  <span className="text-sm font-medium text-muted-foreground">My Upcoming Bookings</span>
+                  <p className="text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
                 </div>
               </div>
             </div>
@@ -340,8 +346,8 @@ export default function Dashboard() {
                   <Building className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Organization Bookings</span>
-                  <p className="text-2xl font-bold text-foreground">{organizationWeeklyBookings}</p>
+                  <span className="text-sm font-medium text-muted-foreground">Organization Upcoming</span>
+                  <p className="text-2xl font-bold text-foreground">{organizationUpcomingBookings}</p>
                 </div>
               </div>
             </div>
