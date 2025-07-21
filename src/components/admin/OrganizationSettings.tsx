@@ -151,7 +151,7 @@ export function OrganizationSettings() {
   };
 
   const copySubdomainUrl = async () => {
-    const subdomainUrl = `https://${subdomain}.lovableproject.com`;
+    const subdomainUrl = `https://${subdomain}.roomer.lovable.app`;
     await navigator.clipboard.writeText(subdomainUrl);
     toast({
       title: "Copied!",
@@ -247,7 +247,7 @@ export function OrganizationSettings() {
                   <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-destructive" />
                 )}
               </div>
-              <span className="text-muted-foreground">.lovableproject.com</span>
+              <span className="text-muted-foreground">.roomer.lovable.app</span>
             </div>
             
             {isAvailable === true && (
@@ -262,7 +262,7 @@ export function OrganizationSettings() {
             )}
             
             <p className="text-sm text-muted-foreground mt-1">
-              Your organization will be accessible at: <code className="bg-muted px-1 rounded">https://{subdomain}.lovableproject.com</code>
+              Your organization will be accessible at: <code className="bg-muted px-1 rounded">https://{subdomain}.roomer.lovable.app</code>
             </p>
           </div>
 
@@ -271,7 +271,7 @@ export function OrganizationSettings() {
             <div>
               <p className="font-medium">Current Subdomain</p>
               <p className="text-sm text-muted-foreground">
-                https://{originalSubdomain}.lovableproject.com
+                https://{originalSubdomain}.roomer.lovable.app
               </p>
             </div>
             <div className="flex items-center gap-2">
