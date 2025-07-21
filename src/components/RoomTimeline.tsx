@@ -219,7 +219,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           {/* Fixed Room Names Column */}
           <div className="flex-shrink-0 w-[220px] border-r bg-muted/30">
             {/* Header space */}
-            <div className="h-16 border-b bg-background/95 backdrop-blur"></div>
+            <div className="h-28 border-b bg-background/95 backdrop-blur"></div>
             
             {/* Room Names */}
             <div className="divide-y divide-border/50">
@@ -312,8 +312,22 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           {/* Scrollable Time Content - Headers and Slots Together */}
           <div className="flex-1 overflow-x-auto">
             <div className="min-w-max">
+              {/* Room Names Header */}
+              <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b h-12">
+                <div className="flex h-full">
+                  {timeSlots.map((_, index) => (
+                    <div 
+                      key={`room-header-${index}`} 
+                      className="flex-shrink-0 w-24 flex items-center justify-center border-r last:border-r-0 text-sm font-medium bg-muted/30"
+                    >
+                      {index === Math.floor(timeSlots.length / 2) ? "Meeting Rooms" : ""}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Time Headers */}
-              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b h-16">
+              <div className="sticky top-12 z-20 bg-background/95 backdrop-blur border-b h-16">
                 <div className="flex h-full">
                   {timeSlots.map(({ time }) => (
                     <div 
