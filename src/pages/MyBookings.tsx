@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin, Trash2, Edit, ArrowLeft, Check, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -32,6 +33,12 @@ interface Booking {
   status: string;
   recurring: string;
   created_at: string;
+  user_id: string;
+  user_profiles?: {
+    email: string;
+    display_name?: string;
+    avatar_url?: string;
+  };
   room: {
     id: string;
     name: string;
@@ -43,6 +50,7 @@ interface Booking {
 
 export default function MyBookings() {
   const { user } = useAuth();
+  const { userRole } = useOrganization();
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,12 +68,14 @@ export default function MyBookings() {
   const fetchMyBookings = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select(`
           *,
           user_profiles!bookings_user_id_fkey (
-            email
+            email,
+            display_name,
+            avatar_url
           ),
           rooms (
             id,
@@ -78,9 +88,14 @@ export default function MyBookings() {
               )
             )
           )
-        `)
-        .eq('user_id', user?.id)
-        .order('start_time', { ascending: true });
+        `);
+
+      // Admins can see all bookings, members only see their own
+      if (userRole !== 'admin') {
+        query = query.eq('user_id', user?.id);
+      }
+
+      const { data, error } = await query.order('start_time', { ascending: true });
 
       if (error) throw error;
 
@@ -110,11 +125,17 @@ export default function MyBookings() {
     try {
       console.log('Cancelling booking:', bookingId);
       
-      const { error } = await supabase
+      // Security check: only allow canceling own bookings unless admin
+      const deleteQuery = supabase
         .from('bookings')
         .delete()
-        .eq('id', bookingId)
-        .eq('user_id', user?.id); // Extra security check
+        .eq('id', bookingId);
+
+      if (userRole !== 'admin') {
+        deleteQuery.eq('user_id', user?.id);
+      }
+
+      const { error } = await deleteQuery;
 
       if (error) {
         console.error('Delete error:', error);
@@ -170,11 +191,17 @@ export default function MyBookings() {
     setConfirmingBookings(prev => new Set(prev).add(bookingId));
     
     try {
-      const { error } = await supabase
+      // Security check: only allow confirming own bookings unless admin
+      const updateQuery = supabase
         .from('bookings')
         .update({ status: 'confirmed' })
-        .eq('id', bookingId)
-        .eq('user_id', user?.id);
+        .eq('id', bookingId);
+
+      if (userRole !== 'admin') {
+        updateQuery.eq('user_id', user?.id);
+      }
+
+      const { error } = await updateQuery;
 
       if (error) throw error;
 
@@ -232,6 +259,10 @@ export default function MyBookings() {
     return new Date(startTime) > new Date();
   };
 
+  const canEditBooking = (booking: Booking) => {
+    return userRole === 'admin' || booking.user_id === user?.id;
+  };
+
   const upcomingBookings = bookings.filter(booking => isUpcoming(booking.start_time));
   const pastBookings = bookings.filter(booking => !isUpcoming(booking.start_time));
 
@@ -265,8 +296,12 @@ export default function MyBookings() {
                 </Link>
               </Button>
               <div>
-                <h1 className="text-xl font-bold">My Bookings</h1>
-                <p className="text-sm text-muted-foreground">Manage your meeting room reservations</p>
+                <h1 className="text-xl font-bold">
+                  {userRole === 'admin' ? 'All Bookings' : 'My Bookings'}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {userRole === 'admin' ? 'Manage all organization bookings' : 'Manage your meeting room reservations'}
+                </p>
               </div>
             </div>
           </div>
@@ -339,6 +374,27 @@ export default function MyBookings() {
                               {booking.recurring}
                             </Badge>
                           )}
+                          {/* Show creator info if admin or if not own booking */}
+                          {(userRole === 'admin' || booking.user_id !== user?.id) && booking.user_profiles && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              {booking.user_profiles.avatar_url ? (
+                                <img 
+                                  src={booking.user_profiles.avatar_url} 
+                                  alt="Creator avatar" 
+                                  className="w-5 h-5 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                                  <span className="text-xs font-medium text-primary">
+                                    {(booking.user_profiles.display_name || booking.user_profiles.email)?.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <span className="text-xs">
+                                {booking.user_profiles.display_name || booking.user_profiles.email}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
@@ -373,8 +429,8 @@ export default function MyBookings() {
                       </div>
 
                       <div className="flex items-center gap-2 ml-4">
-                        {/* Only show edit/cancel for future bookings */}
-                        {isUpcoming(booking.start_time) && (
+                        {/* Show edit/cancel for future bookings that user can edit */}
+                        {isUpcoming(booking.start_time) && canEditBooking(booking) && (
                           <>
                             <Button 
                               variant="outline" 
@@ -385,9 +441,9 @@ export default function MyBookings() {
                               Edit
                             </Button>
                             
-                            {/* Show confirm button for pending bookings */}
-                            {booking.status === 'pending' && (
-                              <Button 
+                            {/* Show confirm button for pending bookings that user can edit */}
+                            {booking.status === 'pending' && canEditBooking(booking) && (
+                              <Button
                                 variant="default" 
                                 size="sm"
                                 onClick={() => handleConfirmBooking(booking.id)}

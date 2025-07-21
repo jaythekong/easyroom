@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin, Edit, Trash2, User } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,6 +24,8 @@ interface BookingDetailsModalProps {
     user_id: string;
     user_profiles?: {
       email: string;
+      display_name?: string;
+      avatar_url?: string;
     };
   } | null;
   room: {
@@ -44,12 +47,14 @@ export function BookingDetailsModal({
   onBookingUpdate 
 }: BookingDetailsModalProps) {
   const { user } = useAuth();
+  const { userRole } = useOrganization();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
   if (!booking || !room) return null;
 
   const isMyBooking = user?.id === booking.user_id;
+  const canEditBooking = userRole === 'admin' || isMyBooking;
   
   const formatDateTime = (dateTime: string) => {
     // Treat the stored time as local time, not UTC
@@ -64,15 +69,21 @@ export function BookingDetailsModal({
   };
 
   const handleCancelBooking = async () => {
-    if (!isMyBooking) return;
+    if (!canEditBooking) return;
     
     setLoading(true);
     try {
-      const { error } = await supabase
+      // Security check: only allow canceling own bookings unless admin
+      const deleteQuery = supabase
         .from('bookings')
         .delete()
-        .eq('id', booking.id)
-        .eq('user_id', user?.id); // Extra security check
+        .eq('id', booking.id);
+
+      if (userRole !== 'admin') {
+        deleteQuery.eq('user_id', user?.id);
+      }
+
+      const { error } = await deleteQuery;
 
       if (error) throw error;
 
@@ -178,15 +189,30 @@ export function BookingDetailsModal({
               </div>
             )}
 
-            {/* Ownership indicator */}
+            {/* Creator info */}
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-              <User className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-2">
+                {booking.user_profiles?.avatar_url ? (
+                  <img 
+                    src={booking.user_profiles.avatar_url} 
+                    alt="Creator avatar" 
+                    className="w-6 h-6 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary">
+                      {(booking.user_profiles?.display_name || booking.user_profiles?.email)?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                <User className="h-4 w-4 text-muted-foreground" />
+              </div>
               <div>
                 <p className="font-medium">
-                  {isMyBooking ? "Your booking" : `Booked by ${booking.user_profiles?.email || 'Unknown user'}`}
+                  {isMyBooking ? "Your booking" : `Created by ${booking.user_profiles?.display_name || booking.user_profiles?.email || 'Unknown user'}`}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isMyBooking ? "You can edit or cancel this booking" : "View-only access"}
+                  {canEditBooking ? (isMyBooking ? "You can edit or cancel this booking" : "Admin access - can edit/cancel") : "View-only access"}
                 </p>
               </div>
             </div>
@@ -198,7 +224,7 @@ export function BookingDetailsModal({
               Close
             </Button>
             
-            {isMyBooking && (
+            {canEditBooking && (
               <>
                 <Button 
                   variant="outline" 

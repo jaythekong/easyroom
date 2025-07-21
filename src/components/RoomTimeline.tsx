@@ -11,6 +11,7 @@ import { format, startOfWeek, addDays, isSameDay, subDays } from "date-fns";
 import { BookingDetailsModal } from "@/components/BookingDetailsModal";
 import { useBookings, useDowntime } from "@/hooks/useBookings";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TimeSlot {
   time: string;
@@ -87,11 +88,12 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   onExpandedRoomsChange, 
   refreshTrigger 
 }: RoomTimelineProps) {
+  const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [roomDates, setRoomDates] = useState<Record<string, Date>>({});
-  const { organization } = useOrganization();
+  const { organization, userRole } = useOrganization();
 
   // Fetch booking data
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
@@ -296,11 +298,22 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   };
 
   const handleBookingClick = (booking: any) => {
-    if (onEditBooking && booking.bookingId) {
+    if (booking.bookingId) {
       const fullBooking = bookings.find(b => b.id === booking.bookingId);
       if (fullBooking) {
-        console.log('📅 Editing booking:', fullBooking.title);
-        onEditBooking(fullBooking);
+        console.log('📅 Clicked on booking:', fullBooking.title);
+        
+        // Check if user can edit this booking
+        const canEditBooking = userRole === 'admin' || fullBooking.user_id === user?.id;
+        
+        if (canEditBooking && onEditBooking) {
+          console.log('📅 Editing booking:', fullBooking.title);
+          onEditBooking(fullBooking);
+        } else {
+          // Show details modal for view-only
+          console.log('📅 View-only access to booking:', fullBooking.title);
+          // You could show a different modal or toast message here
+        }
       }
     }
   };
