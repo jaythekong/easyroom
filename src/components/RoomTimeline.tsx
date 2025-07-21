@@ -260,58 +260,59 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                         </div>
                       </div>
                     ) : (
-                      // Expanded: Room header + week days
+                      // Expanded: Room name in first day row + remaining week days
                         <>
-                          {/* Room Header */}
-                          <div className="min-h-[64px] flex border-b bg-muted/10 hover:bg-muted/20 transition-colors">
-                            <div className="w-12 border-r bg-muted/10 flex items-center justify-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleRoomExpansion(room.id)}
-                                className="h-6 w-6 p-0 hover:bg-muted/50"
-                              >
-                                <Minimize className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <div className="flex-1 p-4 flex items-center">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
-                                  <Badge variant="secondary" className="text-xs font-medium">
-                                    <Users className="h-3 w-3 mr-1" />
-                                    {room.capacity}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Week Day Labels */}
-                          {weekDays.map((day) => {
+                          {/* Week Day Labels - First day includes room name */}
+                          {weekDays.map((day, index) => {
                             const isWeekend = day.getDay() === 0 || day.getDay() === 6; // Sunday or Saturday
+                            const isFirstDay = index === 0;
                             return (
                               <div key={`day-label-${day.toISOString()}`} className="h-[60px] flex hover:bg-muted/10 transition-colors border-b last:border-b-0">
                                 <div className={`w-12 border-r flex items-center justify-center text-xs font-bold ${
                                   isWeekend ? 'bg-red-50 text-red-600' : 'bg-muted/5 text-muted-foreground'
                                 }`}>
-                                  {format(day, 'EEE')}
+                                  {isFirstDay ? (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => toggleRoomExpansion(room.id)}
+                                      className="h-6 w-6 p-0 hover:bg-muted/50"
+                                    >
+                                      <Minimize className="h-3 w-3" />
+                                    </Button>
+                                  ) : (
+                                    format(day, 'EEE')
+                                  )}
                                 </div>
                                 <div className="flex-1 px-4 bg-muted/5 flex items-center">
-                                  <div className="flex items-center gap-3 w-full">
-                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                                      isSameDay(day, selectedDate) 
-                                        ? 'bg-primary text-primary-foreground shadow-sm' 
-                                        : 'bg-muted text-muted-foreground'
-                                    }`}>
-                                      {format(day, 'd')}
-                                    </div>
+                                  {isFirstDay ? (
+                                    // Room name in first day row
                                     <div className="min-w-0 flex-1">
-                                      <div className="text-sm font-medium">
-                                        {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'MMM d')}
+                                      <div className="flex items-center gap-2">
+                                        <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
+                                        <Badge variant="secondary" className="text-xs font-medium">
+                                          <Users className="h-3 w-3 mr-1" />
+                                          {room.capacity}
+                                        </Badge>
                                       </div>
                                     </div>
-                                  </div>
+                                  ) : (
+                                    // Date info for other days
+                                    <div className="flex items-center gap-3 w-full">
+                                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                                        isSameDay(day, selectedDate) 
+                                          ? 'bg-primary text-primary-foreground shadow-sm' 
+                                          : 'bg-muted text-muted-foreground'
+                                      }`}>
+                                        {format(day, 'd')}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <div className="text-sm font-medium">
+                                          {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'MMM d')}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -405,18 +406,8 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           })}
                         </div>
                       ) : (
-                        // Expanded: Room header + all week days
+                        // Expanded: All week days time slots (no separate header)
                         <>
-                          {/* Room Header Spacer */}
-                          <div className="flex border-b bg-muted/10 min-h-[64px] hover:bg-muted/20 transition-colors">
-                            {timeSlots.map(({ time }) => (
-                              <div 
-                                key={`${room.id}-room-header-${time}`}
-                                className="flex-shrink-0 w-24 border-r last:border-r-0 bg-muted/5"
-                              />
-                            ))}
-                          </div>
-                          
                           {/* Week Days Time Slots */}
                           {weekDays.map((day) => (
                             <div key={`${room.id}-${day.toISOString()}`} className="flex hover:bg-muted/10 transition-colors h-[60px] border-b last:border-b-0">
