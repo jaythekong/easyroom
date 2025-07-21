@@ -10,6 +10,7 @@ interface Organization {
   slug: string;
   logo_url?: string;
   primary_color?: string;
+  timezone?: string;
   created_at: string;
   updated_at: string;
 }

@@ -5,6 +5,7 @@ import { RoomTimeline } from "@/components/RoomTimeline";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
 import { UserMenu } from "@/components/UserMenu";
+import { OrganizationClock } from "@/components/OrganizationClock";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building } from "lucide-react";
@@ -252,6 +253,7 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center gap-3">
+              <OrganizationClock />
               <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
                 <Link to={`/${orgSlug}/my-bookings`}>
                   <Calendar className="h-4 w-4 mr-2" />
