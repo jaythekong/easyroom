@@ -192,12 +192,6 @@ export default function Dashboard() {
     console.log("View details for room:", roomId);
   };
 
-  const handleDateChange = (roomId: string, date: Date) => {
-    console.log("Date changed for room:", roomId, "to:", date);
-    // Here you could refresh room data for the selected date
-    // or filter timeline data based on the selected date
-  };
-
   const handleBookingConfirm = (booking: any) => {
     setBookings(prev => [...prev, booking]);
     setIsBookingModalOpen(false);
@@ -416,10 +410,9 @@ export default function Dashboard() {
                       status: 'available',
                       amenities: room.amenities || []
                     }}
-                     onBook={handleBookRoom}
-                     onViewDetails={handleViewDetails}
-                     onQuickBook={handleQuickBook}
-                     onDateChange={handleDateChange}
+                    onBook={handleBookRoom}
+                    onViewDetails={handleViewDetails}
+                    onQuickBook={handleQuickBook}
                   />
                 ))}
               </div>
@@ -446,10 +439,9 @@ export default function Dashboard() {
                             status: 'available',
                             amenities: room.amenities || []
                           }}
-                           onBook={handleBookRoom}
-                           onViewDetails={handleViewDetails}
-                           onDateChange={handleDateChange}
-                           showQuickActions={false}
+                          onBook={handleBookRoom}
+                          onViewDetails={handleViewDetails}
+                          showQuickActions={false}
                         />
                       ))}
                     </div>

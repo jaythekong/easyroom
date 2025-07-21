@@ -1,12 +1,7 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Users, Monitor, Wifi, Coffee, Video, Calendar as CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { Users, Monitor, Wifi, Coffee, Video, Calendar } from "lucide-react";
 
 interface Amenity {
   icon: React.ComponentType<any>;
@@ -28,7 +23,6 @@ interface RoomCardProps {
   room: Room;
   onBook: (roomId: string) => void;
   onViewDetails: (roomId: string) => void;
-  onDateChange?: (roomId: string, date: Date) => void;
 }
 
 const amenityIcons: Record<string, React.ComponentType<any>> = {
@@ -63,16 +57,8 @@ const getStatusConfig = (status: Room['status']) => {
   }
 };
 
-export function RoomCard({ room, onBook, onViewDetails, onDateChange }: RoomCardProps) {
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+export function RoomCard({ room, onBook, onViewDetails }: RoomCardProps) {
   const statusConfig = getStatusConfig(room.status);
-
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setSelectedDate(date);
-      onDateChange?.(room.id, date);
-    }
-  };
 
   return (
     <Card className={`transition-all duration-300 hover:shadow-[var(--shadow-elegant)] ${statusConfig.bgClass} border cursor-pointer`}>
@@ -123,34 +109,6 @@ export function RoomCard({ room, onBook, onViewDetails, onDateChange }: RoomCard
           </div>
         )}
 
-        {/* Calendar Selector */}
-        <div className="mb-4">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  "text-muted-foreground"
-                )}
-                size="sm"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(selectedDate, "PPP")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={handleDateChange}
-                initialFocus
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -166,7 +124,7 @@ export function RoomCard({ room, onBook, onViewDetails, onDateChange }: RoomCard
             disabled={room.status === 'busy'}
             className="flex-1"
           >
-            <CalendarIcon className="h-4 w-4 mr-1" />
+            <Calendar className="h-4 w-4 mr-1" />
             Book Now
           </Button>
         </div>
