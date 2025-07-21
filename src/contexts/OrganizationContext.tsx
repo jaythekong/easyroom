@@ -35,7 +35,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    console.log('OrganizationProvider: orgSlug changed to:', orgSlug, 'user:', user?.id);
     if (orgSlug) {
       fetchOrganization();
     }
@@ -44,7 +43,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const fetchOrganization = async () => {
     if (!orgSlug) return;
 
-    console.log('Fetching organization for slug:', orgSlug);
     setIsLoading(true);
     setError(null);
 
@@ -57,7 +55,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         .single();
 
       if (orgError) {
-        console.log('Organization fetch error:', orgError);
         if (orgError.code === 'PGRST116') {
           setError('Organization not found');
         } else {
@@ -66,7 +63,6 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
         return;
       }
 
-      console.log('Successfully fetched organization:', org);
       setOrganization(org);
 
       // Check if user belongs to this organization
