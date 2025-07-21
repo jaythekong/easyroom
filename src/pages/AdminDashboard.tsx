@@ -10,8 +10,11 @@ import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 
 export default function AdminDashboard() {
+  useOrganizationTheme(); // Apply organization theme
+  
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">

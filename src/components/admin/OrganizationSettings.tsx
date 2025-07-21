@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, Check, AlertCircle, Copy } from "lucide-react";
+import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HexColorPicker } from "react-colorful";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +16,8 @@ interface Organization {
   id: string;
   name: string;
   slug: string;
+  logo_url?: string;
+  primary_color?: string;
   created_at: string;
 }
 
@@ -23,9 +28,14 @@ export function OrganizationSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [subdomain, setSubdomain] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("#ea580c");
   const [originalSubdomain, setOriginalSubdomain] = useState("");
+  const [originalLogoUrl, setOriginalLogoUrl] = useState("");
+  const [originalPrimaryColor, setOriginalPrimaryColor] = useState("#ea580c");
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   useEffect(() => {
     fetchOrganization();
@@ -56,7 +66,11 @@ export function OrganizationSettings() {
       setOrganization(org);
       setOrgName(org.name);
       setSubdomain(org.slug);
+      setLogoUrl(org.logo_url || "");
+      setPrimaryColor(org.primary_color || "#ea580c");
       setOriginalSubdomain(org.slug);
+      setOriginalLogoUrl(org.logo_url || "");
+      setOriginalPrimaryColor(org.primary_color || "#ea580c");
     } catch (error) {
       console.error('Error fetching organization:', error);
       toast({
@@ -107,6 +121,41 @@ export function OrganizationSettings() {
     }, 500);
   };
 
+  const uploadLogo = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setIsUploadingLogo(true);
+      
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${organization?.id}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      setLogoUrl(data.publicUrl);
+      
+      toast({
+        title: "Logo uploaded!",
+        description: "Your organization logo has been updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload logo",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
   const saveSettings = async () => {
     if (!organization || !orgName.trim() || !subdomain.trim()) return;
 
@@ -126,12 +175,16 @@ export function OrganizationSettings() {
         .update({
           name: orgName.trim(),
           slug: subdomain.trim(),
+          logo_url: logoUrl || null,
+          primary_color: primaryColor,
         })
         .eq('id', organization.id);
 
       if (error) throw error;
 
       setOriginalSubdomain(subdomain);
+      setOriginalLogoUrl(logoUrl);
+      setOriginalPrimaryColor(primaryColor);
       toast({
         title: "Settings saved",
         description: "Organization settings have been updated successfully",
@@ -170,11 +223,99 @@ export function OrganizationSettings() {
     );
   }
 
-  const hasChanges = orgName !== organization.name || subdomain !== originalSubdomain;
+  const hasChanges = orgName !== organization.name || 
+    subdomain !== originalSubdomain || 
+    logoUrl !== originalLogoUrl || 
+    primaryColor !== originalPrimaryColor;
   const canSave = hasChanges && orgName.trim() && subdomain.trim() && isAvailable !== false;
 
   return (
     <div className="space-y-6">
+      {/* Branding & Customization */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
+            Branding & Customization
+          </CardTitle>
+          <CardDescription>
+            Customize your organization's visual appearance and branding
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Logo Upload */}
+          <div className="space-y-3">
+            <Label>Organization Logo</Label>
+            <div className="flex items-center gap-4">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={logoUrl} alt={organization.name} />
+                <AvatarFallback className="text-lg">
+                  {organization.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-2">
+                <input
+                  type="file"
+                  id="logo-upload"
+                  accept="image/*"
+                  onChange={uploadLogo}
+                  className="hidden"
+                  disabled={isUploadingLogo}
+                />
+                <Label htmlFor="logo-upload">
+                  <Button variant="outline" size="sm" asChild>
+                    <span className="flex items-center gap-2 cursor-pointer">
+                      <Upload className="h-4 w-4" />
+                      {isUploadingLogo ? "Uploading..." : "Upload Logo"}
+                    </span>
+                  </Button>
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Recommended: Square image, 200x200px or larger
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Primary Color */}
+          <div className="space-y-3">
+            <Label>Primary Color</Label>
+            <div className="flex items-center gap-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-[100px] h-10 p-1"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    <div className="w-full h-full rounded border-2 border-white/20" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-3" side="bottom" align="start">
+                  <HexColorPicker color={primaryColor} onChange={setPrimaryColor} />
+                  <div className="mt-3 space-y-2">
+                    <Label htmlFor="color-input" className="text-sm">Hex Color</Label>
+                    <Input
+                      id="color-input"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value)}
+                      placeholder="#000000"
+                      className="h-8"
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <div>
+                <p className="text-sm font-medium">{primaryColor}</p>
+                <p className="text-xs text-muted-foreground">
+                  This color will be used for buttons, links, and accents throughout your organization
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Organization Details */}
       <Card>
         <CardHeader>
@@ -183,7 +324,7 @@ export function OrganizationSettings() {
             Organization Settings
           </CardTitle>
           <CardDescription>
-            Manage your organization's basic information and branding
+            Manage your organization's basic information
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -299,7 +440,8 @@ export function OrganizationSettings() {
               onClick={saveSettings}
               disabled={!canSave || isLoading}
             >
-              {isLoading ? "Saving..." : "Save Changes"}
+              <Save className="h-4 w-4 mr-2" />
+              {isLoading ? "Saving..." : "Save All Changes"}
             </Button>
           </div>
         </CardContent>

@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 
 interface Room {
   id: string;
@@ -35,6 +36,7 @@ interface UserProfile {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const { organization, userRole } = useOrganization();
+  useOrganizationTheme(); // Apply organization theme
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -234,7 +236,11 @@ export default function Dashboard() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Building className="h-6 w-6 text-primary" />
+                {organization?.logo_url ? (
+                  <img src={organization.logo_url} alt={organization.name} className="h-6 w-6 object-contain" />
+                ) : (
+                  <Building className="h-6 w-6 text-primary" />
+                )}
               </div>
               <div>
                 <h1 className="text-xl font-bold gradient-text">{organization?.name || "Room Booking"}</h1>
