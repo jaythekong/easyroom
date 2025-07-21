@@ -6,10 +6,11 @@ import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee } from "lucide-react";
+import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Room {
   id: string;
@@ -23,6 +24,7 @@ interface Room {
 }
 
 export default function Dashboard() {
+  const { user, signOut } = useAuth();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
@@ -187,6 +189,9 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                Welcome, {user?.email}
+              </span>
               <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Calendar className="h-4 w-4 mr-2" />
                 My Bookings
@@ -197,9 +202,9 @@ export default function Dashboard() {
                   Admin
                 </Link>
               </Button>
-              <Button size="sm" className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
-                <Users className="h-4 w-4 mr-2" />
-                Alex Manager
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
               </Button>
             </div>
           </div>

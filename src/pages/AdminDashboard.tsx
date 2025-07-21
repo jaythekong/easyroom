@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RoomManagement } from "@/components/admin/RoomManagement";
 import { AdminStats } from "@/components/admin/AdminStats";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function AdminDashboard() {
   return (
