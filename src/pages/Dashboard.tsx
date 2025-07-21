@@ -168,10 +168,6 @@ export default function Dashboard() {
     if (room) {
       setSelectedRoom(room);
       setIsBookingModalOpen(true);
-      toast({
-        title: "Time Slot Selected",
-        description: `Selected ${room.name} at ${timeSlot}`,
-      });
     }
   };
 
