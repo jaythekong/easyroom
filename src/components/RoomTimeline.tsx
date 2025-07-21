@@ -229,55 +229,51 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                   <div key={`room-name-${room.id}`}>
                     {!isExpanded ? (
                       // Collapsed: Room name only
-                      <div className="p-4 bg-card/80 backdrop-blur min-h-[80px] flex items-center hover:bg-muted/20 transition-colors">
-                        <div className="flex items-center gap-3 w-full">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRoomExpansion(room.id)}
-                            className="h-7 w-7 p-0 hover:bg-muted/50"
-                          >
-                            <Expand className="h-3.5 w-3.5" />
-                          </Button>
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                              <Users className="h-3 w-3 flex-shrink-0" />
-                              <span>{room.capacity}</span>
-                              {room.location && (
-                                <>
-                                  <span className="text-muted-foreground/50">•</span>
-                                  <span className="truncate">{room.location}</span>
-                                </>
-                              )}
-                            </div>
+                      <div className="p-4 bg-card/80 backdrop-blur min-h-[80px] flex items-center hover:bg-muted/20 transition-colors relative">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleRoomExpansion(room.id)}
+                          className="absolute top-2 right-2 h-6 w-6 p-0 hover:bg-muted/50"
+                        >
+                          <Expand className="h-3 w-3" />
+                        </Button>
+                        <div className="min-w-0 flex-1 pr-8">
+                          <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                            <Users className="h-3 w-3 flex-shrink-0" />
+                            <span>{room.capacity}</span>
+                            {room.location && (
+                              <>
+                                <span className="text-muted-foreground/50">•</span>
+                                <span className="truncate">{room.location}</span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
                     ) : (
                       // Expanded: Room header + week days
                       <>
-                        <div className="p-4 border-b bg-muted/10 min-h-[64px] flex items-center hover:bg-muted/20 transition-colors">
-                          <div className="flex items-center gap-3 w-full">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => toggleRoomExpansion(room.id)}
-                              className="h-7 w-7 p-0 hover:bg-muted/50"
-                            >
-                              <Minimize className="h-3.5 w-3.5" />
-                            </Button>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
-                                <Badge variant="secondary" className="text-xs font-medium">
-                                  <Users className="h-3 w-3 mr-1" />
-                                  {room.capacity}
-                                </Badge>
-                              </div>
-                              <div className="text-xs text-muted-foreground font-medium mt-1">
-                                Week View
-                              </div>
+                        <div className="p-4 border-b bg-muted/10 min-h-[64px] flex items-center hover:bg-muted/20 transition-colors relative">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleRoomExpansion(room.id)}
+                            className="absolute top-2 right-2 h-6 w-6 p-0 hover:bg-muted/50"
+                          >
+                            <Minimize className="h-3 w-3" />
+                          </Button>
+                          <div className="min-w-0 flex-1 pr-8">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
+                              <Badge variant="secondary" className="text-xs font-medium">
+                                <Users className="h-3 w-3 mr-1" />
+                                {room.capacity}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium mt-1">
+                              Week View
                             </div>
                           </div>
                         </div>
