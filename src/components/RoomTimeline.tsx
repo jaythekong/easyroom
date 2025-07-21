@@ -92,6 +92,15 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
   const { data: downtime = [], refetch: refetchDowntime } = useDowntime(selectedDate);
 
+  // Debug logging - critical for tracking data flow
+  console.log('🔍 RoomTimeline Debug:', {
+    selectedDate: selectedDate.toISOString(),
+    bookingsCount: bookings.length,
+    roomsCount: rooms.length,
+    bookingTitles: bookings.map(b => b.title),
+    organizationTimezone: organization?.timezone
+  });
+
   // Expand all rooms by default
   useEffect(() => {
     if (rooms.length > 0 && expandedRooms.size === 0) {
@@ -147,13 +156,31 @@ const RoomTimelineComponent = memo(function RoomTimeline({
 
   // Generate rooms with real booking data
   const roomsWithBookings = useMemo(() => {
-    console.log(`Processing ${bookings.length} bookings for timeline`);
+    console.log('🏠 Processing rooms with bookings:', {
+      roomsCount: rooms.length,
+      bookingsTotal: bookings.length,
+      weekDaysCount: weekDays.length,
+      timeSlotsCount: timeSlots.length,
+      selectedDateStr: format(selectedDate, 'yyyy-MM-dd')
+    });
+    
+    if (bookings.length === 0) {
+      console.warn('⚠️ NO BOOKINGS FOUND - Check if data is being fetched correctly');
+    }
     
     return rooms.map(room => {
       const roomBookings = bookings.filter(b => b.room_id === room.id);
       const roomDowntime = downtime.filter(d => d.room_id === room.id);
       
-      console.log(`Room ${room.name} has ${roomBookings.length} bookings:`, roomBookings.map(b => b.title));
+      console.log(`🏠 Room "${room.name}" (${room.id}):`, {
+        bookingsCount: roomBookings.length,
+        bookings: roomBookings.map(b => ({
+          title: b.title,
+          start: b.start_time,
+          end: b.end_time,
+          id: b.id
+        }))
+      });
       
       const timeSlots: TimeSlot[] = [];
       
@@ -165,8 +192,25 @@ const RoomTimelineComponent = memo(function RoomTimeline({
           const booking = roomBookings.find(b => isBookingInSlot(b, dateStr, time));
           const roomDt = roomDowntime.find(d => isBookingInSlot(d as any, dateStr, time));
           
+          // Debug specific cases
           if (booking) {
-            console.log(`Found booking "${booking.title}" for ${room.name} at ${dateStr} ${time}`);
+            console.log(`✅ BOOKING FOUND: "${booking.title}" for ${room.name} at ${dateStr} ${time}`, {
+              bookingStart: booking.start_time,
+              bookingEnd: booking.end_time,
+              slotTime: `${dateStr}T${time}:00`
+            });
+          }
+          
+          // Debug for missing bookings on specific dates
+          if (room.name.includes('6th Floor') && dateStr === '2025-07-25' && time === '10:00') {
+            console.log(`🔍 Checking slot 10:00 for 6th Floor Meeting Room on 2025-07-25:`, {
+              roomBookings: roomBookings.map(b => ({
+                title: b.title,
+                start: b.start_time,
+                end: b.end_time
+              })),
+              foundBooking: !!booking
+            });
           }
           
           timeSlots.push({
