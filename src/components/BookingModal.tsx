@@ -244,9 +244,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         throw new Error('User organization not found - please contact admin');
       }
 
-      const bookingData = {
+      let bookingData: any = {
         room_id: room.id,
-        user_id: user.id,
         title: formData.title,
         description: formData.description,
         start_time: startDateTime,
@@ -255,6 +254,12 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         recurring: formData.recurring,
         organization_id: profile.organization_id
       };
+
+      // For new bookings, set the current user as the owner
+      // For updates, we don't change the user_id - keep original owner
+      if (!existingBooking) {
+        bookingData.user_id = user.id;
+      }
 
       console.log("About to create/update booking with:", bookingData);
 
