@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay, addDays as addDaysUtil, subDays } from "date-fns";
 import { BookingDetailsModal } from "@/components/BookingDetailsModal";
 import { useBookings, useDowntime } from "@/hooks/useBookings";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface TimeSlot {
   time: string;
@@ -69,6 +70,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+  const { organization } = useOrganization();
 
   // Use React Query for data fetching
   const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
@@ -182,10 +184,35 @@ const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, 
       weekDays.forEach(date => {
         timeSlots.forEach(({ time, endTime }) => {
           const dateStr = format(date, 'yyyy-MM-dd');
-          const startDateTime = `${dateStr}T${time}:00.000Z`; // Add .000Z to match UTC format
+          const orgTimezone = organization?.timezone || 'America/New_York';
           
-          const booking = findBookingForSlot(room.id, startDateTime);
-          const roomDowntime = findDowntimeForSlot(room.id, startDateTime);
+          // Create the slot time in the organization's timezone
+          // The time slots represent local time in the organization's timezone
+          const slotLocalTime = `${dateStr}T${time}:00`;
+          
+          // Convert to UTC by creating a date in org timezone then getting UTC equivalent
+          const localDate = new Date(slotLocalTime);
+          const utcTime = new Date(localDate.toLocaleString('en-US', { timeZone: 'UTC' }));
+          const orgTime = new Date(localDate.toLocaleString('en-US', { timeZone: orgTimezone }));
+          const offset = utcTime.getTime() - orgTime.getTime();
+          const slotUTC = new Date(localDate.getTime() + offset);
+          
+          // For debugging the specific booking
+          if (room.name === '6th Floor Meeting Room' && dateStr === '2025-07-25') {
+            console.log(`Checking slot ${time} for ${room.name}:`, {
+              slotLocalTime,
+              slotUTC: slotUTC.toISOString(),
+              orgTimezone,
+              roomBookings: bookingsByRoom.get(room.id)?.map(b => ({
+                title: b.title,
+                start: b.start_time,
+                end: b.end_time
+              })) || []
+            });
+          }
+          
+          const booking = findBookingForSlot(room.id, slotUTC.toISOString());
+          const roomDowntime = findDowntimeForSlot(room.id, slotUTC.toISOString());
           
           
           timeSlots.push({
@@ -207,7 +234,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, 
         timeSlots
       };
     });
-  }, [rooms, bookings, downtime, weekDays, timeSlots, findBookingForSlot, findDowntimeForSlot]);
+  }, [rooms, bookings, downtime, weekDays, timeSlots, findBookingForSlot, findDowntimeForSlot, organization]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
