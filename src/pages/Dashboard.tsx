@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -318,7 +319,6 @@ export default function Dashboard() {
               </div>
             ) : (
               <RoomTimeline
-                key={refreshKey}
                 rooms={timelineRooms}
                 selectedDate={selectedDate}
                 onQuickBook={handleQuickBook}
@@ -336,6 +336,8 @@ export default function Dashboard() {
                     setIsBookingModalOpen(true);
                   }
                 }}
+                expandedRooms={expandedRooms}
+                onExpandedRoomsChange={setExpandedRooms}
               />
             )}
           </TabsContent>

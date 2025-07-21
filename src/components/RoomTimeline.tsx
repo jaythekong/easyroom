@@ -60,11 +60,12 @@ interface RoomTimelineProps {
   onBookingUpdate?: () => void;
   onDateSelect: (date: Date) => void;
   onEditBooking?: (booking: any) => void;
+  expandedRooms: Set<string>;
+  onExpandedRoomsChange: (expandedRooms: Set<string>) => void;
 }
 
-export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect, onEditBooking }: RoomTimelineProps) {
+export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect, onEditBooking, expandedRooms, onExpandedRoomsChange }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [downtime, setDowntime] = useState<Downtime[]>([]);
   const [roomsWithBookings, setRoomsWithBookings] = useState<TimelineRoom[]>([]);
@@ -303,15 +304,13 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
   };
 
   const toggleRoomExpansion = (roomId: string) => {
-    setExpandedRooms(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(roomId)) {
-        newSet.delete(roomId);
-      } else {
-        newSet.add(roomId);
-      }
-      return newSet;
-    });
+    const newSet = new Set(expandedRooms);
+    if (newSet.has(roomId)) {
+      newSet.delete(roomId);
+    } else {
+      newSet.add(roomId);
+    }
+    onExpandedRoomsChange(newSet);
   };
 
   const goToPreviousDay = () => {
