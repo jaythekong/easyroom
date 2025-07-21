@@ -5,6 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./hooks/useAuth";
+import { OrganizationProvider } from "./contexts/OrganizationContext";
+import { OrganizationLayout } from "./components/OrganizationLayout";
+import { OrganizationSelector } from "./components/OrganizationSelector";
 import Index from "./pages/Index";
 import AdminDashboard from "./pages/AdminDashboard";
 import MyBookings from "./pages/MyBookings";
@@ -29,12 +32,39 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/my-bookings" element={<ProtectedRoute><MyBookings /></ProtectedRoute>} />
-              <Route path="/admin" element={<AdminDashboard />} />
+              {/* Global routes (no organization context) */}
               <Route path="/auth" element={<Auth />} />
               <Route path="/invite/:token" element={<InviteSignup />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              
+              {/* Organization-specific routes */}
+              <Route path="/:orgSlug/*" element={
+                <OrganizationProvider>
+                  <Routes>
+                    <Route path="/" element={
+                      <OrganizationLayout requireAuth={true}>
+                        <Index />
+                      </OrganizationLayout>
+                    } />
+                    <Route path="/my-bookings" element={
+                      <OrganizationLayout requireAuth={true}>
+                        <ProtectedRoute>
+                          <MyBookings />
+                        </ProtectedRoute>
+                      </OrganizationLayout>
+                    } />
+                    <Route path="/admin" element={
+                      <OrganizationLayout requireAuth={true} requireAdmin={true}>
+                        <AdminDashboard />
+                      </OrganizationLayout>
+                    } />
+                  </Routes>
+                </OrganizationProvider>
+              } />
+              
+              {/* Fallback route for root - show organization selector */}
+              <Route path="/" element={<OrganizationSelector />} />
+              
+              {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

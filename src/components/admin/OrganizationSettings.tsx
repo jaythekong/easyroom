@@ -151,8 +151,8 @@ export function OrganizationSettings() {
   };
 
   const copySubdomainUrl = async () => {
-    const subdomainUrl = `https://${subdomain}.roomer.lovable.app`;
-    await navigator.clipboard.writeText(subdomainUrl);
+    const pathUrl = `https://roomer.lovable.app/${subdomain}`;
+    await navigator.clipboard.writeText(pathUrl);
     toast({
       title: "Copied!",
       description: "Subdomain URL copied to clipboard",
@@ -217,15 +217,15 @@ export function OrganizationSettings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Globe className="h-5 w-5" />
-            Subdomain Setup
+            Organization Path Setup
           </CardTitle>
           <CardDescription>
-            Configure your organization's custom subdomain for branded access
+            Configure your organization's custom path for branded access
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="subdomain">Subdomain</Label>
+            <Label htmlFor="subdomain">Organization Path</Label>
             <div className="flex items-center gap-2">
               <div className="flex-1 relative">
                 <Input
@@ -247,31 +247,31 @@ export function OrganizationSettings() {
                   <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-destructive" />
                 )}
               </div>
-              <span className="text-muted-foreground">.roomer.lovable.app</span>
+              <span className="text-muted-foreground">roomer.lovable.app/</span>
             </div>
             
             {isAvailable === true && (
               <p className="text-sm text-green-600 mt-1">
-                ✓ Subdomain is available
+                ✓ Path is available
               </p>
             )}
             {isAvailable === false && (
               <p className="text-sm text-destructive mt-1">
-                ✗ Subdomain is already taken
+                ✗ Path is already taken
               </p>
             )}
             
             <p className="text-sm text-muted-foreground mt-1">
-              Your organization will be accessible at: <code className="bg-muted px-1 rounded">https://{subdomain}.roomer.lovable.app</code>
+              Your organization will be accessible at: <code className="bg-muted px-1 rounded">https://roomer.lovable.app/{subdomain}</code>
             </p>
           </div>
 
           {/* Current Status */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div>
-              <p className="font-medium">Current Subdomain</p>
+              <p className="font-medium">Current Path</p>
               <p className="text-sm text-muted-foreground">
-                https://{originalSubdomain}.roomer.lovable.app
+                https://roomer.lovable.app/{originalSubdomain}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -308,20 +308,20 @@ export function OrganizationSettings() {
       {/* Additional Info */}
       <Card>
         <CardHeader>
-          <CardTitle>Subdomain Information</CardTitle>
+          <CardTitle>Organization Path Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <div className="flex items-start gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-            <p>Subdomains must be 3-63 characters long and contain only letters, numbers, and hyphens</p>
+            <p>Organization paths must be 3-63 characters long and contain only letters, numbers, and hyphens</p>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-            <p>Changes may take a few minutes to propagate across the internet</p>
+            <p>Changes take effect immediately - your organization will be accessible at the new path</p>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-            <p>Your old subdomain will redirect to the new one automatically</p>
+            <p>Your old path will redirect to the new one automatically</p>
           </div>
         </CardContent>
       </Card>

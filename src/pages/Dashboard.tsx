@@ -7,11 +7,12 @@ import { BookingModal } from "@/components/BookingModal";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee, LogOut } from "lucide-react";
+import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Zap, Coffee, LogOut, Building } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Room {
   id: string;
@@ -26,6 +27,8 @@ interface Room {
 
 export default function Dashboard() {
   const { user, signOut } = useAuth();
+  const { organization, userRole } = useOrganization();
+  const { orgSlug } = useParams<{ orgSlug: string }>();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
@@ -186,10 +189,10 @@ export default function Dashboard() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <Building2 className="h-6 w-6 text-primary" />
+                <Building className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-bold gradient-text">Meeting Room Booker</h1>
+                <h1 className="text-xl font-bold gradient-text">{organization?.name || "Room Booking"}</h1>
                 <p className="text-sm text-muted-foreground">Find and book your perfect meeting space</p>
               </div>
             </div>
@@ -200,17 +203,19 @@ export default function Dashboard() {
               </span>
               <ThemeToggle />
               <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
-                <Link to="/my-bookings">
+                <Link to={`/${orgSlug}/my-bookings`}>
                   <Calendar className="h-4 w-4 mr-2" />
                   My Bookings
                 </Link>
               </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/admin">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Admin
-                </Link>
-              </Button>
+              {userRole === 'admin' && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link to={`/${orgSlug}/admin`}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Admin
+                  </Link>
+                </Button>
+              )}
               <Button variant="outline" size="sm" onClick={signOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
