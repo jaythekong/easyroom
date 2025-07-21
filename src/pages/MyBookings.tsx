@@ -143,6 +143,21 @@ export default function MyBookings() {
   };
 
   const handleEditBooking = (booking: Booking) => {
+    console.log('📝 MyBookings - Edit booking clicked:', {
+      booking,
+      room: booking.room,
+      fields: {
+        id: booking.id,
+        title: booking.title,
+        description: booking.description,
+        start_time: booking.start_time,
+        end_time: booking.end_time,
+        attendees: booking.attendees,
+        recurring: booking.recurring,
+        status: booking.status
+      }
+    });
+    
     setEditingBooking(booking);
     setSelectedRoom(booking.room);
     setIsBookingModalOpen(true);

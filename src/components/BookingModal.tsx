@@ -68,11 +68,31 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Reset form data when modal opens with new initial values
   useEffect(() => {
     if (isOpen) {
+      console.log('📝 BookingModal opened with data:', {
+        existingBooking,
+        initialDate,
+        initialStartTime,
+        room
+      });
+
       if (existingBooking) {
         // Pre-fill form with existing booking data
         const startDate = new Date(existingBooking.start_time);
         const endDate = new Date(existingBooking.end_time);
-        setFormData({
+        
+        console.log('📝 Existing booking data:', {
+          id: existingBooking.id,
+          title: existingBooking.title,
+          description: existingBooking.description,
+          start_time: existingBooking.start_time,
+          end_time: existingBooking.end_time,
+          attendees: existingBooking.attendees,
+          recurring: existingBooking.recurring,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString()
+        });
+
+        const newFormData = {
           title: existingBooking.title || "",
           date: startDate,
           startTime: format(startDate, 'HH:mm'),
@@ -80,9 +100,12 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           attendees: existingBooking.attendees?.toString() || "",
           description: existingBooking.description || "",
           recurring: existingBooking.recurring || "none"
-        });
+        };
+
+        console.log('📝 Setting form data:', newFormData);
+        setFormData(newFormData);
       } else {
-        setFormData({
+        const newFormData = {
           title: "",
           date: initialDate || new Date(),
           startTime: initialStartTime || "",
@@ -90,7 +113,9 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           attendees: "",
           description: "",
           recurring: "none"
-        });
+        };
+        console.log('📝 Setting new booking form data:', newFormData);
+        setFormData(newFormData);
       }
     }
   }, [isOpen, initialDate, initialStartTime, existingBooking]);
