@@ -187,6 +187,24 @@ const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, 
           const booking = findBookingForSlot(room.id, startDateTime);
           const roomDowntime = findDowntimeForSlot(room.id, startDateTime);
           
+          // Debug logging for the ererererere booking specifically
+          if (room.id === 'b48fbe3f-28c0-4603-85ba-5a7b1b736306' && dateStr === '2025-07-25') {
+            const roomBookings = bookingsByRoom.get(room.id) || [];
+            console.log(`Debug for room ${room.name} on ${dateStr}:`, {
+              slotDateTime: startDateTime,
+              timeSlotTime: time,
+              roomBookingsCount: roomBookings.length,
+              roomBookings: roomBookings.map(b => ({
+                title: b.title,
+                start_time: b.start_time,
+                end_time: b.end_time,
+                startParsed: new Date(b.start_time),
+                endParsed: new Date(b.end_time),
+                slotStartParsed: new Date(startDateTime)
+              }))
+            });
+          }
+          
           if (booking) {
             console.log(`Found booking match:`, {
               bookingTitle: booking.title,
