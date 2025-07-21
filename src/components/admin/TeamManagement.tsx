@@ -113,12 +113,15 @@ export function TeamManagement() {
         `)
         .eq('organization_id', organizationId);
 
-      if (membersError) throw membersError;
+      if (membersError) {
+        console.error('Members query error:', membersError);
+        throw membersError;
+      }
 
-      // For now, use placeholder emails since we don't have email in profiles table
+      // Use user_id for display since we can't access auth.users directly
       const membersWithEmails = (members || []).map((member) => ({
         ...member,
-        email: `user-${member.user_id.slice(0, 8)}@company.com`
+        email: member.user_id === user?.id ? user?.email || 'your-email@company.com' : `user-${member.user_id.slice(0, 8)}@company.com`
       }));
 
       setTeamMembers(membersWithEmails);
@@ -131,7 +134,10 @@ export function TeamManagement() {
         .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString());
 
-      if (invitesError) throw invitesError;
+      if (invitesError) {
+        console.error('Invites query error:', invitesError);
+        throw invitesError;
+      }
       setInvitations(invites || []);
     } catch (error) {
       console.error('Error fetching team data:', error);
