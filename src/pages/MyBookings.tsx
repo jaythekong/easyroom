@@ -25,6 +25,7 @@ interface Booking {
     name: string;
     location?: string;
     capacity: number;
+    amenities: string[];
   };
 }
 
@@ -54,7 +55,12 @@ export default function MyBookings() {
             id,
             name,
             location,
-            capacity
+            capacity,
+            room_amenities (
+              amenities (
+                name
+              )
+            )
           )
         `)
         .eq('user_id', user?.id)
@@ -65,7 +71,10 @@ export default function MyBookings() {
       // Transform the data to match our interface
       const formattedBookings = data?.map(booking => ({
         ...booking,
-        room: booking.rooms
+        room: {
+          ...booking.rooms,
+          amenities: booking.rooms?.room_amenities?.map(ra => ra.amenities.name) || []
+        }
       })) || [];
 
       setBookings(formattedBookings);
