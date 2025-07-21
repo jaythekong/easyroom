@@ -314,7 +314,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
               </CardHeader>
               <CardContent className="pt-0">
                 {/* Single time header for the room */}
-                <div className="flex gap-2 mb-4 text-xs text-muted-foreground border-b pb-2">
+                <div className="flex gap-1 mb-4 text-xs text-muted-foreground border-b pb-2">
                   <div className="flex-shrink-0 w-16 text-center font-medium">Day</div>
                   {timeSlots.map(({ time }) => (
                     <div key={`header-${time}`} className="flex-shrink-0 w-16 text-center font-medium">
@@ -325,7 +325,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
                 {!isExpanded ? (
                   // Collapsed: Show today's time slots
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                     <div className="flex-shrink-0 w-16 flex items-center justify-center">
                       <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
                         {format(selectedDate, 'd')}
