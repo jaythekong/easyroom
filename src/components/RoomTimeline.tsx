@@ -372,14 +372,6 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                         <ArrowRight className="h-4 w-4" />
                       </Button>
                     </div>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onQuickBook(room.id, '')}
-                    >
-                      Book Room
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
