@@ -213,273 +213,125 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
         </div>
       </div>
 
-      {/* Timeline Table */}
-      <div className="border rounded-lg overflow-hidden bg-card shadow-sm">
-        <div className="flex">
-          {/* Fixed Room Names Column */}
-          <div className="flex-shrink-0 w-[260px] border-r bg-muted/30">
-            {/* Header space */}
-            <div className="h-16 border-b bg-background/95 backdrop-blur flex">
-              <div className="w-12 border-r"></div>
-              <div className="flex-1"></div>
-            </div>
-            
-            {/* Room Names */}
-            <div className="divide-y divide-border/50">
-              {roomsWithBookings.map((room) => {
-                const isExpanded = expandedRooms.has(room.id);
-                return (
-                  <div key={`room-name-${room.id}`}>
-                    {!isExpanded ? (
-                      // Collapsed: Room name only
-                      <div className="min-h-[80px] flex hover:bg-muted/20 transition-colors">
-                        <div className="w-12 border-r bg-muted/10 flex items-center justify-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRoomExpansion(room.id)}
-                            className="h-6 w-6 p-0 hover:bg-muted/50"
-                          >
-                            <Expand className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <div className="flex-1 p-4 bg-card/80 backdrop-blur flex items-center">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-semibold text-base text-foreground truncate">{room.name}</h3>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                              <Users className="h-3 w-3 flex-shrink-0" />
-                              <span>{room.capacity}</span>
-                              {room.location && (
-                                <>
-                                  <span className="text-muted-foreground/50">•</span>
-                                  <span className="truncate">{room.location}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      // Expanded: Room header + week days
-                        <>
-                          {/* Room Header */}
-                          <div className="min-h-[64px] flex border-b bg-muted/10 hover:bg-muted/20 transition-colors">
-                            <div className="w-12 border-r bg-muted/10 flex items-center justify-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => toggleRoomExpansion(room.id)}
-                                className="h-6 w-6 p-0 hover:bg-muted/50"
-                              >
-                                <Minimize className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <div className="flex-1 p-4 flex items-center">
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
-                                  <Badge variant="secondary" className="text-xs font-medium">
-                                    <Users className="h-3 w-3 mr-1" />
-                                    {room.capacity}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          {/* Week Day Labels */}
-                          {weekDays.map((day) => {
-                            const isWeekend = day.getDay() === 0 || day.getDay() === 6; // Sunday or Saturday
-                            return (
-                              <div key={`day-label-${day.toISOString()}`} className="h-[60px] flex hover:bg-muted/10 transition-colors border-b last:border-b-0">
-                                <div className={`w-12 border-r flex items-center justify-center text-xs font-bold ${
-                                  isWeekend ? 'bg-red-50 text-red-600' : 'bg-muted/5 text-muted-foreground'
-                                }`}>
-                                  {format(day, 'EEE')}
-                                </div>
-                                <div className="flex-1 px-4 bg-muted/5 flex items-center">
-                                  <div className="flex items-center gap-3 w-full">
-                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                                      isSameDay(day, selectedDate) 
-                                        ? 'bg-primary text-primary-foreground shadow-sm' 
-                                        : 'bg-muted text-muted-foreground'
-                                    }`}>
-                                      {format(day, 'd')}
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="text-sm font-medium">
-                                        {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'MMM d')}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          {/* Scrollable Time Content - Headers and Slots Together */}
-          <div className="flex-1 overflow-x-auto">
-            <div className="min-w-max">
-              {/* Time Headers */}
-              <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b h-16">
-                <div className="flex h-full">
-                  {timeSlots.map(({ time }) => (
-                    <div 
-                      key={`header-${time}`} 
-                      className={`flex-shrink-0 w-24 flex items-center justify-center border-r last:border-r-0 text-sm font-semibold transition-colors ${
-                        isCurrentHour(time) 
-                          ? 'text-primary bg-primary/10 border-primary/20' 
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {time}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Time Slots Content */}
-              <div className="divide-y divide-border/50">
-                {roomsWithBookings.map((room) => {
-                  const isExpanded = expandedRooms.has(room.id);
-                  return (
-                    <div key={`time-slots-${room.id}`}>
-                      {!isExpanded ? (
-                        // Collapsed: Today's time slots
-                        <div className="flex min-h-[80px] hover:bg-muted/20 transition-colors">
-                          {timeSlots.map(({ time }) => {
-                            const todayKey = format(selectedDate, 'yyyy-MM-dd');
-                            const roomTimeSlot = room.timeSlots.find(ts => 
-                              ts.time === time && ts.date === todayKey
-                            );
-                            const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                            const isCurrent = isCurrentHour(time);
-                            
-                            return (
-                              <div
-                                key={`${room.id}-today-${time}`}
-                                className={`
-                                  flex-shrink-0 w-24 border-r last:border-r-0 cursor-pointer flex items-center justify-center text-xs font-semibold transition-all duration-200 min-h-[80px]
-                                  ${isAvailable 
-                                    ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] hover:shadow-sm' 
-                                    : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed'
-                                  }
-                                  ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10 shadow-inner' : ''}
-                                `}
-                                onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                              >
-                                {isAvailable ? (
-                                  isCurrent ? (
-                                    <Button
-                                      size="sm"
-                                      className="h-8 w-[88px] text-xs font-medium animate-pulse shadow-sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onQuickBook(room.id, time);
-                                      }}
-                                    >
-                                      Book Now
-                                    </Button>
-                                  ) : (
-                                    <span className="text-success font-bold">Free</span>
-                                  )
-                                ) : (
-                                  <div className="text-center">
-                                    <div className="text-destructive font-bold">Booked</div>
-                                    {roomTimeSlot?.meeting && (
-                                      <div className="text-xs text-muted-foreground truncate max-w-[80px]">
-                                        {roomTimeSlot.meeting}
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        // Expanded: Room header + all week days
-                        <>
-                          {/* Room Header Spacer */}
-                          <div className="flex border-b bg-muted/10 min-h-[64px] hover:bg-muted/20 transition-colors">
-                            {timeSlots.map(({ time }) => (
-                              <div 
-                                key={`${room.id}-room-header-${time}`}
-                                className="flex-shrink-0 w-24 border-r last:border-r-0 bg-muted/5"
-                              />
-                            ))}
-                          </div>
-                          
-                          {/* Week Days Time Slots */}
-                          {weekDays.map((day) => (
-                            <div key={`${room.id}-${day.toISOString()}`} className="flex hover:bg-muted/10 transition-colors h-[60px] border-b last:border-b-0">
-                              {timeSlots.map(({ time }) => {
-                                const dayKey = format(day, 'yyyy-MM-dd');
-                                const roomTimeSlot = room.timeSlots.find(ts => 
-                                  ts.time === time && ts.date === dayKey
-                                );
-                                const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                                const isCurrent = isCurrentHour(time, day);
-                                
-                                return (
-                                  <div
-                                    key={`${room.id}-${dayKey}-${time}`}
-                                    className={`
-                                      flex-shrink-0 w-24 border-r last:border-r-0 cursor-pointer flex items-center justify-center text-xs font-semibold transition-all duration-200 min-h-[60px]
-                                      ${isAvailable 
-                                        ? 'hover:bg-success/15 text-success-foreground bg-success/5' 
-                                        : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed'
-                                      }
-                                      ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10' : ''}
-                                    `}
-                                    onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                                  >
-                                    {isAvailable ? (
-                                      isCurrent ? (
-                                        <Button
-                                          size="sm"
-                                          className="h-6 w-[80px] text-xs"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            onQuickBook(room.id, time);
-                                          }}
-                                        >
-                                          Book
-                                        </Button>
-                                      ) : (
-                                        <span className="text-success font-bold">Free</span>
-                                      )
-                                    ) : (
-                                      <div className="text-center">
-                                        <div className="text-destructive font-bold">Booked</div>
-                                        {roomTimeSlot?.meeting && (
-                                          <div className="text-xs text-muted-foreground truncate max-w-[70px]">
-                                            {roomTimeSlot.meeting}
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+      {/* Time Headers */}
+      <div className="bg-card border rounded-lg">
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">Time Slots</span>
           </div>
         </div>
+        <div className="p-4 overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
+            {timeSlots.map(({ time }) => (
+              <div 
+                key={`header-${time}`} 
+                className={`flex-shrink-0 w-20 h-10 flex items-center justify-center border rounded-md text-sm font-medium transition-colors ${
+                  isCurrentHour(time) 
+                    ? 'text-primary bg-primary/10 border-primary/20' 
+                    : 'text-muted-foreground bg-muted/30 border-border hover:text-foreground'
+                }`}
+              >
+                {time}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Room Cards */}
+      <div className="space-y-4">
+        {roomsWithBookings.map((room) => {
+          const todayKey = format(selectedDate, 'yyyy-MM-dd');
+          return (
+            <Card key={room.id} className="overflow-hidden hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{room.name}</CardTitle>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                      <div className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        <span>{room.capacity} people</span>
+                      </div>
+                      {room.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          <span>{room.location}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {room.amenities.length > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Zap className="h-4 w-4 text-muted-foreground" />
+                      <Badge variant="secondary" className="text-xs">
+                        {room.amenities.length} amenities
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="overflow-x-auto">
+                  <div className="flex gap-2 min-w-max pb-2">
+                    {timeSlots.map(({ time }) => {
+                      const roomTimeSlot = room.timeSlots.find(ts => 
+                        ts.time === time && ts.date === todayKey
+                      );
+                      const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                      const isCurrent = isCurrentHour(time);
+                      
+                      return (
+                        <div
+                          key={`${room.id}-${time}`}
+                          className={`
+                            flex-shrink-0 w-20 h-16 border rounded-lg cursor-pointer flex flex-col items-center justify-center text-xs font-medium transition-all duration-200
+                            ${isAvailable 
+                              ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02] hover:shadow-sm border-success/20' 
+                              : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed border-destructive/20'
+                            }
+                            ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10 shadow-inner' : ''}
+                          `}
+                          onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                        >
+                          {isAvailable ? (
+                            isCurrent ? (
+                              <Button
+                                size="sm"
+                                className="h-12 w-16 text-xs font-medium animate-pulse shadow-sm p-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onQuickBook(room.id, time);
+                                }}
+                              >
+                                Book Now
+                              </Button>
+                            ) : (
+                              <>
+                                <div className="text-success font-bold">Free</div>
+                                <div className="text-xs text-muted-foreground">Available</div>
+                              </>
+                            )
+                          ) : (
+                            <div className="text-center p-1">
+                              <div className="text-destructive font-bold">Booked</div>
+                              {roomTimeSlot?.meeting && (
+                                <div className="text-xs text-muted-foreground truncate max-w-[60px] leading-tight">
+                                  {roomTimeSlot.meeting}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
