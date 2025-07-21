@@ -446,7 +446,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                   <div
                                     key={`${format(day, 'yyyy-MM-dd')}-${time}`}
                                     className={cn(
-                                      "min-h-[40px] border rounded p-1 text-xs cursor-pointer transition-all hover:shadow-md",
+                                      "min-h-[50px] border rounded p-2 text-xs cursor-pointer transition-all hover:shadow-md relative",
                                       slot?.available 
                                         ? "bg-success/10 border-success/20 hover:bg-success/20" 
                                         : slot?.isDowntime
@@ -466,34 +466,34 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                     title={slot?.meeting || (slot?.available ? 'Available' : 'Unavailable')}
                                   >
                                     {slot?.meeting && (
-                                      <div className="space-y-1">
-                                        <div className="font-medium text-foreground truncate">
+                                      <div className="flex flex-col gap-1">
+                                        <div className="font-medium text-foreground text-xs leading-tight">
                                           {slot.meeting}
                                         </div>
-                                        {slot.bookerAvatar || slot.bookerDisplayName ? (
-                                          <div className="flex items-center gap-1">
+                                        {(slot.bookerAvatar || slot.bookerDisplayName || slot.bookedBy) && (
+                                          <div className="flex items-center gap-1.5 mt-1">
                                             {slot.bookerAvatar ? (
                                               <img 
                                                 src={slot.bookerAvatar} 
                                                 alt="Booker avatar" 
-                                                className="w-3 h-3 rounded-full object-cover"
+                                                className="w-4 h-4 rounded-full object-cover border border-white/20"
                                               />
                                             ) : (
-                                              <div className="w-3 h-3 rounded-full bg-primary/30 flex items-center justify-center">
-                                                <span className="text-[8px] font-medium text-primary">
+                                              <div className="w-4 h-4 rounded-full bg-primary/40 flex items-center justify-center border border-white/20">
+                                                <span className="text-[9px] font-medium text-primary">
                                                   {(slot.bookerDisplayName || slot.bookedBy)?.charAt(0).toUpperCase()}
                                                 </span>
                                               </div>
                                             )}
-                                            <span className="text-[10px] text-muted-foreground truncate">
+                                            <span className="text-[9px] text-muted-foreground truncate leading-tight max-w-[60px]">
                                               {slot.bookerDisplayName || slot.bookedBy}
                                             </span>
                                           </div>
-                                        ) : null}
+                                        )}
                                       </div>
                                     )}
                                     {slot?.available && (
-                                      <div className="text-success font-medium">Available</div>
+                                      <div className="text-success font-medium text-xs">Available</div>
                                     )}
                                   </div>
                                 );
