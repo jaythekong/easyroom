@@ -275,9 +275,6 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                   {room.capacity}
                                 </Badge>
                               </div>
-                              <div className="text-xs text-muted-foreground font-medium mt-1">
-                                Week View
-                              </div>
                             </div>
                           </div>
                         </div>
@@ -314,7 +311,10 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
             <div className="min-w-max">
               {/* Time Headers */}
               <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b h-16">
-                <div className="flex h-full">
+                <div className="flex h-full items-center">
+                  <div className="text-xs text-muted-foreground font-medium px-3">
+                    Week View
+                  </div>
                   {timeSlots.map(({ time }) => (
                     <div 
                       key={`header-${time}`} 
