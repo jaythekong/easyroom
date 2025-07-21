@@ -213,14 +213,14 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
         </div>
       </div>
 
-      {/* Timeline Table - Clean Grid Structure */}
+      {/* Timeline Table */}
       <div className="border rounded-lg overflow-hidden bg-card shadow-sm">
         {/* Header Row - Only Time Headers */}
         <div className="sticky top-0 z-20 bg-background/95 backdrop-blur border-b">
           <div className="flex">
             {/* Empty space for room column */}
             <div className="flex-shrink-0 w-[220px] border-r bg-muted/30"></div>
-            {/* Time Headers Only */}
+            {/* Time Headers */}
             <div className="flex-1 overflow-x-auto">
               <div className="flex min-w-max">
                 {timeSlots.map(({ time }) => (
@@ -240,17 +240,17 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
           </div>
         </div>
 
-        {/* Content Rows - Room Names + Time Slots */}
-        <div className="flex">
-          {/* Fixed Room Names Column */}
-          <div className="flex-shrink-0 w-[220px] border-r divide-y divide-border/50">
-            {roomsWithBookings.map((room) => {
-              const isExpanded = expandedRooms.has(room.id);
-              return (
-                <div key={`room-name-${room.id}`}>
-                  {!isExpanded ? (
-                    // Collapsed - Show Room Name with Expand Button
-                    <div className="p-4 bg-card/80 backdrop-blur min-h-[80px] flex items-center hover:bg-muted/20 transition-colors">
+        {/* Content Rows - Combined Structure */}
+        <div className="divide-y divide-border/50">
+          {roomsWithBookings.map((room) => {
+            const isExpanded = expandedRooms.has(room.id);
+            return (
+              <div key={`room-row-${room.id}`}>
+                {!isExpanded ? (
+                  // Collapsed: Room info + Today's time slots in same row
+                  <div className="flex hover:bg-muted/20 transition-colors">
+                    {/* Room Info */}
+                    <div className="flex-shrink-0 w-[220px] border-r p-4 bg-card/80 backdrop-blur min-h-[80px] flex items-center">
                       <div className="flex items-center gap-3 w-full">
                         <Button
                           variant="ghost"
@@ -275,71 +275,10 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                         </div>
                       </div>
                     </div>
-                  ) : (
-                    // Expanded - Show Room Header + Week Days
-                    <>
-                      {/* Room Header with Week View */}
-                      <div className="p-4 border-b bg-muted/10 min-h-[64px] flex items-center hover:bg-muted/20 transition-colors">
-                        <div className="flex items-center gap-3 w-full">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleRoomExpansion(room.id)}
-                            className="h-7 w-7 p-0 hover:bg-muted/50"
-                          >
-                            <Minimize className="h-3.5 w-3.5" />
-                          </Button>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
-                              <Badge variant="secondary" className="text-xs font-medium">
-                                <Users className="h-3 w-3 mr-1" />
-                                {room.capacity}
-                              </Badge>
-                            </div>
-                            <div className="text-xs text-muted-foreground font-medium mt-1">
-                              Week View
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Week Day Labels */}
-                      {weekDays.map((day) => (
-                        <div key={`day-label-${day.toISOString()}`} className="px-4 py-3 bg-muted/5 min-h-[60px] flex items-center hover:bg-muted/10 transition-colors border-b last:border-b-0">
-                          <div className="flex items-center gap-3 w-full">
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                              isSameDay(day, selectedDate) 
-                                ? 'bg-primary text-primary-foreground shadow-sm' 
-                                : 'bg-muted text-muted-foreground'
-                            }`}>
-                              {format(day, 'd')}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="text-sm font-medium">
-                                {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'EEE MMM d')}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Scrollable Time Content - Perfectly Aligned */}
-          <div className="flex-1 overflow-x-auto">
-            <div className="min-w-max divide-y divide-border/50">
-              {roomsWithBookings.map((room) => {
-                const isExpanded = expandedRooms.has(room.id);
-                return (
-                  <div key={`time-slots-${room.id}`}>
-                    {!isExpanded ? (
-                      // Collapsed: Today's time slots only
-                      <div className="flex min-h-[80px] hover:bg-muted/20 transition-colors">
+                    
+                    {/* Time Slots */}
+                    <div className="flex-1 overflow-x-auto">
+                      <div className="flex min-w-max min-h-[80px]">
                         {timeSlots.map(({ time }) => {
                           const todayKey = format(selectedDate, 'yyyy-MM-dd');
                           const roomTimeSlot = room.timeSlots.find(ts => 
@@ -390,24 +329,70 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                           );
                         })}
                       </div>
-                    ) : (
-                      // Expanded: Show room header + all week days
-                      <>
-                        {/* Room Header Row - Matches the room header height */}
-                        <div className="flex border-b bg-muted/10 min-h-[64px] hover:bg-muted/20 transition-colors">
+                    </div>
+                  </div>
+                ) : (
+                  // Expanded: Show room header + all week days
+                  <>
+                    {/* Room Header Row */}
+                    <div className="flex border-b bg-muted/10 hover:bg-muted/20 transition-colors">
+                      <div className="flex-shrink-0 w-[220px] border-r p-4 min-h-[64px] flex items-center">
+                        <div className="flex items-center gap-3 w-full">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleRoomExpansion(room.id)}
+                            className="h-7 w-7 p-0 hover:bg-muted/50"
+                          >
+                            <Minimize className="h-3.5 w-3.5" />
+                          </Button>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-semibold text-base text-foreground">{room.name}</h3>
+                              <Badge variant="secondary" className="text-xs font-medium">
+                                <Users className="h-3 w-3 mr-1" />
+                                {room.capacity}
+                              </Badge>
+                            </div>
+                            <div className="text-xs text-muted-foreground font-medium mt-1">
+                              Week View
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-1 overflow-x-auto">
+                        <div className="flex min-w-max min-h-[64px]">
                           {timeSlots.map(({ time }) => (
                             <div 
                               key={`${room.id}-room-header-${time}`}
-                              className="flex-shrink-0 w-24 border-r last:border-r-0 min-h-[64px] bg-muted/5"
-                            >
-                              {/* Empty spacer cells */}
-                            </div>
+                              className="flex-shrink-0 w-24 border-r last:border-r-0 bg-muted/5"
+                            />
                           ))}
                         </div>
-                        
-                        {/* Week Days Time Slots */}
-                        {weekDays.map((day) => (
-                          <div key={`${room.id}-${day.toISOString()}`} className="flex hover:bg-muted/10 transition-colors min-h-[60px] border-b last:border-b-0">
+                      </div>
+                    </div>
+                    
+                    {/* Week Days */}
+                    {weekDays.map((day) => (
+                      <div key={`${room.id}-${day.toISOString()}`} className="flex hover:bg-muted/10 transition-colors border-b last:border-b-0">
+                        <div className="flex-shrink-0 w-[220px] border-r px-4 py-3 bg-muted/5 min-h-[60px] flex items-center">
+                          <div className="flex items-center gap-3 w-full">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                              isSameDay(day, selectedDate) 
+                                ? 'bg-primary text-primary-foreground shadow-sm' 
+                                : 'bg-muted text-muted-foreground'
+                            }`}>
+                              {format(day, 'd')}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-sm font-medium">
+                                {isSameDay(day, selectedDate) ? `Today ${format(day, 'MMM d')}` : format(day, 'EEE MMM d')}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex-1 overflow-x-auto">
+                          <div className="flex min-w-max min-h-[60px]">
                             {timeSlots.map(({ time }) => {
                               const dayKey = format(day, 'yyyy-MM-dd');
                               const roomTimeSlot = room.timeSlots.find(ts => 
@@ -422,21 +407,21 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                   className={`
                                     flex-shrink-0 w-24 border-r last:border-r-0 cursor-pointer flex items-center justify-center text-xs font-semibold transition-all duration-200 min-h-[60px]
                                     ${isAvailable 
-                                      ? 'hover:bg-success/15 text-success-foreground bg-success/5 hover:scale-[1.02]' 
+                                      ? 'hover:bg-success/15 text-success-foreground bg-success/5' 
                                       : 'bg-destructive/10 text-destructive-foreground hover:bg-destructive/15 cursor-not-allowed'
                                     }
-                                    ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10 shadow-inner' : ''}
+                                    ${isCurrent ? 'ring-2 ring-primary/40 bg-primary/10' : ''}
                                   `}
-                                  onClick={() => isAvailable && onTimeSlotSelect(room.id, `${dayKey}-${time}`)}
+                                  onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
                                 >
                                   {isAvailable ? (
                                     isCurrent ? (
                                       <Button
                                         size="sm"
-                                        className="h-7 w-[80px] text-xs font-medium animate-pulse"
+                                        className="h-6 w-[80px] text-xs"
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          onQuickBook(room.id, `${dayKey}-${time}`);
+                                          onQuickBook(room.id, time);
                                         }}
                                       >
                                         Book
@@ -446,7 +431,7 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                                     )
                                   ) : (
                                     <div className="text-center">
-                                      <div className="text-destructive font-bold">Busy</div>
+                                      <div className="text-destructive font-bold">Booked</div>
                                       {roomTimeSlot?.meeting && (
                                         <div className="text-xs text-muted-foreground truncate max-w-[70px]">
                                           {roomTimeSlot.meeting}
@@ -458,14 +443,14 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
                               );
                             })}
                           </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
