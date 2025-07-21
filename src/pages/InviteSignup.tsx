@@ -56,8 +56,9 @@ export default function InviteSignup() {
       }
 
       setInviteData(data);
-      // Set email if it's a link invite (email will be empty)
-      if (!data.email) {
+      // Check if it's a link invite (email starts with "link-" or is empty)
+      const isLinkInvite = !data.email || data.email.startsWith('link-');
+      if (isLinkInvite) {
         setEmail(""); // User will need to enter their email
       } else {
         setEmail(data.email);
@@ -180,7 +181,7 @@ export default function InviteSignup() {
             <CardDescription className="mt-2">
               You've been invited to join as a{" "}
               <span className="font-medium capitalize">{inviteData.role}</span>
-              {inviteData.email ? ` for ${inviteData.email}` : ""}
+              {!inviteData.email?.startsWith('link-') && inviteData.email ? ` for ${inviteData.email}` : ""}
             </CardDescription>
           </div>
         </CardHeader>
@@ -190,11 +191,11 @@ export default function InviteSignup() {
             <Input
               id="email"
               type="email"
-              placeholder={inviteData.email || "Enter your email"}
+              placeholder={(!inviteData.email?.startsWith('link-') && inviteData.email) ? inviteData.email : "Enter your email"}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={!!inviteData.email}
-              className={inviteData.email ? "bg-muted" : ""}
+              disabled={!inviteData.email?.startsWith('link-') && !!inviteData.email}
+              className={(!inviteData.email?.startsWith('link-') && !!inviteData.email) ? "bg-muted" : ""}
             />
           </div>
           
