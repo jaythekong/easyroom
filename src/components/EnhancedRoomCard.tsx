@@ -2,7 +2,11 @@ import { useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, MapPin, Monitor, Wifi, Coffee, Video, Zap, Star } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon, Clock, Users, MapPin, Monitor, Wifi, Coffee, Video, Zap, Star } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface Room {
   id: string;
@@ -20,6 +24,7 @@ interface EnhancedRoomCardProps {
   onBook: (roomId: string) => void;
   onViewDetails: (roomId: string) => void;
   onQuickBook?: (roomId: string) => void;
+  onDateChange?: (roomId: string, date: Date) => void;
   showQuickActions?: boolean;
 }
 
@@ -41,9 +46,18 @@ export const EnhancedRoomCard = memo(function EnhancedRoomCard({
   onBook, 
   onViewDetails, 
   onQuickBook,
+  onDateChange,
   showQuickActions = true 
 }: EnhancedRoomCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      onDateChange?.(room.id, date);
+    }
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -168,6 +182,37 @@ export const EnhancedRoomCard = memo(function EnhancedRoomCard({
           </div>
         )}
 
+        {/* Calendar Selector */}
+        <div className="space-y-2 mb-4">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Select Date
+          </p>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  "text-muted-foreground"
+                )}
+                size="sm"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(selectedDate, "PPP")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={handleDateChange}
+                initialFocus
+                className="pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <Button
@@ -176,7 +221,7 @@ export const EnhancedRoomCard = memo(function EnhancedRoomCard({
           >
             {room.status === 'available' ? (
               <>
-                <Calendar className="h-4 w-4 mr-2" />
+                <CalendarIcon className="h-4 w-4 mr-2" />
                 Book Room
               </>
             ) : (
