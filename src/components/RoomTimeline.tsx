@@ -254,32 +254,6 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
         </div>
       </div>
 
-      {/* Sticky Time Headers */}
-      <div className="sticky top-0 z-10 bg-background border rounded-lg shadow-sm">
-        <div className="p-4 border-b bg-card">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">Time Slots</span>
-          </div>
-        </div>
-        <ScrollArea className="p-4 bg-card">
-          <div className="flex gap-2 min-w-max">
-            {timeSlots.map(({ time }) => (
-              <div 
-                key={`header-${time}`} 
-                className={`flex-shrink-0 w-20 h-10 flex items-center justify-center border rounded-md text-sm font-medium transition-colors ${
-                  isCurrentHour(time) 
-                    ? 'text-primary bg-primary/10 border-primary/20' 
-                    : 'text-muted-foreground bg-muted/30 border-border hover:text-foreground'
-                }`}
-              >
-                {time}
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-
       {/* Room Cards */}
       <div className="space-y-4">
         {roomsWithBookings.map((room) => {
