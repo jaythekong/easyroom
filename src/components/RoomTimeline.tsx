@@ -91,6 +91,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   const { user } = useAuth();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBookingRoom, setSelectedBookingRoom] = useState<any>(null);
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [roomDates, setRoomDates] = useState<Record<string, Date>>({});
   const { organization, userRole } = useOrganization();
@@ -297,7 +298,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     onExpandedRoomsChange(newExpanded);
   };
 
-  const handleBookingClick = (booking: any) => {
+  const handleBookingClick = (booking: any, room: any) => {
     if (booking.bookingId) {
       const fullBooking = bookings.find(b => b.id === booking.bookingId);
       if (fullBooking) {
@@ -312,7 +313,9 @@ const RoomTimelineComponent = memo(function RoomTimeline({
         } else {
           // Show details modal for view-only
           console.log('📅 View-only access to booking:', fullBooking.title);
-          // You could show a different modal or toast message here
+          setSelectedBooking(fullBooking);
+          setSelectedBookingRoom(room);
+          setIsBookingDetailsOpen(true);
         }
       }
     }
@@ -460,7 +463,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                         const slotDateTime = `${format(day, 'yyyy-MM-dd')}T${time}:00`;
                                         onTimeSlotSelect(room.id, slotDateTime);
                                       } else if (slot?.bookingId) {
-                                        handleBookingClick(slot);
+                                        handleBookingClick(slot, room);
                                       }
                                     }}
                                     title={slot?.meeting || (slot?.available ? 'Available' : 'Unavailable')}
@@ -513,14 +516,24 @@ const RoomTimelineComponent = memo(function RoomTimeline({
 
       <BookingDetailsModal
         booking={selectedBooking}
-        room={selectedBooking ? rooms.find(r => r.id === selectedBooking.room_id) : null}
+        room={selectedBookingRoom}
         isOpen={isBookingDetailsOpen}
-        onClose={() => setIsBookingDetailsOpen(false)}
+        onClose={() => {
+          setIsBookingDetailsOpen(false);
+          setSelectedBooking(null);
+          setSelectedBookingRoom(null);
+        }}
         onEdit={() => {
           setIsBookingDetailsOpen(false);
           if (selectedBooking && onEditBooking) {
             onEditBooking(selectedBooking);
           }
+        }}
+        onBookingUpdate={() => {
+          onBookingUpdate?.();
+          setIsBookingDetailsOpen(false);
+          setSelectedBooking(null);
+          setSelectedBookingRoom(null);
         }}
       />
     </div>
