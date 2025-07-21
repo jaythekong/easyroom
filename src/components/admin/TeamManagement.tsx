@@ -109,7 +109,8 @@ export function TeamManagement() {
           id,
           user_id,
           role,
-          created_at
+          created_at,
+          email
         `)
         .eq('organization_id', organizationId);
 
@@ -118,10 +119,10 @@ export function TeamManagement() {
         throw membersError;
       }
 
-      // Use user_id for display since we can't access auth.users directly
+      // Use actual email from user_profiles
       const membersWithEmails = (members || []).map((member) => ({
         ...member,
-        email: member.user_id === user?.id ? user?.email || 'your-email@company.com' : `user-${member.user_id.slice(0, 8)}@company.com`
+        email: member.email || 'no-email@company.com'
       }));
 
       setTeamMembers(membersWithEmails);

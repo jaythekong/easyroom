@@ -106,6 +106,7 @@ export default function InviteSignup() {
             user_id: authData.user.id,
             organization_id: inviteData.organization_id,
             role: inviteData.role as 'admin' | 'member',
+            email: email,
           });
 
         if (profileError) throw profileError;
