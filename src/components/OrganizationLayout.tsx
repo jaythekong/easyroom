@@ -33,16 +33,27 @@ export function OrganizationLayout({
     pathname: location.pathname
   });
 
-  // Show loading while either auth or organization is loading
-  if (authLoading || orgLoading) {
+  // Show loading only for initial loads, not quick navigation transitions
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="text-muted-foreground">
-              {authLoading ? 'Checking authentication...' : 'Loading organization...'}
-            </p>
+            <p className="text-muted-foreground">Checking authentication...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (orgLoading && !organization) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-muted-foreground">Loading organization...</p>
           </CardContent>
         </Card>
       </div>
@@ -80,8 +91,8 @@ export function OrganizationLayout({
       return <Navigate to={`/${organization.slug}/auth?redirectTo=${encodeURIComponent(redirectPath)}`} replace />;
     }
 
-    // If user exists but not in organization, show access denied
-    if (!isUserInOrganization) {
+    // If user exists but not in organization, show access denied (only if not loading)
+    if (!isUserInOrganization && !orgLoading) {
       console.log('OrganizationLayout: User not in organization, showing access denied');
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">

@@ -1,8 +1,8 @@
 
-import { createContext, useContext, useEffect, useState, ReactNode, useMemo, useCallback } from "react";
+import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganizationBySlug, useUserMembership } from "@/hooks/useOrganization";
 
 interface Organization {
   id: string;
@@ -30,118 +30,57 @@ interface OrganizationProviderProps {
 
 export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const { user, loading: authLoading } = useAuth();
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isUserInOrganization, setIsUserInOrganization] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { loading: authLoading } = useAuth();
+  
+  // Use React Query hooks for better caching and error handling
+  const { 
+    data: organization, 
+    isLoading: orgLoading, 
+    error: orgError,
+    isError: hasOrgError
+  } = useOrganizationBySlug(orgSlug);
 
-  // Memoize orgSlug to prevent unnecessary re-fetches
-  const memoizedOrgSlug = useMemo(() => orgSlug, [orgSlug]);
+  const { 
+    data: membership, 
+    isLoading: membershipLoading,
+    error: membershipError
+  } = useUserMembership(organization?.id);
 
-  useEffect(() => {
-    if (memoizedOrgSlug) {
-      console.log('OrganizationProvider: Starting fetch for orgSlug:', memoizedOrgSlug);
-      fetchOrganization();
-    } else {
-      console.log('OrganizationProvider: No orgSlug provided');
-      setIsLoading(false);
+  // Determine loading state - be more conservative about showing loading
+  const isLoading = useMemo(() => {
+    // Only show loading if we don't have cached data and we're actually loading
+    if (authLoading) return true;
+    if (orgSlug && orgLoading && !organization) return true;
+    if (organization?.id && membershipLoading && !membership) return true;
+    return false;
+  }, [authLoading, orgSlug, orgLoading, organization, membershipLoading, membership]);
+
+  // Determine error state
+  const error = useMemo(() => {
+    if (hasOrgError) {
+      return orgError?.message || 'Failed to load organization';
     }
-  }, [memoizedOrgSlug]);
-
-  // Separate effect for user membership check that depends on both org and user
-  useEffect(() => {
-    if (organization?.id && user?.id && !authLoading) {
-      console.log('OrganizationProvider: Checking user membership for org:', organization.name, 'user:', user.email);
-      checkUserMembership();
+    if (membershipError) {
+      return 'Failed to verify access to organization';
     }
-  }, [organization?.id, user?.id, authLoading]);
-
-  const fetchOrganization = useCallback(async () => {
-    if (!memoizedOrgSlug) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      console.log('OrganizationProvider: Fetching organization with slug:', memoizedOrgSlug);
-
-      // Fetch organization by slug
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
-        .select('*')
-        .eq('slug', memoizedOrgSlug)
-        .single();
-
-      if (orgError) {
-        console.error('OrganizationProvider: Error fetching organization:', orgError);
-        if (orgError.code === 'PGRST116') {
-          setError('Organization not found');
-        } else {
-          setError('Failed to load organization');
-        }
-        return;
-      }
-
-      console.log('OrganizationProvider: Successfully fetched organization:', org.name);
-      setOrganization(org);
-    } catch (error: any) {
-      console.error('OrganizationProvider: Unexpected error:', error);
-      setError('Failed to load organization');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [memoizedOrgSlug]);
-
-  const checkUserMembership = useCallback(async () => {
-    if (!organization?.id || !user?.id) {
-      console.log('OrganizationProvider: Skipping membership check - no org or user');
-      setIsUserInOrganization(false);
-      setUserRole(null);
-      return;
-    }
-
-    try {
-      console.log('OrganizationProvider: Checking membership for user:', user.email, 'in org:', organization.name);
-      
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('organization_id', organization.id)
-        .single();
-
-      if (profileError) {
-        if (profileError.code !== 'PGRST116') {
-          console.error('OrganizationProvider: Error fetching user profile:', profileError);
-        } else {
-          console.log('OrganizationProvider: User not found in organization');
-        }
-        setIsUserInOrganization(false);
-        setUserRole(null);
-        return;
-      }
-
-      console.log('OrganizationProvider: User found with role:', profile.role);
-      setIsUserInOrganization(true);
-      setUserRole(profile.role);
-    } catch (error: any) {
-      console.error('OrganizationProvider: Error checking membership:', error);
-      setIsUserInOrganization(false);
-      setUserRole(null);
-    }
-  }, [organization?.id, organization?.name, user?.id, user?.email]);
+    return null;
+  }, [hasOrgError, orgError, membershipError]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
-    organization,
-    isLoading: isLoading || authLoading,
+    organization: organization || null,
+    isLoading,
     error,
-    isUserInOrganization,
-    userRole,
-  }), [organization, isLoading, authLoading, error, isUserInOrganization, userRole]);
+    isUserInOrganization: membership?.isUserInOrganization || false,
+    userRole: membership?.role || null,
+  }), [organization, isLoading, error, membership]);
 
-  console.log('OrganizationProvider: Context value:', contextValue);
+  console.log('OrganizationProvider: Context value:', {
+    ...contextValue,
+    orgSlug,
+    hasOrganization: !!organization,
+    hasMembership: !!membership
+  });
 
   return (
     <OrganizationContext.Provider value={contextValue}>
