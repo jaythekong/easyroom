@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,8 +8,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, startOfWeek, addDays, isSameDay, addDays as addDaysUtil, subDays } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
 import { BookingDetailsModal } from "@/components/BookingDetailsModal";
+import { useBookings, useDowntime } from "@/hooks/useBookings";
 
 interface TimeSlot {
   time: string;
@@ -65,13 +65,14 @@ interface RoomTimelineProps {
   refreshTrigger?: number;
 }
 
-export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect, onEditBooking, expandedRooms, onExpandedRoomsChange, refreshTrigger }: RoomTimelineProps) {
+const RoomTimelineComponent = memo(function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelect, onBookingUpdate, onDateSelect, onEditBooking, expandedRooms, onExpandedRoomsChange, refreshTrigger }: RoomTimelineProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [downtime, setDowntime] = useState<Downtime[]>([]);
-  const [roomsWithBookings, setRoomsWithBookings] = useState<TimelineRoom[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+
+  // Use React Query for data fetching
+  const { data: bookings = [], refetch: refetchBookings } = useBookings(selectedDate);
+  const { data: downtime = [], refetch: refetchDowntime } = useDowntime(selectedDate);
 
   // Responsive hour range based on screen size
   const getResponsiveHourRange = () => {
@@ -114,111 +115,85 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     return slots;
   };
 
-  const timeSlots = generateTimeSlots();
-  const weekDays = generateWeekDays();
+  // Memoized calculations for better performance
+  const timeSlots = useMemo(() => generateTimeSlots(), [selectedHourRange]);
+  const weekDays = useMemo(() => generateWeekDays(), [selectedDate]);
 
-  // Fetch bookings and downtime from database
-  const fetchBookings = async () => {
-    try {
-      const startDate = new Date().toISOString().split('T')[0];
-      const endDate = format(addDays(selectedDate, 7), 'yyyy-MM-dd');
-      
-      console.log("Fetching bookings between:", startDate, "and", endDate);
-      
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          user_profiles!bookings_user_id_fkey (
-            email
-          )
-        `)
-        .gte('start_time', startDate)
-        .lte('start_time', endDate);
-      
-      if (error) throw error;
-      
-      console.log("Fetched bookings:", data);
-      console.log("Total bookings fetched:", data?.length || 0);
-      
-      setBookings(data || []);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-    }
-  };
+  // Memoized booking lookup maps for performance
+  const bookingsByRoom = useMemo(() => {
+    const map = new Map<string, Booking[]>();
+    bookings.forEach(booking => {
+      if (!map.has(booking.room_id)) {
+        map.set(booking.room_id, []);
+      }
+      map.get(booking.room_id)!.push(booking);
+    });
+    return map;
+  }, [bookings]);
 
-  const fetchDowntime = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('room_downtime' as any)
-        .select('*')
-        .gte('start_time', new Date().toISOString().split('T')[0])
-        .lte('start_time', format(addDays(selectedDate, 7), 'yyyy-MM-dd'));
-      
-      if (error) throw error;
-      setDowntime((data as any) || []);
-    } catch (error) {
-      console.error('Error fetching downtime:', error);
-    }
-  };
+  const downtimeByRoom = useMemo(() => {
+    const map = new Map<string, Downtime[]>();
+    downtime.forEach(dt => {
+      if (!map.has(dt.room_id)) {
+        map.set(dt.room_id, []);
+      }
+      map.get(dt.room_id)!.push(dt);
+    });
+    return map;
+  }, [downtime]);
 
-  // Generate rooms with real booking and downtime data
-  const generateRoomsWithBookings = () => {
-    console.log("Generating rooms with bookings. Current bookings:", bookings);
+  // Optimized booking matching function
+  const findBookingForSlot = useCallback((roomId: string, slotDateTime: string) => {
+    const roomBookings = bookingsByRoom.get(roomId) || [];
+    const slotStart = new Date(slotDateTime);
+    
+    return roomBookings.find(b => {
+      const bookingStart = new Date(b.start_time.replace('Z', '').replace('+00:00', ''));
+      const bookingEnd = new Date(b.end_time.replace('Z', '').replace('+00:00', ''));
+      return bookingStart <= slotStart && bookingEnd > slotStart;
+    });
+  }, [bookingsByRoom]);
+
+  const findDowntimeForSlot = useCallback((roomId: string, slotDateTime: string) => {
+    const roomDowntimes = downtimeByRoom.get(roomId) || [];
+    const slotStart = new Date(slotDateTime);
+    
+    return roomDowntimes.find(d => {
+      const downtimeStart = new Date(d.start_time.replace('Z', '').replace('+00:00', ''));
+      const downtimeEnd = new Date(d.end_time.replace('Z', '').replace('+00:00', ''));
+      return downtimeStart <= slotStart && downtimeEnd > slotStart;
+    });
+  }, [downtimeByRoom]);
+
+  // Generate rooms with real booking and downtime data - memoized for performance
+  const roomsWithBookings = useMemo(() => {
+    console.log("Generating rooms with bookings. Current bookings:", bookings.length);
     console.log("Current downtime:", downtime);
     
-    const roomsWithTimeSlots = rooms.map(room => ({
-      ...room,
-      timeSlots: []
-    }));
-
-    // For each room, generate time slots for the full week
-    roomsWithTimeSlots.forEach(room => {
+    return rooms.map(room => {
       console.log(`Processing room: ${room.name} (${room.id})`);
+      
+      const timeSlots: TimeSlot[] = [];
       
       weekDays.forEach(date => {
         timeSlots.forEach(({ time, endTime }) => {
           const dateStr = format(date, 'yyyy-MM-dd');
           const startDateTime = `${dateStr}T${time}:00`;
-          const endDateTime = `${dateStr}T${endTime}:00`;
           
-          // Check if there's a booking for this room and time slot
-          const booking = bookings.find(b => {
-            // Convert stored UTC times to local time for comparison
-            const bookingStart = new Date(b.start_time.replace('Z', '').replace('+00:00', ''));
-            const bookingEnd = new Date(b.end_time.replace('Z', '').replace('+00:00', ''));
-            const slotStart = new Date(startDateTime);
-            
-            const matches = b.room_id === room.id &&
-              bookingStart <= slotStart &&
-              bookingEnd > slotStart;
-            
-            if (matches) {
-              console.log(`Found booking match:`, {
-                bookingTitle: b.title,
-                bookingStart: b.start_time,
-                bookingEnd: b.end_time,
-                slotStart: startDateTime,
-                roomName: room.name
-              });
-            }
-            
-            return matches;
-          });
-
-          // Check if there's downtime for this room and time slot
-          const roomDowntime = downtime.find(d => {
-            // Convert stored UTC times to local time for comparison
-            const downtimeStart = new Date(d.start_time.replace('Z', '').replace('+00:00', ''));
-            const downtimeEnd = new Date(d.end_time.replace('Z', '').replace('+00:00', ''));
-            const slotStart = new Date(startDateTime);
-            
-            return d.room_id === room.id &&
-              downtimeStart <= slotStart &&
-              downtimeEnd > slotStart;
-          });
+          const booking = findBookingForSlot(room.id, startDateTime);
+          const roomDowntime = findDowntimeForSlot(room.id, startDateTime);
           
-          const timeSlot: TimeSlot = {
+          if (booking) {
+            console.log(`Found booking match:`, {
+              bookingTitle: booking.title,
+              bookingStart: booking.start_time,
+              bookingEnd: booking.end_time,
+              slotStart: startDateTime,
+              roomName: room.name
+            });
+          }
+          
+          timeSlots.push({
             time,
             endTime,
             available: !booking && !roomDowntime,
@@ -228,15 +203,16 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
             downtimeType: roomDowntime?.downtime_type,
             downtimeId: roomDowntime?.id,
             date: dateStr
-          };
-          
-          room.timeSlots.push(timeSlot);
+          });
         });
       });
+      
+      return {
+        ...room,
+        timeSlots
+      };
     });
-
-    setRoomsWithBookings(roomsWithTimeSlots);
-  };
+  }, [rooms, bookings, downtime, weekDays, timeSlots, findBookingForSlot, findDowntimeForSlot]);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -253,14 +229,15 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Refetch data when refreshTrigger changes
   useEffect(() => {
-    fetchBookings();
-    fetchDowntime();
-  }, [selectedDate, refreshTrigger]);
+    if (refreshTrigger) {
+      refetchBookings();
+      refetchDowntime();
+    }
+  }, [refreshTrigger, refetchBookings, refetchDowntime]);
 
-  useEffect(() => {
-    generateRoomsWithBookings();
-  }, [rooms, bookings, downtime, selectedDate, selectedHourRange]);
+  // Remove the useEffect since we're using useMemo now
 
   const getCurrentHour = () => {
     return new Date().getHours();
@@ -698,4 +675,6 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
       />
     </div>
   );
-}
+});
+
+export const RoomTimeline = RoomTimelineComponent;
