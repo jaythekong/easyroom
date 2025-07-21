@@ -140,21 +140,23 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
 
       {/* Time Header */}
       <div className="sticky top-20 z-10 glass-card p-4 rounded-xl">
-        <div className="grid gap-2" style={{ gridTemplateColumns: '280px 1fr' }}>
-          <div className="font-medium text-muted-foreground">Rooms</div>
-          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${timeSlots.length}, 1fr)` }}>
-            {timeSlots.map(({ time }) => (
-              <div 
-                key={time} 
-                className={`text-center p-3 rounded-lg font-medium text-sm transition-all ${
-                  isCurrentHour(time) 
-                    ? 'bg-primary/10 text-primary border border-primary/30' 
-                    : 'bg-muted/30 text-muted-foreground'
-                }`}
-              >
-                {time}
-              </div>
-            ))}
+        <div className="flex gap-2">
+          <div className="flex-shrink-0 w-[280px] font-medium text-muted-foreground">Rooms</div>
+          <div className="flex-1 overflow-x-auto">
+            <div className="flex gap-2 min-w-max">
+              {timeSlots.map(({ time }) => (
+                <div 
+                  key={time} 
+                  className={`flex-shrink-0 w-32 text-center p-3 rounded-lg font-medium text-sm transition-all ${
+                    isCurrentHour(time) 
+                      ? 'bg-primary/10 text-primary border border-primary/30' 
+                      : 'bg-muted/30 text-muted-foreground'
+                  }`}
+                >
+                  {time}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -163,9 +165,9 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
       <div className="space-y-4">
         {rooms.map((room) => (
           <Card key={room.id} className="timeline-card overflow-hidden">
-            <div className="grid gap-4 p-6" style={{ gridTemplateColumns: '280px 1fr' }}>
+            <div className="flex gap-4 p-6">
               {/* Room Info */}
-              <div className="space-y-3">
+              <div className="flex-shrink-0 w-[280px] space-y-3">
                 <div>
                   <h3 className="font-bold text-lg text-foreground">{room.name}</h3>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -196,71 +198,73 @@ export function RoomTimeline({ rooms, selectedDate, onQuickBook, onTimeSlotSelec
               </div>
 
               {/* Timeline Slots */}
-              <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${timeSlots.length}, 1fr)` }}>
-                {timeSlots.map(({ time, endTime }) => {
-                  const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
-                  const isAvailable = !roomTimeSlot || roomTimeSlot.available;
-                  const isCurrent = isCurrentHour(time);
-                  
-                  return (
-                    <div
-                      key={`${room.id}-${time}`}
-                      className={`
-                        relative min-h-[80px] rounded-lg border-2 cursor-pointer transition-all duration-200 p-3
-                        ${isAvailable 
-                          ? 'border-success/30 bg-success/5 hover:bg-success/15 hover:border-success/50' 
-                          : 'border-danger/30 bg-danger/5 hover:bg-danger/15'
-                        }
-                        ${isCurrent ? 'ring-2 ring-primary/50 animate-pulse' : ''}
-                      `}
-                      onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
-                    >
-                      {isAvailable ? (
-                        <div className="h-full flex flex-col justify-between">
-                          <div className="text-xs text-muted-foreground font-medium">
-                            {time} - {endTime}
-                          </div>
-                          {isCurrent && (
-                            <Button
-                              size="sm"
-                              className="quick-book-button w-full mt-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onQuickBook(room.id, time);
-                              }}
-                            >
-                              <Zap className="h-3 w-3 mr-1" />
-                              Book Now
-                            </Button>
-                          )}
-                          {!isCurrent && (
-                            <div className="text-center">
-                              <Badge variant="outline" className="text-xs text-success">
-                                Available
-                              </Badge>
+              <div className="flex-1 overflow-x-auto">
+                <div className="flex gap-2 min-w-max">
+                  {timeSlots.map(({ time, endTime }) => {
+                    const roomTimeSlot = room.timeSlots.find(ts => ts.time === time);
+                    const isAvailable = !roomTimeSlot || roomTimeSlot.available;
+                    const isCurrent = isCurrentHour(time);
+                    
+                    return (
+                      <div
+                        key={`${room.id}-${time}`}
+                        className={`
+                          flex-shrink-0 w-32 relative min-h-[80px] rounded-lg border-2 cursor-pointer transition-all duration-200 p-3
+                          ${isAvailable 
+                            ? 'border-success/30 bg-success/5 hover:bg-success/15 hover:border-success/50' 
+                            : 'border-danger/30 bg-danger/5 hover:bg-danger/15'
+                          }
+                          ${isCurrent ? 'ring-2 ring-primary/50 animate-pulse' : ''}
+                        `}
+                        onClick={() => isAvailable && onTimeSlotSelect(room.id, time)}
+                      >
+                        {isAvailable ? (
+                          <div className="h-full flex flex-col justify-between">
+                            <div className="text-xs text-muted-foreground font-medium">
+                              {time} - {endTime}
                             </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="h-full flex flex-col justify-between">
-                          <div className="text-xs text-muted-foreground font-medium">
-                            {time} - {endTime}
-                          </div>
-                          <div className="text-center">
-                            <Badge variant="outline" className="text-xs text-danger mb-1">
-                              Booked
-                            </Badge>
-                            {roomTimeSlot?.meeting && (
-                              <div className="text-xs text-danger font-medium truncate">
-                                {roomTimeSlot.meeting}
+                            {isCurrent && (
+                              <Button
+                                size="sm"
+                                className="quick-book-button w-full mt-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onQuickBook(room.id, time);
+                                }}
+                              >
+                                <Zap className="h-3 w-3 mr-1" />
+                                Book Now
+                              </Button>
+                            )}
+                            {!isCurrent && (
+                              <div className="text-center">
+                                <Badge variant="outline" className="text-xs text-success">
+                                  Available
+                                </Badge>
                               </div>
                             )}
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        ) : (
+                          <div className="h-full flex flex-col justify-between">
+                            <div className="text-xs text-muted-foreground font-medium">
+                              {time} - {endTime}
+                            </div>
+                            <div className="text-center">
+                              <Badge variant="outline" className="text-xs text-danger mb-1">
+                                Booked
+                              </Badge>
+                              {roomTimeSlot?.meeting && (
+                                <div className="text-xs text-danger font-medium truncate">
+                                  {roomTimeSlot.meeting}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </Card>
