@@ -3,70 +3,69 @@ import { RoomCard } from "@/components/RoomCard";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Building2, Calendar, Clock, Users } from "lucide-react";
+import { Building2, Calendar, Clock, Users, Settings } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
-// Mock data - in a real app, this would come from an API
-const mockRooms = [
-  {
-    id: "room-1",
-    name: "Conference Room A",
-    capacity: 8,
-    status: 'available' as const,
-    location: "2nd Floor, East Wing",
-    amenities: ["Monitor", "Video Conferencing", "Whiteboard", "WiFi"]
-  },
-  {
-    id: "room-2", 
-    name: "Meeting Room B",
-    capacity: 6,
-    status: 'busy' as const,
-    currentMeeting: "Marketing Strategy Session",
-    location: "1st Floor, West Wing",
-    amenities: ["Projector", "WiFi", "Coffee Machine"]
-  },
-  {
-    id: "room-3",
-    name: "Executive Boardroom",
-    capacity: 12,
-    status: 'upcoming' as const,
-    nextAvailable: "2:30 PM",
-    location: "3rd Floor, Center",
-    amenities: ["Monitor", "Video Conferencing", "Whiteboard", "WiFi", "Coffee Machine"]
-  },
-  {
-    id: "room-4",
-    name: "Small Meeting Room",
-    capacity: 4,
-    status: 'available' as const,
-    location: "1st Floor, East Wing",
-    amenities: ["Monitor", "WiFi"]
-  },
-  {
-    id: "room-5",
-    name: "Training Room",
-    capacity: 20,
-    status: 'available' as const,
-    location: "2nd Floor, West Wing",
-    amenities: ["Projector", "Whiteboard", "WiFi", "Coffee Machine"]
-  },
-  {
-    id: "room-6",
-    name: "Phone Booth 1",
-    capacity: 2,
-    status: 'busy' as const,
-    currentMeeting: "Client Call",
-    location: "1st Floor, Center",
-    amenities: ["WiFi"]
-  }
-];
+interface Room {
+  id: string;
+  name: string;
+  capacity: number;
+  location?: string;
+  description?: string;
+  photo_url?: string;
+  status: 'active' | 'inactive';
+  amenities?: string[];
+}
 
 export default function Dashboard() {
-  const [rooms, setRooms] = useState(mockRooms);
-  const [filteredRooms, setFilteredRooms] = useState(mockRooms);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      const { data: roomsData, error: roomsError } = await supabase
+        .from("rooms")
+        .select(`
+          *,
+          room_amenities (
+            amenities (
+              name
+            )
+          )
+        `)
+        .eq("status", "active");
+
+      if (roomsError) throw roomsError;
+
+      const formattedRooms = roomsData?.map(room => ({
+        ...room,
+        amenities: room.room_amenities?.map(ra => ra.amenities.name) || []
+      })) || [];
+
+      setRooms(formattedRooms);
+      setFilteredRooms(formattedRooms);
+    } catch (error) {
+      console.error("Error fetching rooms:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch rooms",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFiltersChange = (filters: any) => {
     let filtered = [...rooms];
@@ -113,8 +112,7 @@ export default function Dashboard() {
   };
 
   // Get current stats
-  const availableRooms = rooms.filter(r => r.status === 'available').length;
-  const busyRooms = rooms.filter(r => r.status === 'busy').length;
+  const availableRooms = rooms.length; // All fetched rooms are active
   const totalCapacity = rooms.reduce((sum, room) => sum + room.capacity, 0);
 
   return (
@@ -136,6 +134,12 @@ export default function Dashboard() {
                 <Calendar className="h-4 w-4 mr-2" />
                 My Bookings
               </Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/admin">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Admin
+                </Link>
+              </Button>
               <Button size="sm">
                 <Users className="h-4 w-4 mr-2" />
                 Alex Manager
@@ -147,21 +151,13 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-card p-4 rounded-lg border border-border">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-success rounded-full"></div>
-              <span className="text-sm font-medium text-foreground">Available Now</span>
+              <span className="text-sm font-medium text-foreground">Available Rooms</span>
             </div>
             <p className="text-2xl font-bold text-foreground mt-1">{availableRooms}</p>
-          </div>
-          
-          <div className="bg-card p-4 rounded-lg border border-border">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-danger rounded-full"></div>
-              <span className="text-sm font-medium text-foreground">In Use</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground mt-1">{busyRooms}</p>
           </div>
 
           <div className="bg-card p-4 rounded-lg border border-border">
@@ -205,7 +201,15 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {filteredRooms.length === 0 ? (
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="bg-muted h-48 rounded-lg"></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredRooms.length === 0 ? (
               <div className="text-center py-12">
                 <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">No rooms found</h3>
@@ -216,7 +220,11 @@ export default function Dashboard() {
                 {filteredRooms.map((room) => (
                   <RoomCard
                     key={room.id}
-                    room={room}
+                    room={{
+                      ...room,
+                      status: 'available', // Convert to expected format for RoomCard
+                      amenities: room.amenities || []
+                    }}
                     onBook={handleBookRoom}
                     onViewDetails={handleViewDetails}
                   />

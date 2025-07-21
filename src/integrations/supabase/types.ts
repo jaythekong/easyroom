@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      amenities: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      room_amenities: {
+        Row: {
+          amenity_id: string
+          created_at: string
+          id: string
+          room_id: string
+        }
+        Insert: {
+          amenity_id: string
+          created_at?: string
+          id?: string
+          room_id: string
+        }
+        Update: {
+          amenity_id?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_amenities_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          capacity: number
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          name: string
+          photo_url: string | null
+          status: Database["public"]["Enums"]["room_status"]
+          updated_at: string
+        }
+        Insert: {
+          capacity: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          name: string
+          photo_url?: string | null
+          status?: Database["public"]["Enums"]["room_status"]
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          name?: string
+          photo_url?: string | null
+          status?: Database["public"]["Enums"]["room_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +118,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      room_status: "active" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +245,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      room_status: ["active", "inactive"],
+    },
   },
 } as const
