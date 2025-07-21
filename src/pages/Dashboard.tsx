@@ -33,6 +33,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchRooms();
+    
+    // Refresh data when user returns to the page
+    const handleFocus = () => {
+      fetchRooms();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const fetchRooms = async () => {
