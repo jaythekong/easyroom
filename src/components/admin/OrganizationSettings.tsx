@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save } from "lucide-react";
+import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HexColorPicker } from "react-colorful";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,7 @@ interface Organization {
   slug: string;
   logo_url?: string;
   primary_color?: string;
+  timezone?: string;
   created_at: string;
 }
 
@@ -30,12 +32,33 @@ export function OrganizationSettings() {
   const [subdomain, setSubdomain] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#ea580c");
+  const [timezone, setTimezone] = useState("America/New_York");
   const [originalSubdomain, setOriginalSubdomain] = useState("");
   const [originalLogoUrl, setOriginalLogoUrl] = useState("");
   const [originalPrimaryColor, setOriginalPrimaryColor] = useState("#ea580c");
+  const [originalTimezone, setOriginalTimezone] = useState("America/New_York");
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  const popularTimezones = [
+    { value: "America/New_York", label: "New York (EST/EDT)", city: "New York" },
+    { value: "America/Chicago", label: "Chicago (CST/CDT)", city: "Chicago" },
+    { value: "America/Denver", label: "Denver (MST/MDT)", city: "Denver" },
+    { value: "America/Los_Angeles", label: "Los Angeles (PST/PDT)", city: "Los Angeles" },
+    { value: "America/Phoenix", label: "Phoenix (MST)", city: "Phoenix" },
+    { value: "America/Anchorage", label: "Anchorage (AKST/AKDT)", city: "Anchorage" },
+    { value: "Pacific/Honolulu", label: "Honolulu (HST)", city: "Honolulu" },
+    { value: "Europe/London", label: "London (GMT/BST)", city: "London" },
+    { value: "Europe/Paris", label: "Paris (CET/CEST)", city: "Paris" },
+    { value: "Europe/Berlin", label: "Berlin (CET/CEST)", city: "Berlin" },
+    { value: "Asia/Tokyo", label: "Tokyo (JST)", city: "Tokyo" },
+    { value: "Asia/Shanghai", label: "Shanghai (CST)", city: "Shanghai" },
+    { value: "Asia/Kolkata", label: "Mumbai (IST)", city: "Mumbai" },
+    { value: "Australia/Sydney", label: "Sydney (AEST/AEDT)", city: "Sydney" },
+    { value: "America/Toronto", label: "Toronto (EST/EDT)", city: "Toronto" },
+    { value: "America/Vancouver", label: "Vancouver (PST/PDT)", city: "Vancouver" }
+  ];
 
   useEffect(() => {
     fetchOrganization();
@@ -68,9 +91,11 @@ export function OrganizationSettings() {
       setSubdomain(org.slug);
       setLogoUrl(org.logo_url || "");
       setPrimaryColor(org.primary_color || "#ea580c");
+      setTimezone(org.timezone || "America/New_York");
       setOriginalSubdomain(org.slug);
       setOriginalLogoUrl(org.logo_url || "");
       setOriginalPrimaryColor(org.primary_color || "#ea580c");
+      setOriginalTimezone(org.timezone || "America/New_York");
     } catch (error) {
       console.error('Error fetching organization:', error);
       toast({
@@ -194,6 +219,7 @@ export function OrganizationSettings() {
           slug: subdomain.trim(),
           logo_url: logoUrl || null,
           primary_color: primaryColor,
+          timezone: timezone,
         })
         .eq('id', organization.id);
 
@@ -202,6 +228,7 @@ export function OrganizationSettings() {
       setOriginalSubdomain(subdomain);
       setOriginalLogoUrl(logoUrl);
       setOriginalPrimaryColor(primaryColor);
+      setOriginalTimezone(timezone);
       toast({
         title: "Settings saved",
         description: "Organization settings have been updated successfully",
@@ -243,7 +270,8 @@ export function OrganizationSettings() {
   const hasChanges = orgName !== organization.name || 
     subdomain !== originalSubdomain || 
     logoUrl !== originalLogoUrl || 
-    primaryColor !== originalPrimaryColor;
+    primaryColor !== originalPrimaryColor ||
+    timezone !== originalTimezone;
   const canSave = hasChanges && orgName.trim() && subdomain.trim() && isAvailable !== false;
 
   return (
@@ -356,6 +384,26 @@ export function OrganizationSettings() {
           </div>
 
           <div>
+            <Label htmlFor="timezone">Timezone / City</Label>
+            <Select value={timezone} onValueChange={setTimezone}>
+              <SelectTrigger>
+                <Clock className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Select timezone" />
+              </SelectTrigger>
+              <SelectContent>
+                {popularTimezones.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground mt-1">
+              This will be used for scheduling and time display across your organization
+            </p>
+          </div>
+
+          <div>
             <Label htmlFor="orgId">Organization ID</Label>
             <Input
               id="orgId"
@@ -448,7 +496,14 @@ export function OrganizationSettings() {
           <div className="flex justify-end gap-2 pt-4">
             <Button
               variant="outline"
-              onClick={fetchOrganization}
+              onClick={() => {
+                setOrgName(organization.name);
+                setSubdomain(originalSubdomain);
+                setLogoUrl(originalLogoUrl);
+                setPrimaryColor(originalPrimaryColor);
+                setTimezone(originalTimezone);
+                setIsAvailable(null);
+              }}
               disabled={isLoading}
             >
               Reset

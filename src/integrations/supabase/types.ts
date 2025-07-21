@@ -166,6 +166,7 @@ export type Database = {
           name: string
           primary_color: string | null
           slug: string
+          timezone: string | null
           updated_at: string
         }
         Insert: {
@@ -175,6 +176,7 @@ export type Database = {
           name: string
           primary_color?: string | null
           slug: string
+          timezone?: string | null
           updated_at?: string
         }
         Update: {
@@ -184,6 +186,7 @@ export type Database = {
           name?: string
           primary_color?: string | null
           slug?: string
+          timezone?: string | null
           updated_at?: string
         }
         Relationships: []
