@@ -14,8 +14,17 @@ import { toast } from "sonner";
 
 const Auth = () => {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const { organization, isLoading: orgLoading } = orgSlug ? useOrganization() : { organization: null, isLoading: false };
-  useOrganizationTheme(); // Apply organization theme if available
+  
+  // Only use organization context if we have an orgSlug (organization-specific auth)
+  let organization = null;
+  let orgLoading = false;
+  
+  if (orgSlug) {
+    const orgContext = useOrganization();
+    organization = orgContext.organization;
+    orgLoading = orgContext.isLoading;
+    useOrganizationTheme(); // Apply organization theme only if we're in org context
+  }
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -136,7 +145,10 @@ const Auth = () => {
             </div>
           )}
           {!organization && (
-            <CardTitle className="text-2xl font-bold">Room Booking System</CardTitle>
+            <div>
+              <CardTitle className="text-2xl font-bold">Roomer</CardTitle>
+              <p className="text-muted-foreground text-sm mt-1">Create your organization account</p>
+            </div>
           )}
         </CardHeader>
         <CardContent>
