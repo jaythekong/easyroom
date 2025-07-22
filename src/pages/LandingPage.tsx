@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LandingPage = () => {
   return (
@@ -13,6 +14,7 @@ const LandingPage = () => {
             <span className="text-2xl font-bold">Easy Room</span>
           </div>
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             <Link to="/auth">
               <Button variant="ghost">Demo</Button>
             </Link>

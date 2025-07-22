@@ -11,6 +11,7 @@ import { Loader2, Building, Users, Calendar, ArrowRight, Sparkles } from "lucide
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Auth = () => {
   const { orgSlug } = useParams<{ orgSlug: string }>();
@@ -240,6 +241,13 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background relative overflow-hidden">
+      {/* Theme toggle - only show when not in org context */}
+      {!orgSlug && (
+        <div className="absolute top-4 right-4 z-20">
+          <ThemeToggle />
+        </div>
+      )}
+      
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
