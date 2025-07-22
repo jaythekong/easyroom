@@ -35,9 +35,24 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleSignOut = async () => {
-    await signOut();
-    // Navigate to the org's auth page after logout
-    navigate(`/auth/${orgSlug}`, { replace: true });
+    try {
+      await signOut();
+      // Navigate to the org's auth page after logout
+      if (orgSlug) {
+        navigate(`/auth/${orgSlug}`, { replace: true });
+      } else {
+        // Fallback to main auth page if no org slug
+        navigate(`/auth`, { replace: true });
+      }
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Even if sign out fails, redirect to auth page
+      if (orgSlug) {
+        navigate(`/auth/${orgSlug}`, { replace: true });
+      } else {
+        navigate(`/auth`, { replace: true });
+      }
+    }
   };
 
   const getUserDisplayName = () => {
