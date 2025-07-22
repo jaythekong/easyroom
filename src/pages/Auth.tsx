@@ -213,8 +213,9 @@ const Auth = () => {
         });
         
         if (emailCheck?.user) {
-          // Email exists but password doesn't match
+          // Email exists but password doesn't match - STOP PROCESS
           toast.error("This email is already registered with a different password. Please use the correct password or reset it.");
+          setLoading(false);
           return;
         }
         
@@ -862,48 +863,43 @@ const Auth = () => {
                                   });
                                   
                                   if (existingUser?.user) {
-                                    // User exists and password matches
+                                    // User exists and password matches - can proceed
                                     logger.debug('User already exists and password matches, proceeding to step 2');
                                     setOrgCreationStep(2);
                                     return;
+                                  } 
+                                  
+                                  // Always check if the email exists regardless of error type
+                                  const { data: emailCheck } = await supabase.auth.signInWithOtp({
+                                    email: sanitizedEmail,
+                                    options: { shouldCreateUser: false }
+                                  });
+                                  
+                                  if (emailCheck?.user) {
+                                    // Email exists but password was wrong
+                                    logger.security('Login attempt with existing email but wrong password', { email: sanitizedEmail });
+                                    toast.error("This email is already registered with a different password. Please use the correct password or reset it.");
+                                    return;
                                   }
                                   
-                                  // If login failed, check if email exists
-                                  if (checkError) {
-                                    if (!checkError.message.includes("Invalid login credentials")) {
-                                      // Some other error occurred
-                                      throw checkError;
+                                  // Only if email is completely new, create the account
+                                  const { data: newUser, error: authError } = await supabase.auth.signUp({
+                                    email: sanitizedEmail,
+                                    password,
+                                    options: {
+                                      emailRedirectTo: window.location.origin
                                     }
-                                    
-                                    // Check if email exists
-                                    const { data: emailCheck } = await supabase.auth.signInWithOtp({
-                                      email: sanitizedEmail,
-                                      options: { shouldCreateUser: false }
-                                    });
-                                    
-                                    if (emailCheck?.user) {
-                                      // Email exists but password doesn't match
-                                      toast.error("This email is already registered with a different password. Please use the correct password or reset it.");
-                                      return;
-                                    }
-                                    
-                                    // Email doesn't exist, create new user
-                                    const { data: newUser, error: authError } = await supabase.auth.signUp({
-                                      email: sanitizedEmail,
-                                      password,
-                                      options: {
-                                        emailRedirectTo: window.location.origin
-                                      }
-                                    });
-                                    
-                                    if (authError) {
-                                      throw authError;
-                                    }
-                                    
-                                    if (newUser) {
-                                      // Created successfully, proceed to step 2
-                                      setOrgCreationStep(2);
-                                    }
+                                  });
+                                  
+                                  if (authError) {
+                                    logger.error('Error creating new user:', authError);
+                                    toast.error(authError.message);
+                                    return;
+                                  }
+                                  
+                                  if (newUser) {
+                                    toast.success("Account created successfully!");
+                                    setOrgCreationStep(2);
                                   }
                                 } catch (error) {
                                   logger.error('Admin account setup error:', error);
