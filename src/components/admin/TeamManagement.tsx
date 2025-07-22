@@ -56,15 +56,14 @@ export function TeamManagement() {
     if (!organization?.id) return;
     
     try {
-      // Fetch team members from the same organization
+      // Fetch team members from memberships
       const { data: members, error: membersError } = await supabase
-        .from('user_profiles')
+        .from('user_organization_memberships')
         .select(`
           id,
           user_id,
           role,
-          created_at,
-          email
+          created_at
         `)
         .eq('organization_id', organization.id);
 
@@ -72,12 +71,24 @@ export function TeamManagement() {
         console.error('Members query error:', membersError);
         throw membersError;
       }
-
-      // Use actual email from user_profiles
-      const membersWithEmails = (members || []).map((member) => ({
-        ...member,
-        email: member.email || 'no-email@company.com'
-      }));
+      
+      // Get emails separately since they might be in profiles
+      const userIds = members.map(member => member.user_id);
+      
+      // Fetch emails from profiles or auth (as fallback)
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, email')
+        .in('user_id', userIds);
+        
+      // Map emails to members
+      const membersWithEmails = members.map(member => {
+        const profile = profiles?.find(p => p.user_id === member.user_id);
+        return {
+          ...member,
+          email: profile?.email || 'no-email@company.com'
+        };
+      });
 
       setTeamMembers(membersWithEmails);
 
