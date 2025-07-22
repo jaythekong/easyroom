@@ -87,6 +87,29 @@ export function BookingDetailsModal({
 
       if (error) throw error;
 
+      // Send Telegram notification for cancellation
+      try {
+        // Get user's organization ID for notification
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('organization_id')
+          .eq('user_id', user?.id || '')
+          .maybeSingle();
+
+        if (profile?.organization_id) {
+          await supabase.functions.invoke('send-telegram-notification', {
+            body: {
+              bookingId: booking.id,
+              organizationId: profile.organization_id,
+              action: 'cancelled'
+            }
+          });
+        }
+      } catch (notificationError) {
+        console.error('Failed to send Telegram notification:', notificationError);
+        // Don't block the cancellation if notification fails
+      }
+
       toast({
         title: "Booking Cancelled",
         description: "Your booking has been successfully cancelled.",

@@ -299,6 +299,22 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
       if (error) throw error;
 
+      // Send Telegram notification
+      try {
+        if (booking?.id) {
+          await supabase.functions.invoke('send-telegram-notification', {
+            body: {
+              bookingId: booking.id,
+              organizationId: profile.organization_id,
+              action: existingBooking ? 'updated' : 'created'
+            }
+          });
+        }
+      } catch (notificationError) {
+        console.error('Failed to send Telegram notification:', notificationError);
+        // Don't block the booking success if notification fails
+      }
+
       // Call the confirmation callback
       onBookingConfirm(booking);
       

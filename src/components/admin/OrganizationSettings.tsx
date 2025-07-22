@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save, Clock } from "lucide-react";
+import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save, Clock, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ interface Organization {
   primary_color?: string;
   timezone?: string;
   tagline?: string;
+  telegram_bot_token?: string;
+  telegram_chat_id?: string;
   created_at: string;
 }
 
@@ -40,6 +42,10 @@ export function OrganizationSettings() {
   const [originalPrimaryColor, setOriginalPrimaryColor] = useState("#ea580c");
   const [originalTimezone, setOriginalTimezone] = useState("America/New_York");
   const [originalTagline, setOriginalTagline] = useState("Find and book your perfect meeting space");
+  const [telegramBotToken, setTelegramBotToken] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [originalTelegramBotToken, setOriginalTelegramBotToken] = useState("");
+  const [originalTelegramChatId, setOriginalTelegramChatId] = useState("");
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -97,11 +103,15 @@ export function OrganizationSettings() {
       setPrimaryColor(org.primary_color || "#ea580c");
       setTimezone(org.timezone || "America/New_York");
       setTagline(org.tagline || "Find and book your perfect meeting space");
+      setTelegramBotToken(org.telegram_bot_token || "");
+      setTelegramChatId(org.telegram_chat_id || "");
       setOriginalSubdomain(org.slug);
       setOriginalLogoUrl(org.logo_url || "");
       setOriginalPrimaryColor(org.primary_color || "#ea580c");
       setOriginalTimezone(org.timezone || "America/New_York");
       setOriginalTagline(org.tagline || "Find and book your perfect meeting space");
+      setOriginalTelegramBotToken(org.telegram_bot_token || "");
+      setOriginalTelegramChatId(org.telegram_chat_id || "");
     } catch (error) {
       console.error('Error fetching organization:', error);
       toast({
@@ -227,6 +237,8 @@ export function OrganizationSettings() {
           primary_color: primaryColor,
           timezone: timezone,
           tagline: tagline.trim(),
+          telegram_bot_token: telegramBotToken || null,
+          telegram_chat_id: telegramChatId || null,
         })
         .eq('id', organization.id);
 
@@ -237,6 +249,8 @@ export function OrganizationSettings() {
       setOriginalPrimaryColor(primaryColor);
       setOriginalTimezone(timezone);
       setOriginalTagline(tagline);
+      setOriginalTelegramBotToken(telegramBotToken);
+      setOriginalTelegramChatId(telegramChatId);
       toast({
         title: "Settings saved",
         description: "Organization settings have been updated successfully",
@@ -280,7 +294,9 @@ export function OrganizationSettings() {
     logoUrl !== originalLogoUrl || 
     primaryColor !== originalPrimaryColor ||
     timezone !== originalTimezone ||
-    tagline !== originalTagline;
+    tagline !== originalTagline ||
+    telegramBotToken !== originalTelegramBotToken ||
+    telegramChatId !== originalTelegramChatId;
   const canSave = hasChanges && orgName.trim() && subdomain.trim() && isAvailable !== false;
 
   return (
@@ -436,6 +452,58 @@ export function OrganizationSettings() {
             <p className="text-sm text-muted-foreground mt-1">
               This is your unique organization identifier (read-only)
             </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Telegram Notifications */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Telegram Notifications
+          </CardTitle>
+          <CardDescription>
+            Configure Telegram bot for room booking notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="telegramBotToken">Telegram Bot Token</Label>
+            <Input
+              id="telegramBotToken"
+              type="password"
+              value={telegramBotToken}
+              onChange={(e) => setTelegramBotToken(e.target.value)}
+              placeholder="1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Create a bot with @BotFather on Telegram to get your token
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="telegramChatId">Chat ID</Label>
+            <Input
+              id="telegramChatId"
+              value={telegramChatId}
+              onChange={(e) => setTelegramChatId(e.target.value)}
+              placeholder="-1001234567890"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Group chat ID where notifications will be sent (use @userinfobot to find your chat ID)
+            </p>
+          </div>
+
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <h4 className="font-medium mb-2">How to set up Telegram notifications:</h4>
+            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Message @BotFather on Telegram and create a new bot with /newbot</li>
+              <li>Copy the bot token from BotFather</li>
+              <li>Add your bot to the group/channel where you want notifications</li>
+              <li>Use @userinfobot in your group to get the chat ID</li>
+              <li>Save your settings to start receiving booking notifications</li>
+            </ol>
           </div>
         </CardContent>
       </Card>

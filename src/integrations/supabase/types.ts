@@ -167,6 +167,8 @@ export type Database = {
           primary_color: string | null
           slug: string
           tagline: string | null
+          telegram_bot_token: string | null
+          telegram_chat_id: string | null
           timezone: string | null
           updated_at: string
         }
@@ -178,6 +180,8 @@ export type Database = {
           primary_color?: string | null
           slug: string
           tagline?: string | null
+          telegram_bot_token?: string | null
+          telegram_chat_id?: string | null
           timezone?: string | null
           updated_at?: string
         }
@@ -189,6 +193,8 @@ export type Database = {
           primary_color?: string | null
           slug?: string
           tagline?: string | null
+          telegram_bot_token?: string | null
+          telegram_chat_id?: string | null
           timezone?: string | null
           updated_at?: string
         }
