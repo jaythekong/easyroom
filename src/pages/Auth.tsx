@@ -28,9 +28,23 @@ const Auth = () => {
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
+  const [organizationSlug, setOrganizationSlug] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  // Auto-generate slug from organization name
+  useEffect(() => {
+    if (organizationName && !orgSlug) {
+      const slug = organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      setOrganizationSlug(slug);
+    }
+  }, [organizationName, orgSlug]);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -48,6 +62,73 @@ const Auth = () => {
     };
     checkUser();
   }, [navigate, searchParams]);
+
+  const handleOrganizationSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // First, create the user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/${organizationSlug}`
+        }
+      });
+
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          toast.error("This email is already registered. Please sign in instead.");
+        } else {
+          toast.error(authError.message);
+        }
+        return;
+      }
+
+      if (authData.user) {
+        // Create the organization
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name: organizationName,
+            slug: organizationSlug,
+          })
+          .select()
+          .single();
+
+        if (orgError) {
+          if (orgError.message.includes('duplicate key')) {
+            toast.error("Organization slug already exists. Please choose a different name.");
+          } else {
+            toast.error("Failed to create organization: " + orgError.message);
+          }
+          return;
+        }
+
+        // Create user profile as admin
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: authData.user.id,
+            organization_id: orgData.id,
+            email: email,
+            role: 'admin'
+          });
+
+        if (profileError) {
+          toast.error("Failed to create user profile: " + profileError.message);
+          return;
+        }
+
+        toast.success("Organization created! Check your email for the confirmation link.");
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,9 +270,43 @@ const Auth = () => {
             </TabsContent>
             
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
+              <form onSubmit={!organization ? handleOrganizationSignUp : handleSignUp} className="space-y-4">
+                {!organization && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="org-name">Organization Name</Label>
+                      <Input
+                        id="org-name"
+                        type="text"
+                        placeholder="Your company name"
+                        value={organizationName}
+                        onChange={(e) => setOrganizationName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="org-slug">Organization URL</Label>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-muted-foreground">roomer.app/</span>
+                        <Input
+                          id="org-slug"
+                          type="text"
+                          placeholder="your-org"
+                          value={organizationSlug}
+                          onChange={(e) => setOrganizationSlug(e.target.value)}
+                          required
+                          pattern="[a-z0-9-]+"
+                          className="flex-1"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Only lowercase letters, numbers, and hyphens allowed
+                      </p>
+                    </div>
+                  </>
+                )}
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">Your Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -214,7 +329,7 @@ const Auth = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Sign Up"}
+                  {loading ? (!organization ? "Creating organization..." : "Creating account...") : (!organization ? "Create Organization" : "Sign Up")}
                 </Button>
               </form>
             </TabsContent>
