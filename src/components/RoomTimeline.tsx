@@ -363,6 +363,16 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     return currentHour === slotHour;
   };
 
+  const isPastTimeSlot = (date: Date, time: string) => {
+    const slotDateTime = new Date(date);
+    const slotHour = parseInt(time.split(':')[0]);
+    const slotMinute = parseInt(time.split(':')[1] || '0');
+    slotDateTime.setHours(slotHour, slotMinute, 0, 0);
+    
+    return slotDateTime < currentTime;
+  };
+
+
   return (
     <div className="space-y-6">
 
@@ -510,22 +520,32 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                               {daySlots.map((slot, dayIndex) => {
                                 const day = (isMobile ? room.weekDays.slice(0, 3) : room.weekDays)[dayIndex];
                                 const isCurrent = isCurrentTime(day, time);
+                                const isPast = isPastTimeSlot(day, time);
                                 
                                 return (
                                   <div
                                     key={`${format(day, 'yyyy-MM-dd')}-${time}`}
                                     className={cn(
-                                      "border rounded p-2 cursor-pointer transition-all hover:shadow-md relative",
+                                      "border rounded p-2 transition-all relative",
                                       isMobile ? "min-h-[60px] text-xs" : "min-h-[50px] text-xs",
-                                      slot?.available 
-                                        ? "bg-success/10 border-success/20 hover:bg-success/20" 
-                                        : slot?.isDowntime
-                                        ? "bg-warning/20 border-warning/30"
-                                        : "bg-destructive/10 border-destructive/20",
+                                      // Past time slots - greyed out and not clickable
+                                      isPast && slot?.available && "bg-muted/20 border-muted/40 opacity-60 cursor-not-allowed",
+                                      // Available slots (not past)
+                                      !isPast && slot?.available && "bg-success/10 border-success/20 hover:bg-success/20 cursor-pointer hover:shadow-md",
+                                      // Booked slots
+                                      !slot?.available && slot?.isDowntime && "bg-warning/20 border-warning/30",
+                                      !slot?.available && !slot?.isDowntime && "bg-destructive/10 border-destructive/20",
+                                      // Current time highlight
                                       isCurrent && "ring-2 ring-primary/50",
-                                      !slot?.available && "hover:bg-destructive/20"
+                                      // Hover effects for non-past slots
+                                      !isPast && !slot?.available && "cursor-pointer hover:bg-destructive/20 hover:shadow-md"
                                     )}
                                     onClick={() => {
+                                      // Prevent booking past time slots
+                                      if (isPast && slot?.available) {
+                                        return;
+                                      }
+                                      
                                       if (slot?.available) {
                                         const slotDateTime = `${format(day, 'yyyy-MM-dd')}T${time}:00`;
                                         onTimeSlotSelect(room.id, slotDateTime);
@@ -533,7 +553,11 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                         handleBookingClick(slot, room);
                                       }
                                     }}
-                                    title={slot?.meeting || (slot?.available ? 'Available' : 'Unavailable')}
+                                    title={
+                                      isPast && slot?.available 
+                                        ? 'Past time slot - cannot book' 
+                                        : slot?.meeting || (slot?.available ? 'Available' : 'Unavailable')
+                                    }
                                   >
                                     {slot?.meeting && (
                                       <div className="flex flex-col gap-1">
@@ -578,9 +602,12 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                     )}
                                     {slot?.available && (
                                       <div className={cn(
-                                        "text-success font-medium",
-                                        isMobile ? "text-xs" : "text-xs"
-                                      )}>Available</div>
+                                        "font-medium",
+                                        isMobile ? "text-xs" : "text-xs",
+                                        isPast ? "text-muted-foreground" : "text-success"
+                                      )}>
+                                        {isPast ? "Past" : "Available"}
+                                      </div>
                                     )}
                                   </div>
                                 );
