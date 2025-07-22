@@ -364,24 +364,21 @@ export default function Dashboard() {
               className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
             >
               <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden xs:inline sm:inline">Timeline</span>
-              <span className="xs:hidden">T</span>
+              <span className="hidden sm:inline">Timeline</span>
             </TabsTrigger>
             <TabsTrigger 
               value="grid" 
               className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
             >
               <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden xs:inline sm:inline">Grid</span>
-              <span className="xs:hidden">G</span>
+              <span className="hidden sm:inline">Grid</span>
             </TabsTrigger>
             <TabsTrigger 
               value="filters" 
               className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
             >
               <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden xs:inline sm:inline">Filters</span>
-              <span className="xs:hidden">F</span>
+              <span className="hidden sm:inline">Filters</span>
             </TabsTrigger>
           </TabsList>
 
