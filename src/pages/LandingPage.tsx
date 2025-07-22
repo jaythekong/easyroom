@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone } from "lucide-react";
+import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -91,6 +91,12 @@ const LandingPage = () => {
               <Smartphone className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">✅ Fully Responsive Design</h3>
               <p className="text-muted-foreground">Works beautifully across desktop and mobile — no app download needed.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm">
+              <MessageCircle className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">✅ Telegram Bot Integration</h3>
+              <p className="text-muted-foreground">Connect your own Telegram bot in minutes through the admin panel. Get instant notifications and allow team members to interact with bookings directly from Telegram.</p>
             </div>
           </div>
         </div>
