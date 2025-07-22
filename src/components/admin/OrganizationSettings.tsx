@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save, Clock, MessageSquare } from "lucide-react";
+import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save, Clock, MessageSquare, TestTube, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,8 @@ export function OrganizationSettings() {
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isTestingBot, setIsTestingBot] = useState(false);
+  const [botInfo, setBotInfo] = useState<{username?: string, first_name?: string} | null>(null);
 
   const popularTimezones = [
     { value: "America/New_York", label: "New York (EST/EDT)", city: "New York" },
@@ -271,6 +273,46 @@ export function OrganizationSettings() {
     });
   };
 
+  const testTelegramBot = async () => {
+    if (!telegramBotToken || !organization) {
+      toast({
+        title: "Missing Information",
+        description: "Please save your bot token first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTestingBot(true);
+    try {
+      const response = await supabase.functions.invoke('telegram-bot-setup', {
+        body: {
+          organizationId: organization.id,
+          botToken: telegramBotToken
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to test bot');
+      }
+
+      setBotInfo(response.data.botInfo);
+      toast({
+        title: "Bot Test Successful! 🎉",
+        description: `Bot @${response.data.botInfo.username} is ready to receive subscriptions`,
+      });
+    } catch (error: any) {
+      console.error('Bot test error:', error);
+      toast({
+        title: "Bot Test Failed",
+        description: error.message || "Failed to test bot configuration",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingBot(false);
+    }
+  };
+
   if (!organization) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -472,6 +514,38 @@ export function OrganizationSettings() {
             <p className="text-sm text-muted-foreground mt-1">
               Create a bot with @BotFather on Telegram to get your token
             </p>
+          </div>
+
+          {/* Test Bot Button */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={testTelegramBot}
+              disabled={!telegramBotToken || isTestingBot}
+            >
+              <TestTube className="h-4 w-4 mr-2" />
+              {isTestingBot ? "Testing..." : "Test Bot"}
+            </Button>
+            
+            {botInfo && (
+              <div className="flex items-center gap-2">
+                <Badge variant="default" className="bg-green-100 text-green-700">
+                  <Check className="h-3 w-3 mr-1" />
+                  Bot Active
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  @{botInfo.username}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open(`https://t.me/${botInfo.username}`, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="p-4 bg-muted/50 rounded-lg">
