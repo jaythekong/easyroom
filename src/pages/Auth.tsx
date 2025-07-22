@@ -75,7 +75,11 @@ const Auth = () => {
   useEffect(() => {
     // Only redirect if user is already logged in AND we're in an organization context
     // For /auth (new org signup), allow logged in users to create new orgs
+    // Don't redirect if we're in a password reset flow
     if (!orgSlug) return; // Don't redirect on /auth - allow new org creation
+    
+    const resetParam = searchParams.get('reset');
+    if (resetParam === 'true') return; // Don't redirect during password reset
     
     const checkUser = async () => {
       try {
