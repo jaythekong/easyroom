@@ -38,13 +38,18 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      // Navigate to the org's auth page after logout
+      // Capture org slug BEFORE signing out (since organization context will be cleared)
       const currentOrgSlug = organization?.slug || orgSlug;
+      console.log('UserMenu: Logging out, current org slug:', currentOrgSlug);
+      
+      await signOut();
+      
+      // Navigate to the org's auth page after logout
       if (currentOrgSlug) {
+        console.log('UserMenu: Redirecting to:', `/auth/${currentOrgSlug}`);
         navigate(`/auth/${currentOrgSlug}`, { replace: true });
       } else {
-        // Fallback to main auth page if no org slug
+        console.log('UserMenu: No org slug found, redirecting to /auth');
         navigate(`/auth`, { replace: true });
       }
     } catch (error) {
