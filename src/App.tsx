@@ -14,6 +14,7 @@ import MyBookings from "./pages/MyBookings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
+import LandingPage from "./pages/LandingPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -67,8 +68,8 @@ const App = () => (
                 </OrganizationProvider>
               } />
                 
-                {/* Default redirect to kampus organization */}
-                <Route path="/" element={<Navigate to="/kampus" replace />} />
+                {/* Landing page */}
+                <Route path="/" element={<LandingPage />} />
                 
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
