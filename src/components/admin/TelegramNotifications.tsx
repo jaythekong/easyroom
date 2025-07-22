@@ -1,0 +1,272 @@
+import { useState, useEffect } from "react";
+import { MessageSquare, TestTube, ExternalLink, Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+interface Organization {
+  id: string;
+  name: string;
+  telegram_bot_token?: string;
+}
+
+export function TelegramNotifications() {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [telegramBotToken, setTelegramBotToken] = useState("");
+  const [originalTelegramBotToken, setOriginalTelegramBotToken] = useState("");
+  const [isTestingBot, setIsTestingBot] = useState(false);
+  const [botInfo, setBotInfo] = useState<{username?: string, first_name?: string} | null>(null);
+
+  useEffect(() => {
+    fetchOrganization();
+  }, [user]);
+
+  const fetchOrganization = async () => {
+    if (!user) return;
+
+    try {
+      // Get user's organization
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Get organization details
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', profile.organization_id)
+        .single();
+
+      if (orgError) throw orgError;
+
+      setOrganization(org);
+      setTelegramBotToken(org.telegram_bot_token || "");
+      setOriginalTelegramBotToken(org.telegram_bot_token || "");
+    } catch (error) {
+      console.error('Error fetching organization:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load organization settings",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const testTelegramBot = async () => {
+    if (!telegramBotToken || !organization) {
+      toast({
+        title: "Missing Information",
+        description: "Please save your bot token first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate bot token format
+    if (!telegramBotToken.match(/^\d+:[A-Za-z0-9_-]{35}$/)) {
+      toast({
+        title: "Invalid Bot Token",
+        description: "Bot token should look like: 123456789:ABCdefGhIjKlMnOpQrStUvWxYz",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTestingBot(true);
+    try {
+      const response = await supabase.functions.invoke('telegram-bot-setup', {
+        body: {
+          organizationId: organization.id,
+          botToken: telegramBotToken
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to test bot');
+      }
+
+      setBotInfo(response.data.botInfo);
+      toast({
+        title: "Bot Test Successful! 🎉",
+        description: `Bot @${response.data.botInfo.username} is ready to receive subscriptions`,
+      });
+    } catch (error: any) {
+      console.error('Bot test error:', error);
+      toast({
+        title: "Bot Test Failed",
+        description: error.message || "Failed to test bot configuration",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingBot(false);
+    }
+  };
+
+  const saveSettings = async () => {
+    if (!organization) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          telegram_bot_token: telegramBotToken || null,
+        })
+        .eq('id', organization.id);
+
+      if (error) throw error;
+
+      setOriginalTelegramBotToken(telegramBotToken);
+      toast({
+        title: "Settings saved",
+        description: "Telegram notifications settings have been updated successfully",
+      });
+
+      // Refresh data
+      fetchOrganization();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!organization) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="text-center">
+          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading Telegram settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const hasChanges = telegramBotToken !== originalTelegramBotToken;
+
+  return (
+    <div className="space-y-6">
+      {/* Telegram Bot Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Telegram Bot Configuration
+          </CardTitle>
+          <CardDescription>
+            Configure your Telegram bot for room booking notifications. Users can subscribe directly to your bot to receive updates.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <Label htmlFor="telegramBotToken">Telegram Bot Token</Label>
+            <Input
+              id="telegramBotToken"
+              type="password"
+              value={telegramBotToken}
+              onChange={(e) => setTelegramBotToken(e.target.value)}
+              placeholder="1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Get your bot token from @BotFather on Telegram
+            </p>
+          </div>
+
+          {/* Test Bot Button */}
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={testTelegramBot}
+              disabled={!telegramBotToken || isTestingBot}
+            >
+              <TestTube className="h-4 w-4 mr-2" />
+              {isTestingBot ? "Testing..." : "Test Bot"}
+            </Button>
+            
+            {botInfo && (
+              <div className="flex items-center gap-2">
+                <Badge variant="default" className="bg-green-100 text-green-700">
+                  <Check className="h-3 w-3 mr-1" />
+                  Bot Active
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  @{botInfo.username}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.open(`https://t.me/${botInfo.username}`, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 bg-muted/50 rounded-lg">
+            <h4 className="font-medium mb-2">How to set up Telegram notifications:</h4>
+            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Message @BotFather on Telegram and create a new bot with /newbot</li>
+              <li>Copy the bot token from BotFather and paste it above</li>
+              <li>Share the bot username (e.g., @your-company-bot) with your team members</li>
+              <li>Team members start the bot by sending /start to subscribe to notifications</li>
+              <li>Save your settings - all subscribed users will receive booking notifications!</li>
+            </ol>
+            <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
+              <p className="text-sm text-blue-700 font-medium">🎉 No more chat IDs needed!</p>
+              <p className="text-sm text-blue-600 mt-1">
+                Users can now subscribe directly by starting your bot on Telegram. 
+                Much simpler than finding chat IDs!
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Subscriber Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Subscriber Management</CardTitle>
+          <CardDescription>
+            View and manage users who have subscribed to your Telegram notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              Subscriber management features coming soon...
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Save Button */}
+      <div className="flex justify-end">
+        <Button
+          onClick={saveSettings}
+          disabled={!hasChanges || isLoading}
+        >
+          {isLoading ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
+    </div>
+  );
+}

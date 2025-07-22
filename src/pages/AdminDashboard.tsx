@@ -1,6 +1,6 @@
 
 import { memo } from "react";
-import { Plus, Settings, Users, Calendar, ArrowLeft } from "lucide-react";
+import { Plus, Settings, Users, Calendar, ArrowLeft, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,7 @@ import { RoomManagement } from "@/components/admin/RoomManagement";
 import { AdminStats } from "@/components/admin/AdminStats";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
+import { TelegramNotifications } from "@/components/admin/TelegramNotifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { QueryProvider } from "@/components/QueryProvider";
 import { Link } from "react-router-dom";
@@ -40,7 +41,7 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
         <AdminStats />
 
         <Tabs defaultValue="rooms" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="rooms" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Rooms
@@ -56,6 +57,10 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
             <TabsTrigger value="analytics" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Analytics
+            </TabsTrigger>
+            <TabsTrigger value="telegram" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Telegram
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -101,6 +106,10 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
                 </p>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="telegram" className="space-y-6">
+            <TelegramNotifications />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">

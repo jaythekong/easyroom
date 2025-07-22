@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save, Clock, MessageSquare, TestTube, ExternalLink } from "lucide-react";
+import { Settings, Globe, Check, AlertCircle, Copy, Upload, Palette, Save, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,6 @@ interface Organization {
   primary_color?: string;
   timezone?: string;
   tagline?: string;
-  telegram_bot_token?: string;
   created_at: string;
 }
 
@@ -41,13 +40,9 @@ export function OrganizationSettings() {
   const [originalPrimaryColor, setOriginalPrimaryColor] = useState("#ea580c");
   const [originalTimezone, setOriginalTimezone] = useState("America/New_York");
   const [originalTagline, setOriginalTagline] = useState("Find and book your perfect meeting space");
-  const [telegramBotToken, setTelegramBotToken] = useState("");
-  const [originalTelegramBotToken, setOriginalTelegramBotToken] = useState("");
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [isTestingBot, setIsTestingBot] = useState(false);
-  const [botInfo, setBotInfo] = useState<{username?: string, first_name?: string} | null>(null);
 
   const popularTimezones = [
     { value: "America/New_York", label: "New York (EST/EDT)", city: "New York" },
@@ -102,13 +97,11 @@ export function OrganizationSettings() {
       setPrimaryColor(org.primary_color || "#ea580c");
       setTimezone(org.timezone || "America/New_York");
       setTagline(org.tagline || "Find and book your perfect meeting space");
-      setTelegramBotToken(org.telegram_bot_token || "");
       setOriginalSubdomain(org.slug);
       setOriginalLogoUrl(org.logo_url || "");
       setOriginalPrimaryColor(org.primary_color || "#ea580c");
       setOriginalTimezone(org.timezone || "America/New_York");
       setOriginalTagline(org.tagline || "Find and book your perfect meeting space");
-      setOriginalTelegramBotToken(org.telegram_bot_token || "");
     } catch (error) {
       console.error('Error fetching organization:', error);
       toast({
@@ -234,7 +227,6 @@ export function OrganizationSettings() {
           primary_color: primaryColor,
           timezone: timezone,
           tagline: tagline.trim(),
-          telegram_bot_token: telegramBotToken || null,
         })
         .eq('id', organization.id);
 
@@ -245,7 +237,6 @@ export function OrganizationSettings() {
       setOriginalPrimaryColor(primaryColor);
       setOriginalTimezone(timezone);
       setOriginalTagline(tagline);
-      setOriginalTelegramBotToken(telegramBotToken);
       toast({
         title: "Settings saved",
         description: "Organization settings have been updated successfully",
@@ -273,55 +264,6 @@ export function OrganizationSettings() {
     });
   };
 
-  const testTelegramBot = async () => {
-    if (!telegramBotToken || !organization) {
-      toast({
-        title: "Missing Information",
-        description: "Please save your bot token first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate bot token format
-    if (!telegramBotToken.match(/^\d+:[A-Za-z0-9_-]{35}$/)) {
-      toast({
-        title: "Invalid Bot Token",
-        description: "Bot token should look like: 123456789:ABCdefGhIjKlMnOpQrStUvWxYz",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsTestingBot(true);
-    try {
-      const response = await supabase.functions.invoke('telegram-bot-setup', {
-        body: {
-          organizationId: organization.id,
-          botToken: telegramBotToken
-        }
-      });
-
-      if (response.error) {
-        throw new Error(response.error.message || 'Failed to test bot');
-      }
-
-      setBotInfo(response.data.botInfo);
-      toast({
-        title: "Bot Test Successful! 🎉",
-        description: `Bot @${response.data.botInfo.username} is ready to receive subscriptions`,
-      });
-    } catch (error: any) {
-      console.error('Bot test error:', error);
-      toast({
-        title: "Bot Test Failed",
-        description: error.message || "Failed to test bot configuration",
-        variant: "destructive",
-      });
-    } finally {
-      setIsTestingBot(false);
-    }
-  };
 
   if (!organization) {
     return (
@@ -339,8 +281,7 @@ export function OrganizationSettings() {
     logoUrl !== originalLogoUrl || 
     primaryColor !== originalPrimaryColor ||
     timezone !== originalTimezone ||
-    tagline !== originalTagline ||
-    telegramBotToken !== originalTelegramBotToken;
+    tagline !== originalTagline;
   const canSave = hasChanges && orgName.trim() && subdomain.trim() && isAvailable !== false;
 
   return (
@@ -496,84 +437,6 @@ export function OrganizationSettings() {
             <p className="text-sm text-muted-foreground mt-1">
               This is your unique organization identifier (read-only)
             </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Telegram Notifications */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="h-5 w-5" />
-            Telegram Notifications
-          </CardTitle>
-          <CardDescription>
-            Configure Telegram bot for room booking notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="telegramBotToken">Telegram Bot Token</Label>
-            <Input
-              id="telegramBotToken"
-              type="password"
-              value={telegramBotToken}
-              onChange={(e) => setTelegramBotToken(e.target.value)}
-              placeholder="1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefgh"
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              Create a bot with @BotFather on Telegram to get your token
-            </p>
-          </div>
-
-          {/* Test Bot Button */}
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={testTelegramBot}
-              disabled={!telegramBotToken || isTestingBot}
-            >
-              <TestTube className="h-4 w-4 mr-2" />
-              {isTestingBot ? "Testing..." : "Test Bot"}
-            </Button>
-            
-            {botInfo && (
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="bg-green-100 text-green-700">
-                  <Check className="h-3 w-3 mr-1" />
-                  Bot Active
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  @{botInfo.username}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => window.open(`https://t.me/${botInfo.username}`, '_blank')}
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-
-          <div className="p-4 bg-muted/50 rounded-lg">
-            <h4 className="font-medium mb-2">How to set up Telegram notifications:</h4>
-            <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-              <li>Message @BotFather on Telegram and create a new bot with /newbot</li>
-              <li>Copy the bot token from BotFather and paste it above</li>
-              <li>Share the bot username (e.g., @your-company-bot) with your team members</li>
-              <li>Team members start the bot by sending /start to subscribe to notifications</li>
-              <li>Save your settings - all subscribed users will receive booking notifications!</li>
-            </ol>
-            <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-              <p className="text-sm text-blue-700 font-medium">🎉 No more chat IDs needed!</p>
-              <p className="text-sm text-blue-600 mt-1">
-                Users can now subscribe directly by starting your bot on Telegram. 
-                Much simpler than finding chat IDs!
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>
