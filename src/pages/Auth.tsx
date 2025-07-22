@@ -282,7 +282,7 @@ const Auth = () => {
       logger.debug('Auth: Signing up with redirectTo:', redirectTo);
       const redirectUrl = `${window.location.origin}${redirectTo}`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
@@ -290,17 +290,36 @@ const Auth = () => {
         }
       });
 
-      if (error) {
-        logger.security('Signup failed', { error: error.message, email: sanitizedEmail });
-        if (error.message.includes("already registered")) {
+      if (authError) {
+        logger.security('Signup failed', { error: authError.message, email: sanitizedEmail });
+        if (authError.message.includes("already registered")) {
           toast.error("This email is already registered. Please sign in instead.");
         } else {
-          toast.error(error.message);
+          toast.error(authError.message);
         }
-      } else {
-        logger.security('Signup successful', { email: sanitizedEmail });
-        toast.success("Check your email for the confirmation link!");
+        return;
       }
+
+      // If user was created and we have an organization, create user profile
+      if (authData.user && organization) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: authData.user.id,
+            organization_id: organization.id,
+            email: sanitizedEmail,
+            role: 'member' // Regular signup gets member role
+          });
+
+        if (profileError) {
+          logger.error('Profile creation failed:', profileError);
+          toast.error("Account created but failed to set up profile. Please contact support.");
+          return;
+        }
+      }
+
+      logger.security('Signup successful', { email: sanitizedEmail });
+      toast.success("Check your email for the confirmation link!");
     } catch (error) {
       logger.error('Signup unexpected error:', error);
       toast.error("An unexpected error occurred");

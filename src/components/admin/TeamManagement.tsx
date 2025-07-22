@@ -54,35 +54,22 @@ export function TeamManagement() {
 
     try {
       // Check if user profile exists
-      let { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
         .select('organization_id')
         .eq('user_id', user.id)
         .single();
 
       if (profileError && profileError.code === 'PGRST116') {
-        // User profile doesn't exist, create one with default organization
-        const { data: defaultOrg } = await supabase
-          .from('organizations')
-          .select('id')
-          .limit(1)
-          .single();
-
-        if (defaultOrg) {
-          const { data: newProfile, error: createError } = await supabase
-            .from('user_profiles')
-            .insert({
-              user_id: user.id,
-              organization_id: defaultOrg.id,
-              role: 'admin'
-            })
-            .select('organization_id')
-            .single();
-
-          if (!createError && newProfile) {
-            profile = newProfile;
-          }
-        }
+        // User profile doesn't exist - this should not happen for properly signed up users
+        // Don't auto-create admin profiles as this is a security vulnerability
+        console.error('User profile not found. User may need to sign up properly through organization auth.');
+        toast({
+          title: "Error",
+          description: "User profile not found. Please contact your administrator.",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (profile?.organization_id) {
