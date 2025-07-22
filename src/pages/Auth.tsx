@@ -881,19 +881,26 @@ const Auth = () => {
                                     setOrgCreationStep(2);
                                     return;
                                   } 
-                                  
-                                  // Always check if the email exists regardless of error type
-                                  const { data: emailCheck } = await supabase.auth.signInWithOtp({
-                                    email: sanitizedEmail,
-                                    options: { shouldCreateUser: false }
-                                  });
-                                  
-                                  if (emailCheck?.user) {
-                                    // Email exists but password was wrong
-                                    logger.security('Login attempt with existing email but wrong password', { email: sanitizedEmail });
-                                    toast.error("This email is already registered with a different password. Please use the correct password or reset it.");
-                                    return;
-                                  }
+                                   
+                                   // Login failed - check if it's because email exists with different password
+                                   if (checkError?.message.includes("Invalid login credentials")) {
+                                     // Try a password reset request - this will tell us if email exists
+                                     console.log('Checking if email exists by attempting password reset...');
+                                     const { error: resetError } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
+                                       redirectTo: `${window.location.origin}/reset-password`
+                                     });
+                                     
+                                     console.log('Password reset attempt result:', resetError?.message || 'success');
+                                     
+                                     // If no error on reset request, email exists (even if rate limited)
+                                     if (!resetError || resetError.message.includes("rate limit") || resetError.message.includes("For security purposes")) {
+                                       // Email exists but password doesn't match - STOP PROCESS
+                                       console.log('Email exists with different password - blocking signup');
+                                       toast.error("This email is already registered with a different password. Please use the correct password or try logging in instead.");
+                                       setLoading(false);
+                                       return;
+                                     }
+                                   }
                                   
                                   // Only if email is completely new, create the account
                                   const { data: newUser, error: authError } = await supabase.auth.signUp({
