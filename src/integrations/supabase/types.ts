@@ -355,6 +355,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_organization_memberships: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_organization_memberships_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null
@@ -411,8 +446,27 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_organization_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
+      get_user_primary_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_role_in_org: {
+        Args: { org_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       has_role: {
         Args: { required_role: Database["public"]["Enums"]["user_role"] }
+        Returns: boolean
+      }
+      has_role_in_org: {
+        Args: {
+          required_role: Database["public"]["Enums"]["user_role"]
+          org_id?: string
+        }
         Returns: boolean
       }
     }
