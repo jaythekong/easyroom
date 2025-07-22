@@ -410,7 +410,16 @@ const Auth = () => {
         // Reset rate limiting on successful login
         authRateLimiter.reset(rateLimitKey);
         
-        const redirectTo = searchParams.get('redirectTo') || '/';
+        // Construct redirect path based on orgSlug
+        let redirectTo;
+        if (orgSlug) {
+          // If we're in an org-specific auth page, redirect to the org dashboard
+          redirectTo = searchParams.get('redirectTo') || `/${orgSlug}`;
+        } else {
+          // If it's the main auth page, redirect to the default URL or user's first org dashboard
+          redirectTo = searchParams.get('redirectTo') || '/';
+        }
+        
         logger.debug('Auth: Sign in successful, redirecting to:', redirectTo);
         navigate(redirectTo);
       }
