@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Organization {
   id: string;
@@ -30,6 +31,7 @@ interface TelegramSubscriber {
 export function TelegramNotifications() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { organization: contextOrg } = useOrganization();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [telegramBotToken, setTelegramBotToken] = useState("");
@@ -42,27 +44,20 @@ export function TelegramNotifications() {
   const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
 
   useEffect(() => {
-    fetchOrganization();
-  }, [user]);
+    if (contextOrg?.id) {
+      fetchOrganization();
+    }
+  }, [contextOrg?.id]);
 
   const fetchOrganization = async () => {
-    if (!user) return;
+    if (!contextOrg?.id) return;
 
     try {
-      // Get user's organization
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      // Get organization details
+      // Get organization details directly
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('*')
-        .eq('id', profile.organization_id)
+        .eq('id', contextOrg.id)
         .single();
 
       if (orgError) throw orgError;
@@ -75,7 +70,7 @@ export function TelegramNotifications() {
 
       // Fetch subscribers
       if (org.telegram_bot_token) {
-        fetchSubscribers(profile.organization_id);
+        fetchSubscribers(contextOrg.id);
       }
     } catch (error) {
       console.error('Error fetching organization:', error);

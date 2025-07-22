@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface TeamMember {
   id: string;
@@ -33,6 +34,8 @@ interface Invitation {
 export function TeamManagement() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { organization } = useOrganization();
+  
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -42,71 +45,17 @@ export function TeamManagement() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
-  const [userOrgId, setUserOrgId] = useState<string | null>(null);
-  const [orgSlug, setOrgSlug] = useState<string | null>(null);
 
   useEffect(() => {
-    initializeUser();
-  }, [user]);
-
-  const initializeUser = async () => {
-    if (!user) return;
-
-    try {
-      // Check if user profile exists
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError && profileError.code === 'PGRST116') {
-        // User profile doesn't exist - this should not happen for properly signed up users
-        // Don't auto-create admin profiles as this is a security vulnerability
-        console.error('User profile not found. User may need to sign up properly through organization auth.');
-        toast({
-          title: "Error",
-          description: "User profile not found. Please contact your administrator.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (profile?.organization_id) {
-        setUserOrgId(profile.organization_id);
-        fetchTeamData(profile.organization_id);
-      }
-    } catch (error) {
-      console.error('Error initializing user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize user profile",
-        variant: "destructive",
-      });
+    if (organization?.id) {
+      fetchTeamData();
     }
-  };
+  }, [organization?.id]);
 
-  const fetchTeamData = async (orgId?: string) => {
-    const organizationId = orgId || userOrgId;
-    if (!organizationId) return;
+  const fetchTeamData = async () => {
+    if (!organization?.id) return;
     
     try {
-      // Fetch organization data including slug
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('slug')
-        .eq('id', organizationId)
-        .single();
-
-      if (orgError) {
-        console.error('Organization query error:', orgError);
-        throw orgError;
-      }
-
-      if (orgData?.slug) {
-        setOrgSlug(orgData.slug);
-      }
-
       // Fetch team members from the same organization
       const { data: members, error: membersError } = await supabase
         .from('user_profiles')
@@ -117,7 +66,7 @@ export function TeamManagement() {
           created_at,
           email
         `)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', organization.id);
 
       if (membersError) {
         console.error('Members query error:', membersError);
@@ -136,7 +85,7 @@ export function TeamManagement() {
       const { data: invites, error: invitesError } = await supabase
         .from('invitations')
         .select('*')
-        .eq('organization_id', organizationId)
+        .eq('organization_id', organization.id)
         .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString());
 
@@ -156,7 +105,7 @@ export function TeamManagement() {
   };
 
   const sendInvite = async () => {
-    if (!inviteEmail || !user || !userOrgId) return;
+    if (!inviteEmail || !user || !organization?.id) return;
 
     setIsLoading(true);
     try {
@@ -166,7 +115,7 @@ export function TeamManagement() {
           email: inviteEmail,
           role: inviteRole as 'admin' | 'member',
           invited_by: user.id,
-          organization_id: userOrgId,
+          organization_id: organization.id,
         });
 
       if (error) throw error;
@@ -192,7 +141,7 @@ export function TeamManagement() {
   };
 
   const generateInviteLink = async () => {
-    if (!user || !userOrgId) return;
+    if (!user || !organization?.id) return;
 
     setIsLoading(true);
     try {
@@ -205,7 +154,7 @@ export function TeamManagement() {
           email: linkIdentifier, // Use unique identifier instead of empty string
           role: linkRole as 'admin' | 'member',
           invited_by: user.id,
-          organization_id: userOrgId,
+          organization_id: organization.id,
         })
         .select()
         .single();
@@ -280,7 +229,7 @@ export function TeamManagement() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/${orgSlug}?reset=true`,
+        redirectTo: `${window.location.origin}/auth/${organization.slug}?reset=true`,
       });
 
       if (error) throw error;

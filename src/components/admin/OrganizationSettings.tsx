@@ -12,6 +12,7 @@ import { HexColorPicker } from "react-colorful";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Organization {
   id: string;
@@ -27,6 +28,7 @@ interface Organization {
 export function OrganizationSettings() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { organization: contextOrg } = useOrganization();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -65,27 +67,20 @@ export function OrganizationSettings() {
   ];
 
   useEffect(() => {
-    fetchOrganization();
-  }, [user]);
+    if (contextOrg?.id) {
+      fetchOrganization();
+    }
+  }, [contextOrg?.id]);
 
   const fetchOrganization = async () => {
-    if (!user) return;
+    if (!contextOrg?.id) return;
 
     try {
-      // Get user's organization
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
       // Get organization details
       const { data: org, error: orgError } = await supabase
         .from('organizations')
         .select('*')
-        .eq('id', profile.organization_id)
+        .eq('id', contextOrg.id)
         .single();
 
       if (orgError) throw orgError;

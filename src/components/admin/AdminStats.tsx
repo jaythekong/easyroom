@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Building, Users, Calendar, TrendingUp, User, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface StatsData {
   totalRooms: number;
@@ -15,6 +16,7 @@ interface StatsData {
 
 export function AdminStats() {
   const { user } = useAuth();
+  const { organization } = useOrganization();
   const [stats, setStats] = useState<StatsData>({
     totalRooms: 0,
     activeRooms: 0,
@@ -26,20 +28,25 @@ export function AdminStats() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      if (!organization?.id) return;
+      
       try {
-        // Get room statistics
+        // Get room statistics for current organization
         const { data: rooms } = await supabase
           .from("rooms")
-          .select("status");
+          .select("status")
+          .eq("organization_id", organization.id);
         
         const { data: amenities } = await supabase
           .from("amenities")
-          .select("id");
+          .select("id")
+          .eq("organization_id", organization.id);
 
-        // Get booking statistics
+        // Get booking statistics for current organization
         const { data: allBookings } = await supabase
           .from("bookings")
-          .select("user_id");
+          .select("user_id")
+          .eq("organization_id", organization.id);
 
         const totalRooms = rooms?.length || 0;
         const activeRooms = rooms?.filter(room => room.status === 'active').length || 0;
@@ -63,10 +70,10 @@ export function AdminStats() {
       }
     };
 
-    if (user) {
+    if (user && organization?.id) {
       fetchStats();
     }
-  }, [user]);
+  }, [user, organization?.id]);
 
   const statsCards = [
     {
