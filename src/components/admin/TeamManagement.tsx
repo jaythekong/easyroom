@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 interface TeamMember {
   id: string;
   user_id: string;
-  role: string;
+  role: 'admin' | 'member';
   created_at: string;
   email?: string;
 }
@@ -298,6 +298,30 @@ export function TeamManagement() {
     }
   };
 
+  const updateUserRole = async (userId: string, newRole: 'admin' | 'member', email: string) => {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ role: newRole })
+        .eq('user_id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Role updated",
+        description: `${email} is now a ${newRole}`,
+      });
+      
+      fetchTeamData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update role",
+        variant: "destructive",
+      });
+    }
+  };
+
   const deleteUser = async (userId: string, email: string) => {
     if (!confirm(`Are you sure you want to delete ${email}? This action cannot be undone.`)) {
       return;
@@ -462,9 +486,19 @@ export function TeamManagement() {
                 <TableRow key={member.id}>
                   <TableCell className="font-medium">{member.email}</TableCell>
                   <TableCell>
-                    <Badge variant={member.role === 'admin' ? 'default' : 'secondary'}>
-                      {member.role}
-                    </Badge>
+                    <Select
+                      value={member.role}
+                      onValueChange={(newRole) => updateUserRole(member.user_id, newRole as 'admin' | 'member', member.email || '')}
+                      disabled={member.user_id === user?.id}
+                    >
+                      <SelectTrigger className="w-24">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="member">Member</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     {new Date(member.created_at).toLocaleDateString()}
