@@ -118,16 +118,12 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   // Initialize room dates and expand all rooms by default on first load
   useEffect(() => {
     if (rooms.length > 0) {
-      // Initialize room dates with selected date
+      // Initialize room dates with selected date - sync all rooms to the same date
       const initialRoomDates: Record<string, Date> = {};
       rooms.forEach(room => {
-        if (!roomDates[room.id]) {
-          initialRoomDates[room.id] = selectedDate;
-        }
+        initialRoomDates[room.id] = selectedDate;
       });
-      if (Object.keys(initialRoomDates).length > 0) {
-        setRoomDates(prev => ({ ...prev, ...initialRoomDates }));
-      }
+      setRoomDates(initialRoomDates);
       
       // Auto-expand rooms
       if (expandedRooms.size === 0) {
@@ -137,6 +133,19 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       }
     }
   }, [rooms, expandedRooms.size, onExpandedRoomsChange, selectedDate]);
+
+  // Sync room dates whenever selectedDate changes
+  useEffect(() => {
+    if (rooms.length > 0) {
+      setRoomDates(prev => {
+        const updated: Record<string, Date> = {};
+        rooms.forEach(room => {
+          updated[room.id] = selectedDate;
+        });
+        return updated;
+      });
+    }
+  }, [selectedDate, rooms]);
 
   // Generate business hours time slots (8 AM to 8 PM)
   const timeSlots = useMemo(() => {
@@ -151,16 +160,16 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     return slots;
   }, []);
 
-  // Generate week days for each room
+  // Generate week days for each room - now unified with selectedDate
   const getRoomWeekDays = useCallback((roomId: string) => {
-    const roomDate = roomDates[roomId] || selectedDate;
-    const weekStart = startOfWeek(roomDate, { weekStartsOn: 1 });
+    // Use selectedDate directly instead of individual room dates for unified navigation
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
     const days = [];
     for (let i = 0; i < 7; i++) {
       days.push(addDays(weekStart, i));
     }
     return days;
-  }, [roomDates, selectedDate]);
+  }, [selectedDate]);
 
   // CRITICAL: Simple and bulletproof booking overlap check
   const doesBookingOverlapSlot = useCallback((booking: Booking, slotDate: string, slotHour: number): boolean => {
@@ -271,6 +280,14 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   const handleDateSelect = (date: Date) => {
     console.log('📅 Date selected:', format(date, 'yyyy-MM-dd'));
     onDateSelect(date);
+    // Sync all room dates with the new selected date
+    setRoomDates(prev => {
+      const updated: Record<string, Date> = {};
+      rooms.forEach(room => {
+        updated[room.id] = date;
+      });
+      return updated;
+    });
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -279,15 +296,14 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       : addDays(selectedDate, 7);
     console.log('📅 Navigating week:', direction, 'to', format(newDate, 'yyyy-MM-dd'));
     onDateSelect(newDate);
-  };
-
-  const navigateRoomWeek = (roomId: string, direction: 'prev' | 'next') => {
-    const currentRoomDate = roomDates[roomId] || selectedDate;
-    const newDate = direction === 'prev' 
-      ? subDays(currentRoomDate, 7)
-      : addDays(currentRoomDate, 7);
-    console.log('📅 Navigating room week:', roomId, direction, 'to', format(newDate, 'yyyy-MM-dd'));
-    setRoomDates(prev => ({ ...prev, [roomId]: newDate }));
+    // Sync all room dates with the new selected date
+    setRoomDates(prev => {
+      const updated: Record<string, Date> = {};
+      rooms.forEach(room => {
+        updated[room.id] = newDate;
+      });
+      return updated;
+    });
   };
 
   const toggleRoomExpansion = (roomId: string) => {
