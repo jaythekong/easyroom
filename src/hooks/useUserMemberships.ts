@@ -93,7 +93,7 @@ export function useUserMemberships() {
         });
       }
 
-      return (memberships || []).map(membership => ({
+      return (memberships || []).map((membership: any) => ({
         id: membership.id,
         organization_id: membership.organization_id,
         role: membership.role,
