@@ -230,7 +230,7 @@ const Auth = () => {
           )}
           {!organization && (
             <div>
-              <CardTitle className="text-2xl font-bold">EZRoom</CardTitle>
+              <CardTitle className="text-2xl font-bold">Easy Room</CardTitle>
               <p className="text-muted-foreground text-sm mt-1">Create your organization account</p>
             </div>
           )}
@@ -290,7 +290,7 @@ const Auth = () => {
                     <div className="space-y-2">
                       <Label htmlFor="org-slug">Organization URL</Label>
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm text-muted-foreground">ezroom.app/</span>
+                        <span className="text-sm text-muted-foreground">easyroom.app/</span>
                         <Input
                           id="org-slug"
                           type="text"

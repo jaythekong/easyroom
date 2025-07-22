@@ -10,7 +10,7 @@ const LandingPage = () => {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Building className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">EZRoom</span>
+            <span className="text-2xl font-bold">Easy Room</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/auth">
@@ -133,7 +133,7 @@ const LandingPage = () => {
                   <Star key={i} className="h-5 w-5 fill-primary text-primary" />
                 ))}
               </div>
-              <p className="text-lg mb-4">"EZRoom has completely eliminated our meeting room chaos. Now everyone knows exactly which rooms are available and booking is instant."</p>
+              <p className="text-lg mb-4">"Easy Room has completely eliminated our meeting room chaos. Now everyone knows exactly which rooms are available and booking is instant."</p>
               <div className="font-semibold">Sarah Chen, Operations Manager</div>
             </div>
             
@@ -175,7 +175,7 @@ const LandingPage = () => {
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Building className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">EZRoom</span>
+            <span className="text-xl font-bold">Easy Room</span>
           </div>
           <p className="text-muted-foreground">Smart room booking for modern workplaces</p>
         </div>
