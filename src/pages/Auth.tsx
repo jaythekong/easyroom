@@ -219,7 +219,22 @@ const Auth = () => {
           return;
         }
 
-        // Create user profile as admin
+        // First create user membership (required for RLS policies)
+        const { error: membershipError } = await supabase
+          .from('user_organization_memberships')
+          .insert({
+            user_id: authData.user.id,
+            organization_id: orgData.id,
+            role: 'admin'
+          });
+
+        if (membershipError) {
+          logger.error('Membership creation failed:', membershipError);
+          toast.error("Failed to create user membership: " + membershipError.message);
+          return;
+        }
+
+        // Then create user profile as admin
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
@@ -304,8 +319,24 @@ const Auth = () => {
         return;
       }
 
-      // If user was created and we have an organization, create user profile
+      // If user was created and we have an organization, create membership and profile
       if (authData.user && organization) {
+        // First create user membership (required for RLS policies)
+        const { error: membershipError } = await supabase
+          .from('user_organization_memberships')
+          .insert({
+            user_id: authData.user.id,
+            organization_id: organization.id,
+            role: 'member' // Regular signup gets member role
+          });
+
+        if (membershipError) {
+          logger.error('Membership creation failed:', membershipError);
+          toast.error("Account created but failed to set up membership. Please contact support.");
+          return;
+        }
+
+        // Then create user profile
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
