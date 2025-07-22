@@ -283,6 +283,16 @@ export function OrganizationSettings() {
       return;
     }
 
+    // Validate bot token format
+    if (!telegramBotToken.match(/^\d+:[A-Za-z0-9_-]{35}$/)) {
+      toast({
+        title: "Invalid Bot Token",
+        description: "Bot token should look like: 123456789:ABCdefGhIjKlMnOpQrStUvWxYz",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsTestingBot(true);
     try {
       const response = await supabase.functions.invoke('telegram-bot-setup', {

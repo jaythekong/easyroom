@@ -28,17 +28,27 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const url = new URL(req.url);
     
-    // Handle webhook setup
-    if (req.method === 'POST' && url.pathname.includes('/setup')) {
-      return await handleWebhookSetup(req);
+    // Handle webhook setup - check if body contains organizationId and botToken
+    const body = await req.text();
+    let parsedBody;
+    
+    try {
+      parsedBody = JSON.parse(body);
+    } catch {
+      return new Response('Invalid JSON', { status: 400, headers: corsHeaders });
     }
-
-    // Handle bot webhooks
+    
+    // If request contains organizationId and botToken, it's a setup request
+    if (parsedBody.organizationId && parsedBody.botToken) {
+      return await handleWebhookSetup(parsedBody);
+    }
+    
+    // Otherwise, it's a webhook from Telegram
     if (req.method === 'POST') {
-      return await handleTelegramWebhook(req);
+      return await handleTelegramWebhook(req, parsedBody);
     }
 
-    return new Response('Method not allowed', { status: 405 });
+    return new Response('Method not allowed', { status: 405, headers: corsHeaders });
 
   } catch (error: any) {
     console.error('Error in telegram-bot-setup:', error);
@@ -51,11 +61,16 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-async function handleWebhookSetup(req: Request): Promise<Response> {
+async function handleWebhookSetup(requestData: WebhookSetupRequest): Promise<Response> {
   try {
-    const { organizationId, botToken }: WebhookSetupRequest = await req.json();
+    const { organizationId, botToken } = requestData;
     
     console.log(`Setting up webhook for organization ${organizationId}`);
+
+    // Validate bot token format
+    if (!botToken || !botToken.match(/^\d+:[A-Za-z0-9_-]{35}$/)) {
+      throw new Error('Invalid bot token format. Should be like: 123456789:ABCdefGhIjKlMnOpQrStUvWxYz');
+    }
 
     // Set webhook URL for the bot
     const webhookUrl = `https://yjdrwwelnuyuifjqfebv.supabase.co/functions/v1/telegram-bot-setup/${organizationId}`;
@@ -109,7 +124,7 @@ async function handleWebhookSetup(req: Request): Promise<Response> {
   }
 }
 
-async function handleTelegramWebhook(req: Request): Promise<Response> {
+async function handleTelegramWebhook(req: Request, parsedBody?: any): Promise<Response> {
   try {
     const url = new URL(req.url);
     const organizationId = url.pathname.split('/').pop(); // Extract org ID from URL
@@ -119,7 +134,7 @@ async function handleTelegramWebhook(req: Request): Promise<Response> {
       return new Response('OK', { status: 200 });
     }
 
-    const update: TelegramUpdate = await req.json();
+    const update: TelegramUpdate = parsedBody || await req.json();
     
     if (!update.message?.text) {
       return new Response('OK', { status: 200 });
