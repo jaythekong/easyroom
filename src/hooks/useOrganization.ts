@@ -65,21 +65,51 @@ export function useUserMembership(organizationId: string | undefined) {
         return { role: '', isUserInOrganization: false, allMemberships: [] };
       }
 
-      // Get all user memberships
+      // Get user's membership for the specific organization if provided
+      if (organizationId) {
+        const { data: membership, error } = await supabase
+          .from('user_organization_memberships')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('organization_id', organizationId)
+          .single();
+
+        if (error) {
+          if (error.code === 'PGRST116') {
+            // No membership found for this org
+            return { role: '', isUserInOrganization: false, allMemberships: [] };
+          }
+          console.error('Error fetching user membership:', error);
+          throw new Error('Failed to check user membership');
+        }
+
+        // Also get all memberships for multi-org features
+        const { data: allMemberships } = await supabase
+          .from('user_organization_memberships')
+          .select(`
+            organization_id,
+            role
+          `)
+          .eq('user_id', user.id);
+
+        const formattedMemberships = (allMemberships || []).map(m => ({
+          organization_id: m.organization_id,
+          role: m.role
+        }));
+
+        return {
+          role: membership.role,
+          isUserInOrganization: true,
+          allMemberships: formattedMemberships,
+        };
+      }
+
+      // If no specific org requested, get all memberships
       const { data: allMemberships, error: allError } = await supabase
         .from('user_organization_memberships')
         .select(`
           organization_id,
-          role,
-          organizations (
-            id,
-            name,
-            slug,
-            logo_url,
-            primary_color,
-            timezone,
-            tagline
-          )
+          role
         `)
         .eq('user_id', user.id);
 
@@ -88,35 +118,10 @@ export function useUserMembership(organizationId: string | undefined) {
         return { role: '', isUserInOrganization: false, allMemberships: [] };
       }
 
-      // Format the memberships data
       const formattedMemberships = (allMemberships || []).map(membership => ({
         organization_id: membership.organization_id,
-        role: membership.role,
-        organization: membership.organizations ? {
-          id: membership.organizations.id,
-          name: membership.organizations.name,
-          slug: membership.organizations.slug,
-          logo_url: membership.organizations.logo_url,
-          primary_color: membership.organizations.primary_color,
-          timezone: membership.organizations.timezone,
-          tagline: membership.organizations.tagline,
-          created_at: '', // These aren't selected but needed for type compatibility
-          updated_at: ''
-        } : undefined
+        role: membership.role
       }));
-
-      // Find membership for specific organization if provided
-      if (organizationId) {
-        const specificMembership = formattedMemberships.find(
-          m => m.organization_id === organizationId
-        );
-        
-        return {
-          role: specificMembership?.role || '',
-          isUserInOrganization: !!specificMembership,
-          allMemberships: formattedMemberships,
-        };
-      }
 
       // Return the first membership if no specific org requested
       const firstMembership = formattedMemberships[0];
