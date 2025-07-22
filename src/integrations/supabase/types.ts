@@ -164,7 +164,9 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          org_type: string | null
           primary_color: string | null
+          referral_source: string | null
           slug: string
           tagline: string | null
           telegram_bot_token: string | null
@@ -177,7 +179,9 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          org_type?: string | null
           primary_color?: string | null
+          referral_source?: string | null
           slug: string
           tagline?: string | null
           telegram_bot_token?: string | null
@@ -190,7 +194,9 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          org_type?: string | null
           primary_color?: string | null
+          referral_source?: string | null
           slug?: string
           tagline?: string | null
           telegram_bot_token?: string | null

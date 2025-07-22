@@ -49,6 +49,11 @@ const Auth = () => {
   const [showUpdatePassword, setShowUpdatePassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  
+  // New organization creation state
+  const [orgCreationStep, setOrgCreationStep] = useState(1);
+  const [orgType, setOrgType] = useState("");
+  const [referralSource, setReferralSource] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -232,12 +237,14 @@ const Auth = () => {
       }
 
       if (authData.user) {
-        // Create the organization
+        // Create the organization with additional fields
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .insert({
             name: sanitizedOrgName,
             slug: sanitizedSlug,
+            org_type: orgType,
+            referral_source: referralSource
           })
           .select()
           .single();
@@ -791,83 +798,275 @@ const Auth = () => {
                         </p>
                       </div>
                       
-                      <form onSubmit={handleOrganizationSignUp} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="org-name">Organization Name</Label>
-                            <Input
-                              id="org-name"
-                              type="text"
-                              placeholder="Acme Corporation"
-                              value={organizationName}
-                              onChange={(e) => setOrganizationName(e.target.value)}
-                              required
-                            />
+                      {/* Step 1: Admin Account Setup */}
+                      {orgCreationStep === 1 && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-medium">Step 1: Admin Account</h3>
+                            <span className="text-xs text-muted-foreground">Step 1 of 3</span>
                           </div>
                           
-                          <div className="space-y-2">
-                            <Label htmlFor="org-slug">Your URL</Label>
-                            <div className="relative">
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="admin-email">Your Email</Label>
                               <Input
-                                id="org-slug"
-                                type="text"
-                                placeholder="acme-corp"
-                                value={organizationSlug}
-                                onChange={(e) => setOrganizationSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                id="admin-email"
+                                type="email"
+                                placeholder="you@company.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="pr-32"
                               />
-                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                                .easyroom.app
-                              </span>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <Label htmlFor="admin-password">Password</Label>
+                              <Input
+                                id="admin-password"
+                                type="password"
+                                placeholder="Create a secure password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                                minLength={6}
+                              />
+                              <PasswordStrength password={password} />
+                            </div>
+                            
+                            <Button 
+                              className="w-full" 
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                setLoading(true);
+                                
+                                try {
+                                  // Input validation
+                                  const sanitizedEmail = sanitizeEmail(email);
+                                  const emailValidation = emailSchema.safeParse(sanitizedEmail);
+                                  const passwordValidation = passwordSchema.safeParse(password);
+                                  
+                                  if (!emailValidation.success) {
+                                    toast.error(emailValidation.error.errors[0].message);
+                                    return;
+                                  }
+                                  
+                                  if (!passwordValidation.success) {
+                                    toast.error(passwordValidation.error.errors[0].message);
+                                    return;
+                                  }
+                                  
+                                  // Check if user already exists with matching password
+                                  const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
+                                    email: sanitizedEmail,
+                                    password,
+                                  });
+                                  
+                                  if (existingUser?.user) {
+                                    // User exists and password matches
+                                    logger.debug('User already exists and password matches, proceeding to step 2');
+                                    setOrgCreationStep(2);
+                                    return;
+                                  }
+                                  
+                                  // If login failed, check if email exists
+                                  if (checkError) {
+                                    if (!checkError.message.includes("Invalid login credentials")) {
+                                      // Some other error occurred
+                                      throw checkError;
+                                    }
+                                    
+                                    // Check if email exists
+                                    const { data: emailCheck } = await supabase.auth.signInWithOtp({
+                                      email: sanitizedEmail,
+                                      options: { shouldCreateUser: false }
+                                    });
+                                    
+                                    if (emailCheck?.user) {
+                                      // Email exists but password doesn't match
+                                      toast.error("This email is already registered with a different password. Please use the correct password or reset it.");
+                                      return;
+                                    }
+                                    
+                                    // Email doesn't exist, create new user
+                                    const { data: newUser, error: authError } = await supabase.auth.signUp({
+                                      email: sanitizedEmail,
+                                      password,
+                                      options: {
+                                        emailRedirectTo: window.location.origin
+                                      }
+                                    });
+                                    
+                                    if (authError) {
+                                      throw authError;
+                                    }
+                                    
+                                    if (newUser) {
+                                      // Created successfully, proceed to step 2
+                                      setOrgCreationStep(2);
+                                    }
+                                  }
+                                } catch (error) {
+                                  logger.error('Admin account setup error:', error);
+                                  toast.error("An error occurred while setting up your account.");
+                                } finally {
+                                  setLoading(false);
+                                }
+                              }}
+                              disabled={loading}
+                            >
+                              {loading ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Checking account...
+                                </>
+                              ) : (
+                                "Continue to Organization Type"
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Step 2: Organization Type */}
+                      {orgCreationStep === 2 && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-medium">Step 2: Organization Type</h3>
+                            <span className="text-xs text-muted-foreground">Step 2 of 3</span>
+                          </div>
+                          
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              {['School', 'Startup', 'Corporate', 'Personal', 'Non-profit'].map(type => (
+                                <Button
+                                  key={type}
+                                  type="button"
+                                  variant={orgType === type.toLowerCase() ? "default" : "outline"}
+                                  className="h-auto py-3"
+                                  onClick={() => setOrgType(type.toLowerCase())}
+                                >
+                                  {type}
+                                </Button>
+                              ))}
+                            </div>
+                            
+                            <div className="space-y-2 mt-4">
+                              <Label>Where did you hear about us?</Label>
+                              <div className="grid grid-cols-2 gap-2 mt-2">
+                                {[
+                                  'YouTube', 'LinkedIn', 'Events/conferences', 'Podcast', 
+                                  'News publications', 'Friend', 'Search engines', 'Email',
+                                  'AI Chatbots', 'Facebook/Instagram', 'TV/Streaming', 'Consultant',
+                                  'Outdoors ad'
+                                ].map(source => (
+                                  <Button
+                                    key={source}
+                                    type="button"
+                                    variant={referralSource === source.toLowerCase() ? "default" : "outline"}
+                                    className="h-auto py-2 text-sm"
+                                    onClick={() => setReferralSource(source.toLowerCase())}
+                                  >
+                                    {source}
+                                  </Button>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 mt-4">
+                              <Button 
+                                variant="outline" 
+                                className="flex-1"
+                                onClick={() => setOrgCreationStep(1)}
+                              >
+                                Back
+                              </Button>
+                              <Button 
+                                className="flex-1"
+                                onClick={() => setOrgCreationStep(3)}
+                                disabled={!orgType}
+                              >
+                                Continue to Organization Details
+                              </Button>
                             </div>
                           </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="admin-email">Your Email</Label>
-                            <Input
-                              id="admin-email"
-                              type="email"
-                              placeholder="you@company.com"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              required
-                            />
+                        </div>
+                      )}
+                      
+                      {/* Step 3: Organization Details & Creation */}
+                      {orgCreationStep === 3 && (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-lg font-medium">Step 3: Organization Details</h3>
+                            <span className="text-xs text-muted-foreground">Step 3 of 3</span>
                           </div>
                           
-                           <div className="space-y-2">
-                             <Label htmlFor="admin-password">Password</Label>
-                             <Input
-                               id="admin-password"
-                               type="password"
-                               placeholder="Create a secure password"
-                               value={password}
-                               onChange={(e) => setPassword(e.target.value)}
-                               required
-                               minLength={6}
-                             />
-                             <PasswordStrength password={password} />
-                           </div>
+                          <form onSubmit={handleOrganizationSignUp} className="space-y-4">
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="org-name">Organization Name</Label>
+                                <Input
+                                  id="org-name"
+                                  type="text"
+                                  placeholder="Acme Corporation"
+                                  value={organizationName}
+                                  onChange={(e) => setOrganizationName(e.target.value)}
+                                  required
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="org-slug">Your URL</Label>
+                                <div className="relative">
+                                  <Input
+                                    id="org-slug"
+                                    type="text"
+                                    placeholder="acme-corp"
+                                    value={organizationSlug}
+                                    onChange={(e) => setOrganizationSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+                                    required
+                                    className="pr-32"
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                                    .easyroom.app
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2 mt-4">
+                              <Button 
+                                type="button"
+                                variant="outline" 
+                                className="flex-1"
+                                onClick={() => setOrgCreationStep(2)}
+                              >
+                                Back
+                              </Button>
+                              <Button 
+                                type="submit"
+                                className="flex-1"
+                                disabled={loading || !organizationName || !organizationSlug}
+                              >
+                                {loading ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Creating organization...
+                                  </>
+                                ) : (
+                                  <>
+                                    Create Organization
+                                    <Sparkles className="ml-2 h-4 w-4" />
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </form>
                         </div>
-                        
-                        <Button type="submit" className="w-full" disabled={loading}>
-                          {loading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Creating your organization...
-                            </>
-                          ) : (
-                            <>
-                              Create Organization
-                              <Sparkles className="ml-2 h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-                        
-                        <p className="text-xs text-muted-foreground text-center">
-                          By creating an account, you agree to our Terms of Service and Privacy Policy
-                        </p>
-                      </form>
+                      )}
+                      
+                      <p className="text-xs text-muted-foreground text-center mt-6">
+                        By creating an account, you agree to our Terms of Service and Privacy Policy
+                      </p>
                     </TabsContent>
                   </Tabs>
                 ) : (
