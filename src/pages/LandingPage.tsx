@@ -13,10 +13,10 @@ const LandingPage = () => {
             <span className="text-2xl font-bold">Roomer</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link to="/kampus">
+            <Link to="/auth">
               <Button variant="ghost">Demo</Button>
             </Link>
-            <Link to="/kampus/auth">
+            <Link to="/auth">
               <Button>Get Started</Button>
             </Link>
           </div>
@@ -33,12 +33,12 @@ const LandingPage = () => {
             Each organization gets its own private workspace, with fully isolated data, branding, and permissions. Perfect for coworking spaces, campuses, NGOs, and corporate environments.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/kampus/auth">
+            <Link to="/auth">
               <Button size="lg" className="text-lg px-8 py-6">
                 Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/kampus">
+            <Link to="/auth">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 View Demo
               </Button>
@@ -156,12 +156,12 @@ const LandingPage = () => {
           <h2 className="text-4xl font-bold mb-4">✅ Ready to Simplify Room Management?</h2>
           <p className="text-xl text-muted-foreground mb-8">Try the demo or book a call. No credit card required.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/kampus">
+            <Link to="/auth">
               <Button size="lg" className="text-lg px-8 py-6">
                 Try Demo <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/kampus/auth">
+            <Link to="/auth">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 Get Started Free
               </Button>
