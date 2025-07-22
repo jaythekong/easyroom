@@ -185,6 +185,7 @@ const Auth = () => {
       authRateLimiter.recordAttempt(rateLimitKey);
       
       // STEP 1: Check if user already exists
+      console.log('Attempting login to check if user exists with email:', sanitizedEmail);
       const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
         email: sanitizedEmail,
         password,
@@ -195,26 +196,41 @@ const Auth = () => {
       
       if (existingUser?.user) {
         // User exists and password matches
+        console.log('User already exists and password matches, proceeding with org creation');
         logger.debug('User already exists and password matches, proceeding with org creation');
         authData = existingUser;
       } else {
         // User doesn't exist OR password doesn't match
+        console.log('Login failed with error:', checkError?.message);
+        
         if (checkError && !checkError.message.includes("Invalid login credentials")) {
           // Some other error occurred
+          console.log('Unexpected error during login check:', checkError);
           logger.error('Error checking existing user:', checkError);
           toast.error("An error occurred. Please try again.");
           return;
         }
         
-        // If login failed due to invalid credentials, check if email exists
-        if (checkError?.message.includes("Invalid login credentials")) {
+        // For "Invalid login credentials", we need to determine if email exists
+        // Try a password reset request - this will tell us if email exists
+        console.log('Checking if email exists by attempting password reset...');
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
+          redirectTo: `${window.location.origin}/reset-password`
+        });
+        
+        console.log('Password reset attempt result:', resetError?.message || 'success');
+        
+        // If no error on reset request, email exists (even if rate limited)
+        if (!resetError || resetError.message.includes("rate limit") || resetError.message.includes("For security purposes")) {
           // Email exists but password doesn't match - STOP PROCESS
+          console.log('Email exists with different password - blocking signup');
           toast.error("This email is already registered with a different password. Please use the correct password or try logging in instead.");
           setLoading(false);
           return;
         }
         
         // Email doesn't exist, create new user
+        console.log('Email does not exist, creating new user');
         const { data: newUser, error: authError } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password,
@@ -224,11 +240,13 @@ const Auth = () => {
         });
         
         if (authError) {
+          console.log('Signup failed:', authError.message);
           logger.security('Organization signup failed', { error: authError.message, email: sanitizedEmail });
           toast.error(authError.message);
           return;
         }
         
+        console.log('New user created successfully');
         authData = newUser;
       }
 
