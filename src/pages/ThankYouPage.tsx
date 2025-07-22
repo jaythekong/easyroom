@@ -81,7 +81,7 @@ export default function ThankYouPage() {
           </div>
           
           <Button asChild className="w-full">
-            <Link to={orgSlug ? `/auth/${orgSlug}` : "/auth"}>
+            <Link to={orgSlug ? `/${orgSlug}/auth` : "/auth"}>
               Back to Sign In
             </Link>
           </Button>
