@@ -281,35 +281,59 @@ const Auth = () => {
           return;
         }
 
-        // First create user membership (required for RLS policies)
-        const { error: membershipError } = await supabase
+        // Check if user already has a membership for this organization
+        const { data: existingMembership } = await supabase
           .from('user_organization_memberships')
-          .insert({
-            user_id: authData.user.id,
-            organization_id: orgData.id,
-            role: 'admin'
-          });
+          .select('id')
+          .eq('user_id', authData.user.id)
+          .eq('organization_id', orgData.id)
+          .maybeSingle();
 
-        if (membershipError) {
-          logger.error('Membership creation failed:', membershipError);
-          toast.error("Failed to create user membership: " + membershipError.message);
-          return;
+        if (!existingMembership) {
+          // Create user membership only if it doesn't exist
+          const { error: membershipError } = await supabase
+            .from('user_organization_memberships')
+            .insert({
+              user_id: authData.user.id,
+              organization_id: orgData.id,
+              role: 'admin'
+            });
+
+          if (membershipError) {
+            logger.error('Membership creation failed:', membershipError);
+            toast.error("Failed to create user membership: " + membershipError.message);
+            return;
+          }
+        } else {
+          logger.debug('User already has membership in this organization');
         }
 
-        // Then create user profile as admin
-        const { error: profileError } = await supabase
+        // Check if user already has a profile for this organization
+        const { data: existingProfile } = await supabase
           .from('user_profiles')
-          .insert({
-            user_id: authData.user.id,
-            organization_id: orgData.id,
-            email: sanitizedEmail,
-            role: 'admin'
-          });
+          .select('id')
+          .eq('user_id', authData.user.id)
+          .eq('organization_id', orgData.id)
+          .maybeSingle();
 
-        if (profileError) {
-          logger.error('Profile creation failed:', profileError);
-          toast.error("Failed to create user profile: " + profileError.message);
-          return;
+        if (!existingProfile) {
+          // Create user profile only if it doesn't exist
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              user_id: authData.user.id,
+              organization_id: orgData.id,
+              email: sanitizedEmail,
+              role: 'admin'
+            });
+
+          if (profileError) {
+            logger.error('Profile creation failed:', profileError);
+            toast.error("Failed to create user profile: " + profileError.message);
+            return;
+          }
+        } else {
+          logger.debug('User already has profile in this organization');
         }
 
         logger.security('Organization created successfully', { 
