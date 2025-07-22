@@ -144,7 +144,32 @@ export default function MyBookings() {
         throw error;
       }
 
-      console.log('Booking deleted successfully, refreshing list...');
+      console.log('Booking deleted successfully, sending telegram notification...');
+
+      // Send Telegram notification for cancellation
+      try {
+        // Get user's organization ID for notification
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('organization_id')
+          .eq('user_id', user?.id || '')
+          .maybeSingle();
+
+        if (profile?.organization_id) {
+          await supabase.functions.invoke('send-telegram-notification', {
+            body: {
+              bookingId: bookingId,
+              organizationId: profile.organization_id,
+              action: 'cancelled'
+            }
+          });
+        }
+      } catch (notificationError) {
+        console.error('Failed to send Telegram notification:', notificationError);
+        // Don't block the cancellation if notification fails
+      }
+
+      console.log('Booking cancelled and notification sent, refreshing list...');
 
       toast({
         title: "Booking Cancelled",
