@@ -342,11 +342,12 @@ const RoomTimelineComponent = memo(function RoomTimeline({
           hasOnEditBooking: !!onEditBooking
         });
         
+        // If user can edit AND onEditBooking is provided, allow editing
         if (canEditBooking && onEditBooking) {
           console.log('📅 EDITING booking:', fullBooking.title);
           onEditBooking(fullBooking);
         } else {
-          // Show details modal for view-only
+          // Otherwise, show details modal (for view-only or when onEditBooking is not available)
           console.log('📅 SHOWING DETAILS for booking:', fullBooking.title);
           setSelectedBooking(fullBooking);
           setSelectedBookingRoom(room);
