@@ -30,7 +30,7 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Button variant="outline" asChild>
-              <Link to={`../../`}>
+              <Link to={`../`}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Link>
