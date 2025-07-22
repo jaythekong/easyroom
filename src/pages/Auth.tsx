@@ -119,9 +119,17 @@ const Auth = () => {
         .from('organizations')
         .select('slug')
         .eq('slug', sanitizedSubdomain)
-        .single();
+        .maybeSingle();
       
-      if (error || !data) {
+      if (error) {
+        console.error('Database error during organization lookup:', error);
+        toast.error("An error occurred while searching for the organization.");
+        logger.error('Organization lookup database error', { subdomain: sanitizedSubdomain, error });
+        setLoading(false);
+        return;
+      }
+      
+      if (!data) {
         toast.error("Organization not found. Please check the subdomain and try again.");
         logger.security('Organization lookup failed', { subdomain: sanitizedSubdomain });
         setLoading(false);

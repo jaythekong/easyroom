@@ -34,13 +34,15 @@ export function useOrganizationBySlug(orgSlug: string | undefined) {
         .from('organizations')
         .select('*')
         .eq('slug', orgSlug)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        if (error.code === 'PGRST116') {
-          throw new Error('Organization not found');
-        }
+        console.error('Database error during organization lookup:', error);
         throw new Error('Failed to load organization');
+      }
+
+      if (!org) {
+        throw new Error('Organization not found');
       }
 
       return org as Organization;
