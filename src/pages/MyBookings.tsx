@@ -127,7 +127,30 @@ export default function MyBookings() {
     try {
       console.log('Cancelling booking:', bookingId);
       
-      // Security check: only allow canceling own bookings unless admin
+      // Get user's organization ID for notification
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('user_id', user?.id || '')
+        .maybeSingle();
+
+      // Send Telegram notification for cancellation BEFORE deleting (so booking details exist)
+      try {
+        if (profile?.organization_id) {
+          await supabase.functions.invoke('send-telegram-notification', {
+            body: {
+              bookingId: bookingId,
+              organizationId: profile.organization_id,
+              action: 'cancelled'
+            }
+          });
+        }
+      } catch (notificationError) {
+        console.error('Failed to send Telegram notification:', notificationError);
+        // Don't block the cancellation if notification fails
+      }
+
+      // Now delete the booking
       const deleteQuery = supabase
         .from('bookings')
         .delete()
@@ -142,31 +165,6 @@ export default function MyBookings() {
       if (error) {
         console.error('Delete error:', error);
         throw error;
-      }
-
-      console.log('Booking deleted successfully, sending telegram notification...');
-
-      // Send Telegram notification for cancellation
-      try {
-        // Get user's organization ID for notification
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('organization_id')
-          .eq('user_id', user?.id || '')
-          .maybeSingle();
-
-        if (profile?.organization_id) {
-          await supabase.functions.invoke('send-telegram-notification', {
-            body: {
-              bookingId: bookingId,
-              organizationId: profile.organization_id,
-              action: 'cancelled'
-            }
-          });
-        }
-      } catch (notificationError) {
-        console.error('Failed to send Telegram notification:', notificationError);
-        // Don't block the cancellation if notification fails
       }
 
       console.log('Booking cancelled and notification sent, refreshing list...');
