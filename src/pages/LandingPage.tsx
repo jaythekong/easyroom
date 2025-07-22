@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap } from "lucide-react";
+import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const LandingPage = () => {
@@ -27,10 +27,10 @@ const LandingPage = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto text-center max-w-4xl">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Find & Book Meeting Rooms Instantly
+            Multi-Tenant Room Booking Platform
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Streamline your workplace with smart room booking. No more conflicts, no more confusion - just seamless space management.
+            Each organization gets its own private workspace, with fully isolated data, branding, and permissions. Perfect for coworking spaces, campuses, NGOs, and corporate environments.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/kampus/auth">
@@ -51,68 +51,92 @@ const LandingPage = () => {
       <section className="py-20 px-4 bg-muted/50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Everything you need to manage spaces</h2>
-            <p className="text-xl text-muted-foreground">Powerful features that make room booking effortless</p>
+            <h2 className="text-4xl font-bold mb-4">🔑 Built for Multi-Tenant Use</h2>
+            <p className="text-xl text-muted-foreground">Each organization gets its own private workspace, with fully isolated data, branding, and permissions</p>
+          </div>
+          
+          {/* Super Admin Feature */}
+          <div className="bg-background p-8 rounded-2xl shadow-sm mb-16 max-w-4xl mx-auto">
+            <div className="flex items-center gap-4 mb-6">
+              <BarChart3 className="h-16 w-16 text-primary" />
+              <div>
+                <h3 className="text-2xl font-bold mb-2">🚀 Super Admin Dashboard (New)</h3>
+                <p className="text-muted-foreground">Get a bird's-eye view of every organization on the platform</p>
+              </div>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 text-sm">
+              <div className="space-y-2">
+                <p>• Track usage across tenants</p>
+                <p>• Manage organizations, users, and rooms</p>
+                <p>• View platform-wide analytics</p>
+              </div>
+              <div className="space-y-2">
+                <p>• Impersonate org admins for fast support</p>
+                <p>• Set limits and feature access per org</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold mb-4">🧩 Core Features</h3>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="bg-background p-8 rounded-2xl shadow-sm">
               <Calendar className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Smart Scheduling</h3>
-              <p className="text-muted-foreground">Intelligent booking system that prevents conflicts and optimizes room utilization.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
-              <Users className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Team Collaboration</h3>
-              <p className="text-muted-foreground">Book rooms for your team, manage recurring meetings, and coordinate effortlessly.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
-              <MapPin className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Real-time Availability</h3>
-              <p className="text-muted-foreground">See which rooms are available right now with live status updates.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
-              <Shield className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Access Control</h3>
-              <p className="text-muted-foreground">Manage who can book which rooms with flexible permission settings.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
-              <Zap className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Lightning Fast</h3>
-              <p className="text-muted-foreground">Book a room in seconds with our intuitive interface and quick booking flow.</p>
+              <h3 className="text-xl font-semibold mb-2">✅ Room Booking Made Easy</h3>
+              <p className="text-muted-foreground">Real-time availability, recurring meetings, conflict detection — all in a timeline or grid view.</p>
             </div>
             
             <div className="bg-background p-8 rounded-2xl shadow-sm">
               <Building className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Multi-Organization</h3>
-              <p className="text-muted-foreground">Perfect for companies with multiple offices, departments, or client organizations.</p>
+              <h3 className="text-xl font-semibold mb-2">✅ Custom Branding per Organization</h3>
+              <p className="text-muted-foreground">Logo, color theme, and timezone — give each org their own identity.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm">
+              <Shield className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">✅ Role-Based Access</h3>
+              <p className="text-muted-foreground">Admins manage rooms and bookings. Members just book what they need.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm">
+              <Settings className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">✅ Amenities & Maintenance Management</h3>
+              <p className="text-muted-foreground">Attach Wi-Fi, projector, or whiteboard to each room. Block off downtime for cleaning or repairs.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm">
+              <Smartphone className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">✅ Fully Responsive Design</h3>
+              <p className="text-muted-foreground">Works beautifully across desktop and mobile — no app download needed.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Use Cases Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4">See how Roomer transforms workplaces</h2>
-          <p className="text-xl text-muted-foreground mb-12">Join organizations that have streamlined their space management</p>
+          <h2 className="text-4xl font-bold mb-4">💬 Use Cases</h2>
+          <p className="text-xl text-muted-foreground mb-12">Perfect for organizations that need flexible, scalable room management</p>
           
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="p-6">
-              <div className="text-4xl font-bold text-primary mb-2">95%</div>
-              <div className="text-muted-foreground">Reduction in booking conflicts</div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+            <div className="p-6 bg-background rounded-2xl shadow-sm">
+              <div className="text-lg font-semibold text-primary mb-2">Coworking Spaces</div>
+              <div className="text-muted-foreground">Managing 10+ tenants</div>
             </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-primary mb-2">60%</div>
-              <div className="text-muted-foreground">Faster room booking process</div>
+            <div className="p-6 bg-background rounded-2xl shadow-sm">
+              <div className="text-lg font-semibold text-primary mb-2">Universities</div>
+              <div className="text-muted-foreground">Multiple departments</div>
             </div>
-            <div className="p-6">
-              <div className="text-4xl font-bold text-primary mb-2">100+</div>
-              <div className="text-muted-foreground">Organizations trust Roomer</div>
+            <div className="p-6 bg-background rounded-2xl shadow-sm">
+              <div className="text-lg font-semibold text-primary mb-2">NGOs</div>
+              <div className="text-muted-foreground">Distributed teams</div>
+            </div>
+            <div className="p-6 bg-background rounded-2xl shadow-sm">
+              <div className="text-lg font-semibold text-primary mb-2">Corporate Offices</div>
+              <div className="text-muted-foreground">Standardizing scheduling</div>
             </div>
           </div>
         </div>
@@ -150,13 +174,20 @@ const LandingPage = () => {
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto text-center max-w-3xl">
-          <h2 className="text-4xl font-bold mb-4">Ready to transform your workspace?</h2>
-          <p className="text-xl text-muted-foreground mb-8">Join hundreds of organizations using Roomer to streamline their meeting room management</p>
-          <Link to="/kampus/auth">
-            <Button size="lg" className="text-lg px-8 py-6">
-              Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <h2 className="text-4xl font-bold mb-4">✅ Ready to Simplify Room Management?</h2>
+          <p className="text-xl text-muted-foreground mb-8">Try the demo or book a call. No credit card required.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/kampus">
+              <Button size="lg" className="text-lg px-8 py-6">
+                Try Demo <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/kampus/auth">
+              <Button variant="outline" size="lg" className="text-lg px-8 py-6">
+                Get Started Free
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
