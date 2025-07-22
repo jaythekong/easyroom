@@ -7,11 +7,22 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Building, Users, Calendar, ArrowRight, Sparkles } from "lucide-react";
+import { Loader2, Building, Users, Calendar, ArrowRight, Sparkles, Shield } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { logger } from "@/lib/logger";
+import { 
+  sanitizeInput, 
+  sanitizeEmail, 
+  sanitizeOrganizationSlug, 
+  passwordSchema,
+  emailSchema,
+  organizationNameSchema
+} from "@/lib/validation";
+import { authRateLimiter, passwordResetRateLimiter } from "@/lib/rateLimiter";
 
 const Auth = () => {
   const { orgSlug } = useParams<{ orgSlug: string }>();
@@ -71,11 +82,11 @@ const Auth = () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           const redirectTo = searchParams.get('redirectTo') || `/${orgSlug}`;
-          console.log('Auth: User already logged in, redirecting to:', redirectTo);
+          logger.debug('Auth: User already logged in, redirecting to:', redirectTo);
           navigate(redirectTo);
         }
       } catch (error) {
-        console.error('Auth: Error checking session:', error);
+        logger.error('Auth: Error checking session:', error);
       }
     };
     checkUser();
@@ -86,22 +97,32 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      const sanitizedSubdomain = sanitizeOrganizationSlug(orgSubdomain);
+      
+      if (!sanitizedSubdomain) {
+        toast.error("Please enter a valid organization subdomain.");
+        setLoading(false);
+        return;
+      }
+      
       // Check if organization exists
       const { data, error } = await supabase
         .from('organizations')
         .select('slug')
-        .eq('slug', orgSubdomain)
+        .eq('slug', sanitizedSubdomain)
         .single();
       
       if (error || !data) {
         toast.error("Organization not found. Please check the subdomain and try again.");
+        logger.security('Organization lookup failed', { subdomain: sanitizedSubdomain });
         setLoading(false);
         return;
       }
       
       // Redirect to organization auth page
-      navigate(`/${orgSubdomain}`);
+      navigate(`/${sanitizedSubdomain}`);
     } catch (error) {
+      logger.error("Organization redirect error:", error);
       toast.error("An error occurred while searching for the organization.");
     } finally {
       setLoading(false);
@@ -113,16 +134,58 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      // Input validation and sanitization
+      const sanitizedEmail = sanitizeEmail(email);
+      const sanitizedOrgName = sanitizeInput(organizationName);
+      const sanitizedSlug = sanitizeOrganizationSlug(organizationSlug);
+      
+      // Validate inputs
+      const emailValidation = emailSchema.safeParse(sanitizedEmail);
+      const passwordValidation = passwordSchema.safeParse(password);
+      const orgNameValidation = organizationNameSchema.safeParse(sanitizedOrgName);
+      
+      if (!emailValidation.success) {
+        toast.error(emailValidation.error.errors[0].message);
+        return;
+      }
+      
+      if (!passwordValidation.success) {
+        toast.error(passwordValidation.error.errors[0].message);
+        return;
+      }
+      
+      if (!orgNameValidation.success) {
+        toast.error(orgNameValidation.error.errors[0].message);
+        return;
+      }
+      
+      if (!sanitizedSlug) {
+        toast.error("Organization slug cannot be empty.");
+        return;
+      }
+      
+      // Rate limiting check
+      const rateLimitKey = `org-signup-${sanitizedEmail}`;
+      if (!authRateLimiter.canAttempt(rateLimitKey)) {
+        const remainingTime = authRateLimiter.getRemainingTime(rateLimitKey);
+        toast.error(`Too many signup attempts. Try again in ${remainingTime} minutes.`);
+        logger.security('Rate limit exceeded for organization signup', { email: sanitizedEmail });
+        return;
+      }
+      
+      authRateLimiter.recordAttempt(rateLimitKey);
+      
       // First, create the user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: sanitizedEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/${organizationSlug}`
+          emailRedirectTo: `${window.location.origin}/${sanitizedSlug}`
         }
       });
 
       if (authError) {
+        logger.security('Organization signup failed', { error: authError.message, email: sanitizedEmail });
         if (authError.message.includes("already registered")) {
           toast.error("This email is already registered. Please sign in instead.");
         } else {
@@ -136,13 +199,14 @@ const Auth = () => {
         const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .insert({
-            name: organizationName,
-            slug: organizationSlug,
+            name: sanitizedOrgName,
+            slug: sanitizedSlug,
           })
           .select()
           .single();
 
         if (orgError) {
+          logger.error('Organization creation failed:', orgError);
           if (orgError.message.includes('duplicate key')) {
             toast.error("Organization slug already exists. Please choose a different name.");
           } else {
@@ -157,18 +221,25 @@ const Auth = () => {
           .insert({
             user_id: authData.user.id,
             organization_id: orgData.id,
-            email: email,
+            email: sanitizedEmail,
             role: 'admin'
           });
 
         if (profileError) {
+          logger.error('Profile creation failed:', profileError);
           toast.error("Failed to create user profile: " + profileError.message);
           return;
         }
 
+        logger.security('Organization created successfully', { 
+          orgId: orgData.id, 
+          userId: authData.user.id,
+          email: sanitizedEmail 
+        });
         toast.success("Organization created! Check your email for the confirmation link.");
       }
     } catch (error) {
+      logger.error('Organization signup unexpected error:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -180,12 +251,39 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      // Input validation and sanitization
+      const sanitizedEmail = sanitizeEmail(email);
+      
+      const emailValidation = emailSchema.safeParse(sanitizedEmail);
+      const passwordValidation = passwordSchema.safeParse(password);
+      
+      if (!emailValidation.success) {
+        toast.error(emailValidation.error.errors[0].message);
+        return;
+      }
+      
+      if (!passwordValidation.success) {
+        toast.error(passwordValidation.error.errors[0].message);
+        return;
+      }
+      
+      // Rate limiting check
+      const rateLimitKey = `signup-${sanitizedEmail}`;
+      if (!authRateLimiter.canAttempt(rateLimitKey)) {
+        const remainingTime = authRateLimiter.getRemainingTime(rateLimitKey);
+        toast.error(`Too many signup attempts. Try again in ${remainingTime} minutes.`);
+        logger.security('Rate limit exceeded for signup', { email: sanitizedEmail });
+        return;
+      }
+      
+      authRateLimiter.recordAttempt(rateLimitKey);
+      
       const redirectTo = searchParams.get('redirectTo') || '/';
-      console.log('Auth: Signing up with redirectTo:', redirectTo);
+      logger.debug('Auth: Signing up with redirectTo:', redirectTo);
       const redirectUrl = `${window.location.origin}${redirectTo}`;
       
       const { error } = await supabase.auth.signUp({
-        email,
+        email: sanitizedEmail,
         password,
         options: {
           emailRedirectTo: redirectUrl
@@ -193,15 +291,18 @@ const Auth = () => {
       });
 
       if (error) {
+        logger.security('Signup failed', { error: error.message, email: sanitizedEmail });
         if (error.message.includes("already registered")) {
           toast.error("This email is already registered. Please sign in instead.");
         } else {
           toast.error(error.message);
         }
       } else {
+        logger.security('Signup successful', { email: sanitizedEmail });
         toast.success("Check your email for the confirmation link!");
       }
     } catch (error) {
+      logger.error('Signup unexpected error:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -213,25 +314,54 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Input validation and sanitization
+      const sanitizedEmail = sanitizeEmail(email);
+      
+      const emailValidation = emailSchema.safeParse(sanitizedEmail);
+      if (!emailValidation.success) {
+        toast.error(emailValidation.error.errors[0].message);
+        return;
+      }
+      
+      if (!password || password.length < 1) {
+        toast.error("Password is required");
+        return;
+      }
+      
+      // Rate limiting check
+      const rateLimitKey = `signin-${sanitizedEmail}`;
+      if (!authRateLimiter.canAttempt(rateLimitKey)) {
+        const remainingTime = authRateLimiter.getRemainingTime(rateLimitKey);
+        toast.error(`Too many sign-in attempts. Try again in ${remainingTime} minutes.`);
+        logger.security('Rate limit exceeded for signin', { email: sanitizedEmail });
+        return;
+      }
+      
+      authRateLimiter.recordAttempt(rateLimitKey);
+      
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: sanitizedEmail,
         password,
       });
 
       if (error) {
-        console.error('Auth: Sign in error:', error);
+        logger.security('Signin failed', { error: error.message, email: sanitizedEmail });
         if (error.message.includes("Invalid login credentials")) {
           toast.error("Invalid email or password. Please check your credentials.");
         } else {
           toast.error(error.message);
         }
       } else {
+        logger.security('Signin successful', { email: sanitizedEmail });
+        // Reset rate limiting on successful login
+        authRateLimiter.reset(rateLimitKey);
+        
         const redirectTo = searchParams.get('redirectTo') || '/';
-        console.log('Auth: Sign in successful, redirecting to:', redirectTo);
+        logger.debug('Auth: Sign in successful, redirecting to:', redirectTo);
         navigate(redirectTo);
       }
     } catch (error) {
-      console.error('Auth: Unexpected error:', error);
+      logger.error('Signin unexpected error:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -243,18 +373,41 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      // Input validation and sanitization
+      const sanitizedEmail = sanitizeEmail(resetEmail);
+      
+      const emailValidation = emailSchema.safeParse(sanitizedEmail);
+      if (!emailValidation.success) {
+        toast.error(emailValidation.error.errors[0].message);
+        return;
+      }
+      
+      // Rate limiting check
+      const rateLimitKey = `reset-${sanitizedEmail}`;
+      if (!passwordResetRateLimiter.canAttempt(rateLimitKey)) {
+        const remainingTime = passwordResetRateLimiter.getRemainingTime(rateLimitKey);
+        toast.error(`Too many password reset attempts. Try again in ${remainingTime} minutes.`);
+        logger.security('Rate limit exceeded for password reset', { email: sanitizedEmail });
+        return;
+      }
+      
+      passwordResetRateLimiter.recordAttempt(rateLimitKey);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
         redirectTo: `${window.location.origin}${window.location.pathname}?reset=true`,
       });
 
       if (error) {
+        logger.security('Password reset failed', { error: error.message, email: sanitizedEmail });
         toast.error(error.message);
       } else {
+        logger.security('Password reset requested', { email: sanitizedEmail });
         toast.success("Password reset email sent! Check your inbox.");
         setShowForgotPassword(false);
         setResetEmail("");
       }
     } catch (error) {
+      logger.error('Password reset unexpected error:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -271,8 +424,10 @@ const Auth = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters long");
+    // Enhanced password validation
+    const passwordValidation = passwordSchema.safeParse(newPassword);
+    if (!passwordValidation.success) {
+      toast.error(passwordValidation.error.errors[0].message);
       setLoading(false);
       return;
     }
@@ -283,8 +438,10 @@ const Auth = () => {
       });
 
       if (error) {
+        logger.security('Password update failed', { error: error.message });
         toast.error(error.message);
       } else {
+        logger.security('Password updated successfully');
         toast.success("Password updated successfully!");
         setShowUpdatePassword(false);
         setNewPassword("");
@@ -297,6 +454,7 @@ const Auth = () => {
         }
       }
     } catch (error) {
+      logger.error('Password update unexpected error:', error);
       toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
@@ -439,6 +597,7 @@ const Auth = () => {
                         required
                         minLength={6}
                       />
+                      <PasswordStrength password={newPassword} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirm-password">Confirm New Password</Label>
@@ -564,18 +723,19 @@ const Auth = () => {
                             />
                           </div>
                           
-                          <div className="space-y-2">
-                            <Label htmlFor="admin-password">Password</Label>
-                            <Input
-                              id="admin-password"
-                              type="password"
-                              placeholder="Create a secure password"
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              required
-                              minLength={6}
-                            />
-                          </div>
+                           <div className="space-y-2">
+                             <Label htmlFor="admin-password">Password</Label>
+                             <Input
+                               id="admin-password"
+                               type="password"
+                               placeholder="Create a secure password"
+                               value={password}
+                               onChange={(e) => setPassword(e.target.value)}
+                               required
+                               minLength={6}
+                             />
+                             <PasswordStrength password={password} />
+                           </div>
                         </div>
                         
                         <Button type="submit" className="w-full" disabled={loading}>
@@ -751,18 +911,19 @@ const Auth = () => {
                             required
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-password">Password</Label>
-                          <Input
-                            id="signup-password"
-                            type="password"
-                            placeholder="Create a password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            minLength={6}
-                          />
-                        </div>
+                         <div className="space-y-2">
+                           <Label htmlFor="signup-password">Password</Label>
+                           <Input
+                             id="signup-password"
+                             type="password"
+                             placeholder="Create a password"
+                             value={password}
+                             onChange={(e) => setPassword(e.target.value)}
+                             required
+                             minLength={6}
+                           />
+                           <PasswordStrength password={password} />
+                         </div>
                         <Button type="submit" className="w-full" disabled={loading}>
                           {loading ? (
                             <>

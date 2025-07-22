@@ -13,6 +13,13 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/lib/logger";
+import { 
+  sanitizeInput, 
+  bookingTitleSchema, 
+  bookingDescriptionSchema, 
+  attendeesSchema 
+} from "@/lib/validation";
 
 interface Room {
   id: string;
@@ -228,8 +235,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       // Create datetime strings
       const startDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
       const endDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
-
-      console.log("DateTime strings:", { startDateTime, endDateTime });
+      
+      logger.debug("DateTime strings:", { startDateTime, endDateTime });
 
       // Get user's organization ID
       const { data: profile, error: profileError } = await supabase
