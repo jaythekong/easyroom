@@ -258,11 +258,11 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary/10 rounded-lg">
+              <div className="p-3 bg-primary/10 rounded-lg">
                 {organization?.logo_url ? (
-                  <img src={organization.logo_url} alt={organization.name} className="h-6 w-6 object-contain" />
+                  <img src={organization.logo_url} alt={organization.name} className="h-10 w-10 object-contain" />
                 ) : (
-                  <Building className="h-6 w-6 text-primary" />
+                  <Building className="h-10 w-10 text-primary" />
                 )}
               </div>
               <div>
