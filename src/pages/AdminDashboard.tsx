@@ -10,7 +10,6 @@ import { TeamManagement } from "@/components/admin/TeamManagement";
 import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { TelegramNotifications } from "@/components/admin/TelegramNotifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { QueryProvider } from "@/components/QueryProvider";
 import { Link } from "react-router-dom";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 
@@ -122,9 +121,5 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
 });
 
 export default function AdminDashboard() {
-  return (
-    <QueryProvider>
-      <AdminDashboardContent />
-    </QueryProvider>
-  );
+  return <AdminDashboardContent />;
 }

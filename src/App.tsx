@@ -16,7 +16,6 @@ import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
 import LandingPage from "./pages/LandingPage";
 import ThankYouPage from "./pages/ThankYouPage";
-import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
