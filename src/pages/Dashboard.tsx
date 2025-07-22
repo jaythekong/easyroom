@@ -305,51 +305,51 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="timeline-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+            <div className="timeline-card p-2 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1 sm:p-2 bg-success/10 rounded-lg">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-success rounded-full animate-pulse"></div>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Available Now</span>
-                  <p className="text-2xl font-bold text-success">{availableRooms}</p>
+                <div className="min-w-0">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Available Now</span>
+                  <p className="text-lg sm:text-2xl font-bold text-success">{availableRooms}</p>
                 </div>
               </div>
             </div>
             
-            <div className="timeline-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Building2 className="w-4 h-4 text-primary" />
+            <div className="timeline-card p-2 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1 sm:p-2 bg-primary/10 rounded-lg">
+                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Total Rooms</span>
-                  <p className="text-2xl font-bold text-foreground">{rooms.length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="timeline-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-accent/10 rounded-lg">
-                  <User className="w-4 h-4 text-accent-foreground" />
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">My Upcoming Bookings</span>
-                  <p className="text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
+                <div className="min-w-0">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Total Rooms</span>
+                  <p className="text-lg sm:text-2xl font-bold text-foreground">{rooms.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="timeline-card p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Building className="w-4 h-4 text-blue-600" />
+            <div className="timeline-card p-2 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1 sm:p-2 bg-accent/10 rounded-lg">
+                  <User className="w-3 h-3 sm:w-4 sm:h-4 text-accent-foreground" />
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Organization Upcoming</span>
-                  <p className="text-2xl font-bold text-foreground">{organizationUpcomingBookings}</p>
+                <div className="min-w-0">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
+                  <p className="text-lg sm:text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="timeline-card p-2 sm:p-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1 sm:p-2 bg-blue-100 rounded-lg">
+                  <Building className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Org Total</span>
+                  <p className="text-lg sm:text-2xl font-bold text-foreground">{organizationUpcomingBookings}</p>
                 </div>
               </div>
             </div>
@@ -357,22 +357,31 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content with Tabs */}
-        <Tabs defaultValue="timeline" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 sm:w-auto">
-            <TabsTrigger value="timeline" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+        <Tabs defaultValue="timeline" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-8 sm:h-10 p-0.5 sm:p-1">
+            <TabsTrigger 
+              value="timeline" 
+              className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
+            >
               <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Timeline View</span>
-              <span className="sm:hidden">Timeline</span>
+              <span className="hidden xs:inline sm:inline">Timeline</span>
+              <span className="xs:hidden">T</span>
             </TabsTrigger>
-            <TabsTrigger value="grid" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <TabsTrigger 
+              value="grid" 
+              className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
+            >
               <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Grid View</span>
-              <span className="sm:hidden">Grid</span>
+              <span className="hidden xs:inline sm:inline">Grid</span>
+              <span className="xs:hidden">G</span>
             </TabsTrigger>
-            <TabsTrigger value="filters" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <TabsTrigger 
+              value="filters" 
+              className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
+            >
               <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Filters</span>
-              <span className="sm:hidden">Filters</span>
+              <span className="hidden xs:inline sm:inline">Filters</span>
+              <span className="xs:hidden">F</span>
             </TabsTrigger>
           </TabsList>
 
