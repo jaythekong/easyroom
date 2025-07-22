@@ -267,7 +267,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <h1 className="text-xl font-bold gradient-text">{organization?.name || "Room Booking"}</h1>
-                <p className="text-sm text-muted-foreground">Find and book your perfect meeting space</p>
+                <p className="text-sm text-muted-foreground">{organization?.tagline || "Find and book your perfect meeting space"}</p>
               </div>
             </div>
             

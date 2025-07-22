@@ -20,6 +20,7 @@ interface Organization {
   logo_url?: string;
   primary_color?: string;
   timezone?: string;
+  tagline?: string;
   created_at: string;
 }
 
@@ -33,10 +34,12 @@ export function OrganizationSettings() {
   const [logoUrl, setLogoUrl] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#ea580c");
   const [timezone, setTimezone] = useState("America/New_York");
+  const [tagline, setTagline] = useState("Find and book your perfect meeting space");
   const [originalSubdomain, setOriginalSubdomain] = useState("");
   const [originalLogoUrl, setOriginalLogoUrl] = useState("");
   const [originalPrimaryColor, setOriginalPrimaryColor] = useState("#ea580c");
   const [originalTimezone, setOriginalTimezone] = useState("America/New_York");
+  const [originalTagline, setOriginalTagline] = useState("Find and book your perfect meeting space");
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -93,10 +96,12 @@ export function OrganizationSettings() {
       setLogoUrl(org.logo_url || "");
       setPrimaryColor(org.primary_color || "#ea580c");
       setTimezone(org.timezone || "America/New_York");
+      setTagline(org.tagline || "Find and book your perfect meeting space");
       setOriginalSubdomain(org.slug);
       setOriginalLogoUrl(org.logo_url || "");
       setOriginalPrimaryColor(org.primary_color || "#ea580c");
       setOriginalTimezone(org.timezone || "America/New_York");
+      setOriginalTagline(org.tagline || "Find and book your perfect meeting space");
     } catch (error) {
       console.error('Error fetching organization:', error);
       toast({
@@ -221,6 +226,7 @@ export function OrganizationSettings() {
           logo_url: logoUrl || null,
           primary_color: primaryColor,
           timezone: timezone,
+          tagline: tagline.trim(),
         })
         .eq('id', organization.id);
 
@@ -230,6 +236,7 @@ export function OrganizationSettings() {
       setOriginalLogoUrl(logoUrl);
       setOriginalPrimaryColor(primaryColor);
       setOriginalTimezone(timezone);
+      setOriginalTagline(tagline);
       toast({
         title: "Settings saved",
         description: "Organization settings have been updated successfully",
@@ -272,7 +279,8 @@ export function OrganizationSettings() {
     subdomain !== originalSubdomain || 
     logoUrl !== originalLogoUrl || 
     primaryColor !== originalPrimaryColor ||
-    timezone !== originalTimezone;
+    timezone !== originalTimezone ||
+    tagline !== originalTagline;
   const canSave = hasChanges && orgName.trim() && subdomain.trim() && isAvailable !== false;
 
   return (
@@ -382,6 +390,19 @@ export function OrganizationSettings() {
               onChange={(e) => setOrgName(e.target.value)}
               placeholder="Your organization name"
             />
+          </div>
+
+          <div>
+            <Label htmlFor="tagline">Tagline</Label>
+            <Input
+              id="tagline"
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              placeholder="Find and book your perfect meeting space"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              This tagline will appear on your organization's dashboard
+            </p>
           </div>
 
           <div>

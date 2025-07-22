@@ -166,6 +166,7 @@ export type Database = {
           name: string
           primary_color: string | null
           slug: string
+          tagline: string | null
           timezone: string | null
           updated_at: string
         }
@@ -176,6 +177,7 @@ export type Database = {
           name: string
           primary_color?: string | null
           slug: string
+          tagline?: string | null
           timezone?: string | null
           updated_at?: string
         }
@@ -186,6 +188,7 @@ export type Database = {
           name?: string
           primary_color?: string | null
           slug?: string
+          tagline?: string | null
           timezone?: string | null
           updated_at?: string
         }

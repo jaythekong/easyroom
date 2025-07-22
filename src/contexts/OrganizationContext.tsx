@@ -11,6 +11,7 @@ interface Organization {
   logo_url?: string;
   primary_color?: string;
   timezone?: string;
+  tagline?: string;
   created_at: string;
   updated_at: string;
 }
