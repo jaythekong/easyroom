@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import AdminDashboard from "./pages/AdminDashboard";
 import MyBookings from "./pages/MyBookings";
 import Auth from "./pages/Auth";
+import CreateOrganization from "./pages/CreateOrganization";
 import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
 import LandingPage from "./pages/LandingPage";
@@ -36,6 +37,7 @@ const App = () => (
               <Routes>
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/create-org" element={<CreateOrganization />} />
                 
               {/* Organization-specific auth route */}
               <Route path="/:orgSlug/auth" element={

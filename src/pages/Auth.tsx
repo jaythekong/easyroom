@@ -30,6 +30,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
   const [organizationSlug, setOrganizationSlug] = useState("");
+  const [orgSubdomain, setOrgSubdomain] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -65,6 +66,33 @@ const Auth = () => {
     };
     checkUser();
   }, [navigate, searchParams, orgSlug]);
+
+  const handleOrganizationRedirect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      // Check if organization exists
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('slug')
+        .eq('slug', orgSubdomain)
+        .single();
+      
+      if (error || !data) {
+        toast.error("Organization not found. Please check the subdomain and try again.");
+        setLoading(false);
+        return;
+      }
+      
+      // Redirect to organization auth page
+      navigate(`/${orgSubdomain}`);
+    } catch (error) {
+      toast.error("An error occurred while searching for the organization.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOrganizationSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,7 +256,13 @@ const Auth = () => {
               </div>
             </div>
           )}
-          {!organization && (
+          {!organization && !orgSlug && (
+            <div>
+              <CardTitle className="text-2xl font-bold">Easy Room</CardTitle>
+              <p className="text-muted-foreground text-sm mt-1">Enter your organization's subdomain to sign in</p>
+            </div>
+          )}
+          {!organization && orgSlug && (
             <div>
               <CardTitle className="text-2xl font-bold">Easy Room</CardTitle>
               <p className="text-muted-foreground text-sm mt-1">Create your organization account</p>
@@ -236,107 +270,141 @@ const Auth = () => {
           )}
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+          {!orgSlug ? (
+            // Organization finder form for /auth
+            <form onSubmit={handleOrganizationRedirect} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="org-subdomain">Organization Subdomain</Label>
+                <div className="flex items-center space-x-2">
                   <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="org-subdomain"
+                    type="text"
+                    placeholder="your-organization"
+                    value={orgSubdomain}
+                    onChange={(e) => setOrgSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                     required
+                    pattern="[a-z0-9-]+"
+                    className="flex-1"
                   />
+                  <span className="text-sm text-muted-foreground">.easyroom.app</span>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={!organization ? handleOrganizationSignUp : handleSignUp} className="space-y-4">
-                {!organization && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="org-name">Organization Name</Label>
-                      <Input
-                        id="org-name"
-                        type="text"
-                        placeholder="Your company name"
-                        value={organizationName}
-                        onChange={(e) => setOrganizationName(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="org-slug">Organization URL</Label>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-muted-foreground">easyroom.app/</span>
+                <p className="text-xs text-muted-foreground">
+                  Enter your organization's subdomain to access the sign-in page
+                </p>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Finding organization..." : "Continue to Sign In"}
+              </Button>
+              <div className="text-center pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Don't have an organization? <a href="/create-org" className="text-primary hover:underline">Create one here</a>
+                </p>
+              </div>
+            </form>
+          ) : (
+            // Existing organization-specific auth tabs
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="signin">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-email">Email</Label>
+                    <Input
+                      id="signin-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signin-password">Password</Label>
+                    <Input
+                      id="signin-password"
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing in..." : "Sign In"}
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="signup">
+                <form onSubmit={!organization ? handleOrganizationSignUp : handleSignUp} className="space-y-4">
+                  {!organization && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="org-name">Organization Name</Label>
                         <Input
-                          id="org-slug"
+                          id="org-name"
                           type="text"
-                          placeholder="your-org"
-                          value={organizationSlug}
-                          onChange={(e) => setOrganizationSlug(e.target.value)}
+                          placeholder="Your company name"
+                          value={organizationName}
+                          onChange={(e) => setOrganizationName(e.target.value)}
                           required
-                          pattern="[a-z0-9-]+"
-                          className="flex-1"
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Only lowercase letters, numbers, and hyphens allowed
-                      </p>
-                    </div>
-                  </>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Your Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="Create a password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (!organization ? "Creating organization..." : "Creating account...") : (!organization ? "Create Organization" : "Sign Up")}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
+                      <div className="space-y-2">
+                        <Label htmlFor="org-slug">Organization URL</Label>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm text-muted-foreground">easyroom.app/</span>
+                          <Input
+                            id="org-slug"
+                            type="text"
+                            placeholder="your-org"
+                            value={organizationSlug}
+                            onChange={(e) => setOrganizationSlug(e.target.value)}
+                            required
+                            pattern="[a-z0-9-]+"
+                            className="flex-1"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Only lowercase letters, numbers, and hyphens allowed
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email">Your Email</Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password">Password</Label>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="Create a password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? (!organization ? "Creating organization..." : "Creating account...") : (!organization ? "Create Organization" : "Sign Up")}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          )}
         </CardContent>
       </Card>
     </div>
