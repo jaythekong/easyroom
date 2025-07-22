@@ -275,12 +275,6 @@ export default function Dashboard() {
               <div className="hidden md:block">
                 <OrganizationClock />
               </div>
-              <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
-                <Link to={`/${orgSlug}/my-bookings`}>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  My Bookings
-                </Link>
-              </Button>
               <UserMenu 
                 profile={userProfile} 
                 onProfileUpdate={fetchUserProfile}
@@ -330,8 +324,8 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="timeline-card p-2 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" className="timeline-card p-2 sm:p-4 h-auto" asChild>
+              <Link to={`/${orgSlug}/my-bookings`} className="flex items-center gap-2 sm:gap-3 w-full">
                 <div className="p-1 sm:p-2 bg-accent/10 rounded-lg">
                   <User className="w-3 h-3 sm:w-4 sm:h-4 text-accent-foreground" />
                 </div>
@@ -339,8 +333,8 @@ export default function Dashboard() {
                   <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
                   <p className="text-lg sm:text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
                 </div>
-              </div>
-            </div>
+              </Link>
+            </Button>
 
             <div className="timeline-card p-2 sm:p-4">
               <div className="flex items-center gap-2 sm:gap-3">
