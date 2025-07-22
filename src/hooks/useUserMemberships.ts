@@ -32,30 +32,65 @@ export function useUserMemberships() {
         return [];
       }
 
-      const { data: memberships, error } = await supabase
-        .from('user_organization_memberships')
-        .select(`
-          id,
-          organization_id,
-          role,
-          created_at,
-          updated_at,
-          organizations (
-            id,
-            name,
-            slug,
-            logo_url,
-            primary_color,
-            timezone,
-            tagline
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true });
+      // Using a raw SQL approach for better reliability
+      const { data: memberships, error } = await supabase.rpc('get_user_memberships', {
+        p_user_id: user.id
+      });
 
       if (error) {
         console.error('Failed to fetch user memberships:', error);
-        throw new Error('Failed to fetch user memberships');
+        // Fallback to manual approach
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('user_organization_memberships')
+          .select('id, organization_id, role, created_at, updated_at')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: true });
+
+        if (membershipError) {
+          throw new Error('Failed to fetch user memberships');
+        }
+
+        // Get organization details separately
+        const orgIds = membershipData?.map(m => m.organization_id) || [];
+        if (orgIds.length === 0) return [];
+
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('id, name, slug, logo_url, primary_color, timezone, tagline')
+          .in('id', orgIds);
+
+        if (orgError) {
+          throw new Error('Failed to fetch organization details');
+        }
+
+        // Combine the data
+        return (membershipData || []).map(membership => {
+          const org = orgData?.find(o => o.id === membership.organization_id);
+          return {
+            id: membership.id,
+            organization_id: membership.organization_id,
+            role: membership.role,
+            created_at: membership.created_at,
+            updated_at: membership.updated_at,
+            organization: org ? {
+              id: org.id,
+              name: org.name,
+              slug: org.slug,
+              logo_url: org.logo_url,
+              primary_color: org.primary_color,
+              timezone: org.timezone,
+              tagline: org.tagline,
+            } : {
+              id: membership.organization_id,
+              name: 'Unknown Organization',
+              slug: 'unknown',
+              logo_url: null,
+              primary_color: null,
+              timezone: null,
+              tagline: null,
+            }
+          };
+        });
       }
 
       return (memberships || []).map(membership => ({
