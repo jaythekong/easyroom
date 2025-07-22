@@ -15,6 +15,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
 import LandingPage from "./pages/LandingPage";
+import ThankYouPage from "./pages/ThankYouPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,8 @@ const App = () => (
               <Routes>
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/thank-you" element={<ThankYouPage />} />
+                <Route path="/thank-you/:orgSlug" element={<ThankYouPage />} />
                 
               {/* Organization-specific auth route */}
               <Route path="/:orgSlug/auth" element={

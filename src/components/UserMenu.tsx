@@ -44,22 +44,22 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
       
       await signOut();
       
-      // Navigate to the org's auth page after logout
+      // Navigate to thank you page after logout
       if (currentOrgSlug) {
-        console.log('UserMenu: Redirecting to:', `/auth/${currentOrgSlug}`);
-        navigate(`/auth/${currentOrgSlug}`, { replace: true });
+        console.log('UserMenu: Redirecting to:', `/thank-you/${currentOrgSlug}`);
+        navigate(`/thank-you/${currentOrgSlug}`, { replace: true });
       } else {
-        console.log('UserMenu: No org slug found, redirecting to /auth');
-        navigate(`/auth`, { replace: true });
+        console.log('UserMenu: No org slug found, redirecting to /thank-you');
+        navigate(`/thank-you`, { replace: true });
       }
     } catch (error) {
       console.error('Sign out error:', error);
-      // Even if sign out fails, redirect to auth page
+      // Even if sign out fails, redirect to thank you page
       const currentOrgSlug = organization?.slug || orgSlug;
       if (currentOrgSlug) {
-        navigate(`/auth/${currentOrgSlug}`, { replace: true });
+        navigate(`/thank-you/${currentOrgSlug}`, { replace: true });
       } else {
-        navigate(`/auth`, { replace: true });
+        navigate(`/thank-you`, { replace: true });
       }
     }
   };
