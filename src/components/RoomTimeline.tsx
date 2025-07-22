@@ -291,10 +291,12 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
+    // Skip by 3 days on mobile (showing 3 days), 7 days on desktop (showing 7 days)
+    const daysToSkip = isMobile ? 3 : 7;
     const newDate = direction === 'prev' 
-      ? subDays(selectedDate, 7)
-      : addDays(selectedDate, 7);
-    console.log('📅 Navigating week:', direction, 'to', format(newDate, 'yyyy-MM-dd'));
+      ? subDays(selectedDate, daysToSkip)
+      : addDays(selectedDate, daysToSkip);
+    console.log('📅 Navigating week:', direction, 'by', daysToSkip, 'days to', format(newDate, 'yyyy-MM-dd'));
     onDateSelect(newDate);
     // Sync all room dates with the new selected date
     setRoomDates(prev => {
