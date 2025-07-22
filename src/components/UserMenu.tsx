@@ -13,6 +13,7 @@ import { ProfileModal } from "@/components/ProfileModal";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface UserProfile {
   display_name?: string;
@@ -31,6 +32,7 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
   const { signOut } = useAuth();
   const { setTheme } = useTheme();
   const { orgSlug } = useParams<{ orgSlug: string }>();
+  const { organization } = useOrganization();
   const navigate = useNavigate();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
@@ -38,8 +40,9 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
     try {
       await signOut();
       // Navigate to the org's auth page after logout
-      if (orgSlug) {
-        navigate(`/auth/${orgSlug}`, { replace: true });
+      const currentOrgSlug = organization?.slug || orgSlug;
+      if (currentOrgSlug) {
+        navigate(`/auth/${currentOrgSlug}`, { replace: true });
       } else {
         // Fallback to main auth page if no org slug
         navigate(`/auth`, { replace: true });
@@ -47,8 +50,9 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
     } catch (error) {
       console.error('Sign out error:', error);
       // Even if sign out fails, redirect to auth page
-      if (orgSlug) {
-        navigate(`/auth/${orgSlug}`, { replace: true });
+      const currentOrgSlug = organization?.slug || orgSlug;
+      if (currentOrgSlug) {
+        navigate(`/auth/${currentOrgSlug}`, { replace: true });
       } else {
         navigate(`/auth`, { replace: true });
       }
