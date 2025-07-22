@@ -160,16 +160,25 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     return slots;
   }, []);
 
-  // Generate week days for each room - now unified with selectedDate
+  // Generate days for each room - mobile shows 3 days centered on selected date, desktop shows full week
   const getRoomWeekDays = useCallback((roomId: string) => {
-    // Use selectedDate directly instead of individual room dates for unified navigation
-    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      days.push(addDays(weekStart, i));
+    if (isMobile) {
+      // Mobile: show 3 days centered around selected date (previous, current, next)
+      return [
+        subDays(selectedDate, 1),
+        selectedDate,
+        addDays(selectedDate, 1)
+      ];
+    } else {
+      // Desktop: show full week starting from Monday
+      const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+      const days = [];
+      for (let i = 0; i < 7; i++) {
+        days.push(addDays(weekStart, i));
+      }
+      return days;
     }
-    return days;
-  }, [selectedDate]);
+  }, [selectedDate, isMobile]);
 
   // CRITICAL: Simple and bulletproof booking overlap check
   const doesBookingOverlapSlot = useCallback((booking: Booking, slotDate: string, slotHour: number): boolean => {
