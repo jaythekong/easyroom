@@ -287,11 +287,11 @@ export default function Dashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section with Statistics */}
-        <div className="mb-8">
-          <div className="glass-card p-6 rounded-2xl mb-6">
+        <div className="mb-4 sm:mb-8">
+          <div className="glass-card p-3 sm:p-6 rounded-2xl mb-3 sm:mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
                   {getTimeBasedGreeting()}, {userDisplayName}! ☀️
                 </h2>
               </div>
@@ -299,51 +299,51 @@ export default function Dashboard() {
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-            <div className="timeline-card p-2 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-4">
+            <div className="timeline-card p-1.5 sm:p-4">
+              <div className="flex items-center gap-1.5 sm:gap-3">
                 <div className="p-1 sm:p-2 bg-success/10 rounded-lg">
                   <div className="w-2 h-2 sm:w-3 sm:h-3 bg-success rounded-full animate-pulse"></div>
                 </div>
                 <div className="min-w-0">
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Available Now</span>
-                  <p className="text-lg sm:text-2xl font-bold text-success">{availableRooms}</p>
+                  <span className="text-[10px] sm:text-sm font-medium text-muted-foreground block leading-tight">Available</span>
+                  <p className="text-sm sm:text-2xl font-bold text-success">{availableRooms}</p>
                 </div>
               </div>
             </div>
             
-            <div className="timeline-card p-2 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
+            <div className="timeline-card p-1.5 sm:p-4">
+              <div className="flex items-center gap-1.5 sm:gap-3">
                 <div className="p-1 sm:p-2 bg-primary/10 rounded-lg">
-                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+                  <Building2 className="w-2.5 h-2.5 sm:w-4 sm:h-4 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Total Rooms</span>
-                  <p className="text-lg sm:text-2xl font-bold text-foreground">{rooms.length}</p>
+                  <span className="text-[10px] sm:text-sm font-medium text-muted-foreground block leading-tight">Rooms</span>
+                  <p className="text-sm sm:text-2xl font-bold text-foreground">{rooms.length}</p>
                 </div>
               </div>
             </div>
 
-            <Button variant="ghost" className="timeline-card p-2 sm:p-4 h-auto" asChild>
-              <Link to={`/${orgSlug}/my-bookings`} className="flex items-center gap-2 sm:gap-3 w-full">
+            <Button variant="ghost" className="timeline-card p-1.5 sm:p-4 h-auto" asChild>
+              <Link to={`/${orgSlug}/my-bookings`} className="flex items-center gap-1.5 sm:gap-3 w-full">
                 <div className="p-1 sm:p-2 bg-accent/10 rounded-lg">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4 text-accent-foreground" />
+                  <User className="w-2.5 h-2.5 sm:w-4 sm:h-4 text-accent-foreground" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
-                  <p className="text-lg sm:text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
+                  <span className="text-[10px] sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
+                  <p className="text-sm sm:text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
                 </div>
               </Link>
             </Button>
 
-            <div className="timeline-card p-2 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
+            <div className="timeline-card p-1.5 sm:p-4">
+              <div className="flex items-center gap-1.5 sm:gap-3">
                 <div className="p-1 sm:p-2 bg-blue-100 rounded-lg">
-                  <Building className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                  <Building className="w-2.5 h-2.5 sm:w-4 sm:h-4 text-blue-600" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Org Total</span>
-                  <p className="text-lg sm:text-2xl font-bold text-foreground">{organizationUpcomingBookings}</p>
+                  <span className="text-[10px] sm:text-sm font-medium text-muted-foreground block leading-tight">Org Total</span>
+                  <p className="text-sm sm:text-2xl font-bold text-foreground">{organizationUpcomingBookings}</p>
                 </div>
               </div>
             </div>
@@ -351,8 +351,8 @@ export default function Dashboard() {
         </div>
 
         {/* Main Content with Tabs */}
-        <Tabs defaultValue="timeline" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-8 sm:h-10 p-0.5 sm:p-1">
+        <Tabs defaultValue="timeline" className="space-y-2 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 h-7 sm:h-10 p-0.5 sm:p-1">
             <TabsTrigger 
               value="timeline" 
               className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
