@@ -285,65 +285,79 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Welcome Section with Statistics */}
-        <div className="mb-8">
-          <div className="glass-card p-6 rounded-2xl mb-6">
+        <div className="mb-4 sm:mb-8">
+          <div className="glass-card p-3 sm:p-6 rounded-2xl mb-3 sm:mb-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">
+                <h2 className="text-lg sm:text-2xl font-bold text-foreground mb-1 sm:mb-2">
                   {getTimeBasedGreeting()}, {userDisplayName}! ☀️
                 </h2>
               </div>
             </div>
           </div>
 
-          {/* Stats Grid */}
+          {/* Enhanced Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-            <div className="timeline-card p-2 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1 sm:p-2 bg-success/10 rounded-lg">
-                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-success rounded-full animate-pulse"></div>
+            {/* Available Rooms - Enhanced with success gradient */}
+            <div className="timeline-card p-3 sm:p-4 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-success/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 bg-success/10 rounded-xl relative">
+                  <div className="w-2 h-2 sm:w-3 sm:h-3 bg-success rounded-full animate-pulse shadow-lg shadow-success/30"></div>
+                  <div className="absolute inset-0 bg-success/20 rounded-xl blur-sm"></div>
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Available Now</span>
-                  <p className="text-lg sm:text-2xl font-bold text-success">{availableRooms}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-success">{availableRooms}</p>
                 </div>
               </div>
             </div>
             
-            <div className="timeline-card p-2 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1 sm:p-2 bg-primary/10 rounded-lg">
-                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-primary" />
+            {/* Total Rooms - Enhanced with primary gradient */}
+            <div className="timeline-card p-3 sm:p-4 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 bg-primary/10 rounded-xl relative">
+                  <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-primary drop-shadow-sm" />
+                  <div className="absolute inset-0 bg-primary/20 rounded-xl blur-sm"></div>
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Total Rooms</span>
-                  <p className="text-lg sm:text-2xl font-bold text-foreground">{rooms.length}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-primary">{rooms.length}</p>
                 </div>
               </div>
             </div>
 
-            <Button variant="ghost" className="timeline-card p-2 sm:p-4 h-auto" asChild>
+            {/* My Bookings - Enhanced clickable button */}
+            <Button variant="ghost" className="timeline-card p-3 sm:p-4 h-auto group relative overflow-hidden hover:shadow-lg transition-all duration-300" asChild>
               <Link to={`/${orgSlug}/my-bookings`} className="flex items-center gap-2 sm:gap-3 w-full">
-                <div className="p-1 sm:p-2 bg-accent/10 rounded-lg">
-                  <User className="w-3 h-3 sm:w-4 sm:h-4 text-accent-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
-                  <p className="text-lg sm:text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative flex items-center gap-2 sm:gap-3 w-full">
+                  <div className="p-2 sm:p-3 bg-accent/10 rounded-xl relative">
+                    <User className="w-3 h-3 sm:w-4 sm:h-4 text-accent-foreground drop-shadow-sm" />
+                    <div className="absolute inset-0 bg-accent/20 rounded-xl blur-sm"></div>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
+                  </div>
                 </div>
               </Link>
             </Button>
 
-            <div className="timeline-card p-2 sm:p-4">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1 sm:p-2 bg-blue-100 rounded-lg">
-                  <Building className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+            {/* Organization Total - Enhanced with blue accent */}
+            <div className="timeline-card p-3 sm:p-4 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl relative">
+                  <Building className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 drop-shadow-sm" />
+                  <div className="absolute inset-0 bg-blue-500/20 rounded-xl blur-sm"></div>
                 </div>
                 <div className="min-w-0">
                   <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Org Total</span>
-                  <p className="text-lg sm:text-2xl font-bold text-foreground">{organizationUpcomingBookings}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{organizationUpcomingBookings}</p>
                 </div>
               </div>
             </div>
