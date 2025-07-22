@@ -35,6 +35,9 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [showUpdatePassword, setShowUpdatePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -49,6 +52,14 @@ const Auth = () => {
       setOrganizationSlug(slug);
     }
   }, [organizationName, orgSlug]);
+
+  // Check for password reset parameter
+  useEffect(() => {
+    const resetParam = searchParams.get('reset');
+    if (resetParam === 'true') {
+      setShowUpdatePassword(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Only redirect if user is already logged in AND we're in an organization context
@@ -250,6 +261,48 @@ const Auth = () => {
     }
   };
 
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Password updated successfully!");
+        setShowUpdatePassword(false);
+        setNewPassword("");
+        setConfirmPassword("");
+        // Redirect to the organization dashboard after password update
+        if (orgSlug) {
+          navigate(`/${orgSlug}`);
+        } else {
+          navigate('/');
+        }
+      }
+    } catch (error) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Show loading while fetching organization data
   if (orgSlug && orgLoading) {
     return (
@@ -357,16 +410,60 @@ const Auth = () => {
                     <p className="text-muted-foreground">Find your organization to continue</p>
                   </div>
                 )}
-                {!organization && orgSlug && (
+                {!organization && orgSlug && !showUpdatePassword && (
                   <div>
                     <CardTitle className="text-2xl font-bold">Join Easy Room</CardTitle>
                     <p className="text-muted-foreground text-sm mt-1">Create your account to get started</p>
                   </div>
                 )}
+                {showUpdatePassword && (
+                  <div>
+                    <CardTitle className="text-2xl font-bold">Update Your Password</CardTitle>
+                    <p className="text-muted-foreground text-sm mt-1">Enter your new password below</p>
+                  </div>
+                )}
               </CardHeader>
               
               <CardContent className="space-y-6">
-                {!orgSlug ? (
+                {showUpdatePassword ? (
+                  // Password update form
+                  <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        placeholder="Enter your new password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input
+                        id="confirm-password"
+                        type="password"
+                        placeholder="Confirm your new password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Updating password...
+                        </>
+                      ) : (
+                        "Update Password"
+                      )}
+                    </Button>
+                  </form>
+                ) : !orgSlug ? (
                   // Organization finder with integrated signup
                   <Tabs defaultValue="find" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">

@@ -43,6 +43,7 @@ export function TeamManagement() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [userOrgId, setUserOrgId] = useState<string | null>(null);
+  const [orgSlug, setOrgSlug] = useState<string | null>(null);
 
   useEffect(() => {
     initializeUser();
@@ -101,7 +102,24 @@ export function TeamManagement() {
   const fetchTeamData = async (orgId?: string) => {
     const organizationId = orgId || userOrgId;
     if (!organizationId) return;
+    
     try {
+      // Fetch organization data including slug
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('slug')
+        .eq('id', organizationId)
+        .single();
+
+      if (orgError) {
+        console.error('Organization query error:', orgError);
+        throw orgError;
+      }
+
+      if (orgData?.slug) {
+        setOrgSlug(orgData.slug);
+      }
+
       // Fetch team members from the same organization
       const { data: members, error: membersError } = await supabase
         .from('user_profiles')
@@ -275,7 +293,7 @@ export function TeamManagement() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?reset=true`,
+        redirectTo: `${window.location.origin}/auth/${orgSlug}?reset=true`,
       });
 
       if (error) throw error;
