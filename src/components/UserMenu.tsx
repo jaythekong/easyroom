@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ProfileModal } from "@/components/ProfileModal";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 
 interface UserProfile {
   display_name?: string;
@@ -31,7 +31,14 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
   const { signOut } = useAuth();
   const { setTheme } = useTheme();
   const { orgSlug } = useParams<{ orgSlug: string }>();
+  const navigate = useNavigate();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    // Navigate to the org's auth page after logout
+    navigate(`/auth/${orgSlug}`, { replace: true });
+  };
 
   const getUserDisplayName = () => {
     if (profile?.display_name) return profile.display_name;
@@ -97,7 +104,7 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
 
           <DropdownMenuSeparator />
           
-          <DropdownMenuItem onClick={signOut}>
+          <DropdownMenuItem onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sign out</span>
           </DropdownMenuItem>

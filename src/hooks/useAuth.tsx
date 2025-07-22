@@ -50,11 +50,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = useCallback(async () => {
     console.log('useAuth: Signing out user');
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error("useAuth: Error signing out:", error.message);
-    } else {
-      console.log('useAuth: Successfully signed out');
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("useAuth: Error signing out:", error.message);
+        // If session doesn't exist on server, still clear local state
+        if (error.message.includes('session_not_found') || error.message.includes('Session not found')) {
+          console.log('useAuth: Session already expired, clearing local state');
+          setSession(null);
+          setUser(null);
+        }
+      } else {
+        console.log('useAuth: Successfully signed out');
+      }
+    } catch (error) {
+      console.error("useAuth: Unexpected error during sign out:", error);
+      // Clear local state even if there's an error
+      setSession(null);
+      setUser(null);
     }
   }, []);
 
