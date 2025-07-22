@@ -281,59 +281,45 @@ const Auth = () => {
           return;
         }
 
-        // Check if user already has a membership for this organization
-        const { data: existingMembership } = await supabase
+        // Create user membership for the NEW organization (user becomes admin of new org)
+        const { error: membershipError } = await supabase
           .from('user_organization_memberships')
-          .select('id')
-          .eq('user_id', authData.user.id)
-          .eq('organization_id', orgData.id)
-          .maybeSingle();
+          .insert({
+            user_id: authData.user.id,
+            organization_id: orgData.id,
+            role: 'admin'
+          });
 
-        if (!existingMembership) {
-          // Create user membership only if it doesn't exist
-          const { error: membershipError } = await supabase
-            .from('user_organization_memberships')
-            .insert({
-              user_id: authData.user.id,
-              organization_id: orgData.id,
-              role: 'admin'
-            });
-
-          if (membershipError) {
-            logger.error('Membership creation failed:', membershipError);
+        if (membershipError) {
+          logger.error('Membership creation failed:', membershipError);
+          // Handle the specific duplicate key error more gracefully
+          if (membershipError.message.includes('duplicate key')) {
+            logger.warn('User already has membership for this organization, continuing...');
+          } else {
             toast.error("Failed to create user membership: " + membershipError.message);
             return;
           }
-        } else {
-          logger.debug('User already has membership in this organization');
         }
 
-        // Check if user already has a profile for this organization
-        const { data: existingProfile } = await supabase
+        // Create user profile for the NEW organization
+        const { error: profileError } = await supabase
           .from('user_profiles')
-          .select('id')
-          .eq('user_id', authData.user.id)
-          .eq('organization_id', orgData.id)
-          .maybeSingle();
+          .insert({
+            user_id: authData.user.id,
+            organization_id: orgData.id,
+            email: sanitizedEmail,
+            role: 'admin'
+          });
 
-        if (!existingProfile) {
-          // Create user profile only if it doesn't exist
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .insert({
-              user_id: authData.user.id,
-              organization_id: orgData.id,
-              email: sanitizedEmail,
-              role: 'admin'
-            });
-
-          if (profileError) {
-            logger.error('Profile creation failed:', profileError);
+        if (profileError) {
+          logger.error('Profile creation failed:', profileError);
+          // Handle the specific duplicate key error more gracefully
+          if (profileError.message.includes('duplicate key')) {
+            logger.warn('User already has profile for this organization, continuing...');
+          } else {
             toast.error("Failed to create user profile: " + profileError.message);
             return;
           }
-        } else {
-          logger.debug('User already has profile in this organization');
         }
 
         logger.security('Organization created successfully', { 
