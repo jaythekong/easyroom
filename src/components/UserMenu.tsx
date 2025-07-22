@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { ProfileModal } from "@/components/ProfileModal";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
@@ -77,63 +78,68 @@ export function UserMenu({ profile, onProfileUpdate, userRole }: UserMenuProps) 
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.avatar_url} alt={getUserDisplayName()} />
-              <AvatarFallback>{getUserInitials()}</AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56" align="end" forceMount>
-          <div className="flex items-center justify-start gap-2 p-2">
-            <div className="flex flex-col space-y-1 leading-none">
-              <p className="font-medium">{getUserDisplayName()}</p>
-              <p className="w-[200px] truncate text-sm text-muted-foreground">
-                {profile?.email}
-              </p>
+      <div className="flex items-center gap-3">
+        {/* Organization Switcher - only show if user has multiple orgs */}
+        <OrganizationSwitcher />
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={profile?.avatar_url} alt={getUserDisplayName()} />
+                <AvatarFallback>{getUserInitials()}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <div className="flex items-center justify-start gap-2 p-2">
+              <div className="flex flex-col space-y-1 leading-none">
+                <p className="font-medium">{getUserDisplayName()}</p>
+                <p className="w-[200px] truncate text-sm text-muted-foreground">
+                  {profile?.email}
+                </p>
+              </div>
             </div>
-          </div>
-          <DropdownMenuSeparator />
-          
-          <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)}>
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </DropdownMenuItem>
-
-          {userRole === 'admin' && (
-            <DropdownMenuItem asChild>
-              <Link to={`/${orgSlug}/admin`} className="w-full">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Admin</span>
-              </Link>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem onClick={() => setIsProfileModalOpen(true)}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
             </DropdownMenuItem>
-          )}
 
-          <DropdownMenuSeparator />
-          
-          <DropdownMenuItem onClick={() => setTheme("light")}>
-            <Sun className="mr-2 h-4 w-4" />
-            <span>Light</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("dark")}>
-            <Moon className="mr-2 h-4 w-4" />
-            <span>Dark</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTheme("system")}>
-            <Settings className="mr-2 h-4 w-4" />
-            <span>System</span>
-          </DropdownMenuItem>
+            {userRole === 'admin' && (
+              <DropdownMenuItem asChild>
+                <Link to={`/${orgSlug}/admin`} className="w-full">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Admin</span>
+                </Link>
+              </DropdownMenuItem>
+            )}
 
-          <DropdownMenuSeparator />
-          
-          <DropdownMenuItem onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Sign out</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem onClick={() => setTheme("light")}>
+              <Sun className="mr-2 h-4 w-4" />
+              <span>Light</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("dark")}>
+              <Moon className="mr-2 h-4 w-4" />
+              <span>Dark</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setTheme("system")}>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>System</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+            
+            <DropdownMenuItem onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sign out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <ProfileModal 
         isOpen={isProfileModalOpen}

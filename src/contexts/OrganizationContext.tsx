@@ -22,6 +22,17 @@ interface OrganizationContextType {
   error: string | null;
   isUserInOrganization: boolean;
   userRole: string | null;
+  orgSlug: string | undefined;
+  hasOrganization: boolean;
+  hasMembership: boolean;
+  // Multi-org support
+  allUserMemberships: Array<{
+    organization_id: string;
+    role: string;
+    organization?: Organization;
+  }>;
+  hasAdminAccess: boolean;
+  canSwitchOrganizations: boolean;
 }
 
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
@@ -35,53 +46,35 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const { loading: authLoading } = useAuth();
   
   // Use React Query hooks for better caching and error handling
-  const { 
-    data: organization, 
-    isLoading: orgLoading, 
-    error: orgError,
-    isError: hasOrgError
-  } = useOrganizationBySlug(orgSlug);
+  const orgQuery = useOrganizationBySlug(orgSlug);
+  const membershipQuery = useUserMembership(orgQuery.data?.id);
 
-  const { 
-    data: membership, 
-    isLoading: membershipLoading,
-    error: membershipError
-  } = useUserMembership(organization?.id);
-
-  // Determine loading state - be more conservative about showing loading
-  const isLoading = useMemo(() => {
-    // Only show loading if we don't have cached data and we're actually loading
-    if (authLoading) return true;
-    if (orgSlug && orgLoading && !organization) return true;
-    if (organization?.id && membershipLoading && !membership) return true;
-    return false;
-  }, [authLoading, orgSlug, orgLoading, organization, membershipLoading, membership]);
-
-  // Determine error state
-  const error = useMemo(() => {
-    if (hasOrgError) {
-      return orgError?.message || 'Failed to load organization';
-    }
-    if (membershipError) {
-      return 'Failed to verify access to organization';
-    }
-    return null;
-  }, [hasOrgError, orgError, membershipError]);
-
-  // Memoize context value to prevent unnecessary re-renders
+  // Enhanced context value with multi-org support
   const contextValue = useMemo(() => ({
-    organization: organization || null,
-    isLoading,
-    error,
-    isUserInOrganization: membership?.isUserInOrganization || false,
-    userRole: membership?.role || null,
-  }), [organization, isLoading, error, membership]);
+    organization: orgQuery.data || null,
+    isLoading: orgQuery.isLoading || membershipQuery.isLoading,
+    error: orgQuery.error?.message || membershipQuery.error?.message || null,
+    isUserInOrganization: membershipQuery.data?.isUserInOrganization || false,
+    userRole: membershipQuery.data?.role || null,
+    orgSlug,
+    hasOrganization: !!orgQuery.data,
+    hasMembership: membershipQuery.data?.isUserInOrganization || false,
+    // Multi-org features
+    allUserMemberships: membershipQuery.data?.allMemberships || [],
+    hasAdminAccess: membershipQuery.data?.role === 'admin',
+    canSwitchOrganizations: (membershipQuery.data?.allMemberships?.length || 0) > 1,
+  }), [orgQuery.data, orgQuery.isLoading, orgQuery.error, membershipQuery.data, membershipQuery.isLoading, membershipQuery.error, orgSlug]);
 
   console.log('OrganizationProvider: Context value:', {
-    ...contextValue,
-    orgSlug,
-    hasOrganization: !!organization,
-    hasMembership: !!membership
+    organization: contextValue.organization?.name,
+    isLoading: contextValue.isLoading,
+    error: contextValue.error,
+    isUserInOrganization: contextValue.isUserInOrganization,
+    userRole: contextValue.userRole,
+    orgSlug: contextValue.orgSlug,
+    hasOrganization: contextValue.hasOrganization,
+    hasMembership: contextValue.hasMembership,
+    membershipCount: contextValue.allUserMemberships?.length || 0
   });
 
   return (

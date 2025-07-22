@@ -17,6 +17,11 @@ interface Organization {
 interface UserMembership {
   role: string;
   isUserInOrganization: boolean;
+  allMemberships: Array<{
+    organization_id: string;
+    role: string;
+    organization?: Organization;
+  }>;
 }
 
 export function useOrganizationBySlug(orgSlug: string | undefined) {
@@ -56,30 +61,72 @@ export function useUserMembership(organizationId: string | undefined) {
   return useQuery({
     queryKey: ['user-membership', organizationId, user?.id],
     queryFn: async (): Promise<UserMembership> => {
-      if (!organizationId || !user?.id) {
-        return { role: '', isUserInOrganization: false };
+      if (!user?.id) {
+        return { role: '', isUserInOrganization: false, allMemberships: [] };
       }
 
-      const { data: profile, error } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('organization_id', organizationId)
-        .single();
+      // Get all user memberships
+      const { data: allMemberships, error: allError } = await supabase
+        .from('user_organization_memberships')
+        .select(`
+          organization_id,
+          role,
+          organizations (
+            id,
+            name,
+            slug,
+            logo_url,
+            primary_color,
+            timezone,
+            tagline
+          )
+        `)
+        .eq('user_id', user.id);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return { role: '', isUserInOrganization: false };
-        }
-        throw new Error('Failed to check user membership');
+      if (allError) {
+        console.error('Failed to fetch user memberships:', allError);
+        return { role: '', isUserInOrganization: false, allMemberships: [] };
       }
 
+      // Format the memberships data
+      const formattedMemberships = (allMemberships || []).map(membership => ({
+        organization_id: membership.organization_id,
+        role: membership.role,
+        organization: membership.organizations ? {
+          id: membership.organizations.id,
+          name: membership.organizations.name,
+          slug: membership.organizations.slug,
+          logo_url: membership.organizations.logo_url,
+          primary_color: membership.organizations.primary_color,
+          timezone: membership.organizations.timezone,
+          tagline: membership.organizations.tagline,
+          created_at: '', // These aren't selected but needed for type compatibility
+          updated_at: ''
+        } : undefined
+      }));
+
+      // Find membership for specific organization if provided
+      if (organizationId) {
+        const specificMembership = formattedMemberships.find(
+          m => m.organization_id === organizationId
+        );
+        
+        return {
+          role: specificMembership?.role || '',
+          isUserInOrganization: !!specificMembership,
+          allMemberships: formattedMemberships,
+        };
+      }
+
+      // Return the first membership if no specific org requested
+      const firstMembership = formattedMemberships[0];
       return {
-        role: profile.role,
-        isUserInOrganization: true,
+        role: firstMembership?.role || '',
+        isUserInOrganization: formattedMemberships.length > 0,
+        allMemberships: formattedMemberships,
       };
     },
-    enabled: !!organizationId && !!user?.id && !authLoading,
+    enabled: !!user?.id && !authLoading,
     staleTime: 1000 * 60 * 2, // 2 minutes
     retry: 1,
   });
