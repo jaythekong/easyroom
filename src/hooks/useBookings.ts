@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { format, addDays, startOfWeek } from "date-fns";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Booking {
   id: string;
@@ -9,6 +10,7 @@ interface Booking {
   end_time: string;
   room_id: string;
   user_id: string;
+  organization_id: string;
   user_profiles: {
     email: string;
     display_name?: string;
@@ -17,9 +19,15 @@ interface Booking {
 }
 
 export function useBookings(selectedDate: Date) {
+  const { organization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['bookings', format(selectedDate, 'yyyy-MM-dd')],
+    queryKey: ['bookings', format(selectedDate, 'yyyy-MM-dd'), organization?.id],
     queryFn: async () => {
+      if (!organization?.id) {
+        return [];
+      }
+
       // Calculate the full week range around the selected date
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday
       const weekEnd = addDays(weekStart, 6); // Sunday
@@ -28,7 +36,7 @@ export function useBookings(selectedDate: Date) {
       const startDateTime = format(weekStart, 'yyyy-MM-dd') + 'T00:00:00.000Z';
       const endDateTime = format(addDays(weekEnd, 1), 'yyyy-MM-dd') + 'T00:00:00.000Z'; // Add 1 day to include all of Sunday
       
-      console.log(`Fetching bookings from ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')} for selected date:`, format(selectedDate, 'yyyy-MM-dd'));
+      console.log(`Fetching bookings from ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')} for org: ${organization.slug}`);
       console.log('Query range:', { startDateTime, endDateTime });
       
       const { data, error } = await supabase
@@ -41,6 +49,7 @@ export function useBookings(selectedDate: Date) {
             avatar_url
           )
         `)
+        .eq('organization_id', organization.id)
         .gte('start_time', startDateTime)
         .lt('start_time', endDateTime);
       
@@ -49,9 +58,10 @@ export function useBookings(selectedDate: Date) {
         throw error;
       }
       
-      console.log(`Found ${data?.length || 0} bookings in date range`);
+      console.log(`Found ${data?.length || 0} bookings in date range for org ${organization.slug}`);
       return data as Booking[];
     },
+    enabled: !!organization?.id,
     staleTime: 1000 * 30, // 30 seconds
     refetchOnWindowFocus: false,
   });
@@ -65,12 +75,19 @@ interface Downtime {
   end_time: string;
   room_id: string;
   downtime_type: string;
+  organization_id: string;
 }
 
 export function useDowntime(selectedDate: Date) {
+  const { organization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['downtime', format(selectedDate, 'yyyy-MM-dd')],
+    queryKey: ['downtime', format(selectedDate, 'yyyy-MM-dd'), organization?.id],
     queryFn: async () => {
+      if (!organization?.id) {
+        return [];
+      }
+
       // Calculate the full week range around the selected date  
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday
       const weekEnd = addDays(weekStart, 6); // Sunday
@@ -79,17 +96,19 @@ export function useDowntime(selectedDate: Date) {
       const startDateTime = format(weekStart, 'yyyy-MM-dd') + 'T00:00:00.000Z';
       const endDateTime = format(addDays(weekEnd, 1), 'yyyy-MM-dd') + 'T00:00:00.000Z'; // Add 1 day to include all of Sunday
       
-      console.log(`Fetching downtime from ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')} for selected date:`, format(selectedDate, 'yyyy-MM-dd'));
+      console.log(`Fetching downtime from ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')} for org: ${organization.slug}`);
       
       const { data, error } = await supabase
         .from('room_downtime' as any)
         .select('*')
+        .eq('organization_id', organization.id)
         .gte('start_time', startDateTime)
         .lt('start_time', endDateTime);
       
       if (error) throw error;
       return ((data || []) as unknown) as Downtime[];
     },
+    enabled: !!organization?.id,
     staleTime: 1000 * 60 * 2, // 2 minutes
     refetchOnWindowFocus: false,
   });

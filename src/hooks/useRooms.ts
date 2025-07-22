@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Room {
   id: string;
@@ -12,20 +13,29 @@ interface Room {
   photo_url: string;
   status: 'active' | 'inactive';
   created_at: string;
+  organization_id: string;
 }
 
 export function useRooms() {
+  const { organization } = useOrganization();
+  
   return useQuery({
-    queryKey: ['rooms'],
+    queryKey: ['rooms', organization?.id],
     queryFn: async () => {
+      if (!organization?.id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("rooms")
         .select("*")
+        .eq("organization_id", organization.id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as Room[];
     },
+    enabled: !!organization?.id,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 }
