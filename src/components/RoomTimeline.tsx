@@ -12,6 +12,7 @@ import { BookingDetailsModal } from "@/components/BookingDetailsModal";
 import { useBookings, useDowntime } from "@/hooks/useBookings";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TimeSlot {
   time: string;
@@ -89,6 +90,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   refreshTrigger 
 }: RoomTimelineProps) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [selectedBookingRoom, setSelectedBookingRoom] = useState<any>(null);
@@ -347,6 +349,50 @@ const RoomTimelineComponent = memo(function RoomTimeline({
 
   return (
     <div className="space-y-6">
+      {/* Calendar Controls */}
+      <div className={cn(
+        "flex justify-between items-center",
+        isMobile ? "flex-col gap-4" : "flex-row"
+      )}>
+        <div className="flex items-center gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn(
+                "gap-2",
+                isMobile ? "w-full justify-start" : ""
+              )}>
+                <Calendar className="h-4 w-4" />
+                {format(selectedDate, 'PPP')}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className={cn(
+                "w-auto p-0", 
+                isMobile && "w-[95vw] max-w-sm"
+              )} 
+              align="start"
+            >
+              <CalendarComponent
+                mode="single"
+                selected={selectedDate}
+                onSelect={(date) => date && handleDateSelect(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
+            <ArrowLeft className="h-4 w-4" />
+            {!isMobile && <span className="ml-2">Previous Week</span>}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
+            {!isMobile && <span className="mr-2">Next Week</span>}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {/* Timeline Grid */}
       <div className="space-y-4">
@@ -419,19 +465,25 @@ const RoomTimelineComponent = memo(function RoomTimeline({
               {expandedRooms.has(room.id) && (
                 <CardContent className="pt-0">
                   <ScrollArea className="w-full">
-                    <div className="min-w-[800px]">
+                    <div className={cn(
+                      isMobile ? "min-w-[100%]" : "min-w-[800px]"
+                    )}>
                       {/* Day Headers */}
-                      <div className="grid grid-cols-8 gap-1 mb-2">
+                      <div className={cn(
+                        "gap-1 mb-2",
+                        isMobile ? "grid grid-cols-4" : "grid grid-cols-8"
+                      )}>
                         <div className="p-2 text-sm font-medium">Time</div>
-                        {room.weekDays.map((day) => (
+                        {(isMobile ? room.weekDays.slice(0, 3) : room.weekDays).map((day) => (
                           <div
                             key={format(day, 'yyyy-MM-dd')}
                             className={cn(
-                              "p-2 text-center text-sm font-medium",
+                              "p-2 text-center font-medium",
+                              isMobile ? "text-xs" : "text-sm",
                               isSameDay(day, currentTime) && "bg-primary/10 rounded"
                             )}
                           >
-                            <div>{format(day, 'EEE')}</div>
+                            <div>{format(day, isMobile ? 'EEE' : 'EEE')}</div>
                             <div className="text-xs text-muted-foreground">
                               {format(day, 'MMM d')}
                             </div>
@@ -443,7 +495,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                       <div className="space-y-1">
                         {timeSlots.map(({ time }) => {
                           // Get the slots for this time across all days of the week for this room
-                          const daySlots = room.weekDays.map(day => {
+                          const daySlots = (isMobile ? room.weekDays.slice(0, 3) : room.weekDays).map(day => {
                             const dateStr = format(day, 'yyyy-MM-dd');
                             return room.timeSlots.find(
                               slot => slot.time === time && slot.date === dateStr
@@ -451,22 +503,29 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                           });
 
                           return (
-                            <div key={time} className="grid grid-cols-8 gap-1">
+                            <div key={time} className={cn(
+                              "gap-1",
+                              isMobile ? "grid grid-cols-4" : "grid grid-cols-8"
+                            )}>
                               {/* Time label */}
-                              <div className="p-2 text-xs font-mono text-muted-foreground bg-muted/30 rounded">
+                              <div className={cn(
+                                "p-2 font-mono text-muted-foreground bg-muted/30 rounded",
+                                isMobile ? "text-xs" : "text-xs"
+                              )}>
                                 {time}
                               </div>
                               
                               {/* Slots for each day */}
                               {daySlots.map((slot, dayIndex) => {
-                                const day = room.weekDays[dayIndex];
+                                const day = (isMobile ? room.weekDays.slice(0, 3) : room.weekDays)[dayIndex];
                                 const isCurrent = isCurrentTime(day, time);
                                 
                                 return (
                                   <div
                                     key={`${format(day, 'yyyy-MM-dd')}-${time}`}
                                     className={cn(
-                                      "min-h-[50px] border rounded p-2 text-xs cursor-pointer transition-all hover:shadow-md relative",
+                                      "border rounded p-2 cursor-pointer transition-all hover:shadow-md relative",
+                                      isMobile ? "min-h-[60px] text-xs" : "min-h-[50px] text-xs",
                                       slot?.available 
                                         ? "bg-success/10 border-success/20 hover:bg-success/20" 
                                         : slot?.isDowntime
@@ -487,8 +546,11 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                   >
                                     {slot?.meeting && (
                                       <div className="flex flex-col gap-1">
-                                        <div className="font-medium text-foreground text-xs leading-tight">
-                                          {slot.meeting}
+                                        <div className={cn(
+                                          "font-medium text-foreground leading-tight",
+                                          isMobile ? "text-xs" : "text-xs"
+                                        )}>
+                                          {isMobile ? slot.meeting.substring(0, 10) + (slot.meeting.length > 10 ? '...' : '') : slot.meeting}
                                         </div>
                                         {(slot.bookerAvatar || slot.bookerDisplayName || slot.bookedBy) && (
                                           <div className="flex items-center gap-1.5 mt-1">
@@ -496,24 +558,38 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                                               <img 
                                                 src={slot.bookerAvatar} 
                                                 alt="Booker avatar" 
-                                                className="w-4 h-4 rounded-full object-cover border border-white/20"
+                                                className={cn(
+                                                  "rounded-full object-cover border border-white/20",
+                                                  isMobile ? "w-5 h-5" : "w-4 h-4"
+                                                )}
                                               />
                                             ) : (
-                                              <div className="w-4 h-4 rounded-full bg-primary/40 flex items-center justify-center border border-white/20">
-                                                <span className="text-[9px] font-medium text-primary">
+                                              <div className={cn(
+                                                "rounded-full bg-primary/40 flex items-center justify-center border border-white/20",
+                                                isMobile ? "w-5 h-5" : "w-4 h-4"
+                                              )}>
+                                                <span className={cn(
+                                                  "font-medium text-primary",
+                                                  isMobile ? "text-xs" : "text-[9px]"
+                                                )}>
                                                   {(slot.bookerDisplayName || slot.bookedBy)?.charAt(0).toUpperCase()}
                                                 </span>
                                               </div>
                                             )}
-                                            <span className="text-[9px] text-muted-foreground truncate leading-tight max-w-[60px]">
-                                              {slot.bookerDisplayName || slot.bookedBy}
-                                            </span>
+                                            {!isMobile && (
+                                              <span className="text-[9px] text-muted-foreground truncate leading-tight max-w-[60px]">
+                                                {slot.bookerDisplayName || slot.bookedBy}
+                                              </span>
+                                            )}
                                           </div>
                                         )}
                                       </div>
                                     )}
                                     {slot?.available && (
-                                      <div className="text-success font-medium text-xs">Available</div>
+                                      <div className={cn(
+                                        "text-success font-medium",
+                                        isMobile ? "text-xs" : "text-xs"
+                                      )}>Available</div>
                                     )}
                                   </div>
                                 );
