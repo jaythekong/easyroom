@@ -16,6 +16,15 @@ interface Organization {
   id: string;
   name: string;
   telegram_bot_token?: string;
+  welcome_message?: string;
+}
+
+interface TelegramSubscriber {
+  id: string;
+  telegram_chat_id: string;
+  telegram_username?: string;
+  created_at: string;
+  user_id?: string;
 }
 
 export function TelegramNotifications() {
@@ -25,8 +34,12 @@ export function TelegramNotifications() {
   const [isLoading, setIsLoading] = useState(false);
   const [telegramBotToken, setTelegramBotToken] = useState("");
   const [originalTelegramBotToken, setOriginalTelegramBotToken] = useState("");
+  const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [originalWelcomeMessage, setOriginalWelcomeMessage] = useState("");
   const [isTestingBot, setIsTestingBot] = useState(false);
   const [botInfo, setBotInfo] = useState<{username?: string, first_name?: string} | null>(null);
+  const [subscribers, setSubscribers] = useState<TelegramSubscriber[]>([]);
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
 
   useEffect(() => {
     fetchOrganization();
@@ -57,11 +70,66 @@ export function TelegramNotifications() {
       setOrganization(org);
       setTelegramBotToken(org.telegram_bot_token || "");
       setOriginalTelegramBotToken(org.telegram_bot_token || "");
+      setWelcomeMessage(org.welcome_message || "Welcome! You have successfully subscribed to booking notifications. You will receive updates when bookings are made, modified, or cancelled.");
+      setOriginalWelcomeMessage(org.welcome_message || "Welcome! You have successfully subscribed to booking notifications. You will receive updates when bookings are made, modified, or cancelled.");
+
+      // Fetch subscribers
+      if (org.telegram_bot_token) {
+        fetchSubscribers(profile.organization_id);
+      }
     } catch (error) {
       console.error('Error fetching organization:', error);
       toast({
         title: "Error",
         description: "Failed to load organization settings",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchSubscribers = async (organizationId: string) => {
+    setIsLoadingSubscribers(true);
+    try {
+      const { data, error } = await supabase
+        .from('telegram_subscriptions')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setSubscribers(data || []);
+    } catch (error) {
+      console.error('Error fetching subscribers:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load subscribers",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingSubscribers(false);
+    }
+  };
+
+  const deleteSubscriber = async (subscriberId: string) => {
+    try {
+      const { error } = await supabase
+        .from('telegram_subscriptions')
+        .delete()
+        .eq('id', subscriberId);
+
+      if (error) throw error;
+
+      setSubscribers(prev => prev.filter(s => s.id !== subscriberId));
+      toast({
+        title: "Success",
+        description: "Subscriber removed successfully",
+      });
+    } catch (error: any) {
+      console.error('Error deleting subscriber:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to remove subscriber",
         variant: "destructive",
       });
     }
@@ -126,12 +194,14 @@ export function TelegramNotifications() {
         .from('organizations')
         .update({
           telegram_bot_token: telegramBotToken || null,
+          welcome_message: welcomeMessage,
         })
         .eq('id', organization.id);
 
       if (error) throw error;
 
       setOriginalTelegramBotToken(telegramBotToken);
+      setOriginalWelcomeMessage(welcomeMessage);
       toast({
         title: "Settings saved",
         description: "Telegram notifications settings have been updated successfully",
@@ -161,7 +231,7 @@ export function TelegramNotifications() {
     );
   }
 
-  const hasChanges = telegramBotToken !== originalTelegramBotToken;
+  const hasChanges = telegramBotToken !== originalTelegramBotToken || welcomeMessage !== originalWelcomeMessage;
 
   return (
     <div className="space-y-6">
@@ -243,21 +313,131 @@ export function TelegramNotifications() {
         </CardContent>
       </Card>
 
+      {/* Welcome Message Configuration */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Welcome Message
+          </CardTitle>
+          <CardDescription>
+            Configure the message users receive when they first subscribe to your bot
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <Label htmlFor="welcomeMessage">Welcome Message</Label>
+            <Textarea
+              id="welcomeMessage"
+              value={welcomeMessage}
+              onChange={(e) => setWelcomeMessage(e.target.value)}
+              placeholder="Enter the welcome message for new subscribers..."
+              className="min-h-[100px]"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              This message will be sent when users send /start to your bot
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Subscriber Management */}
       <Card>
         <CardHeader>
-          <CardTitle>Subscriber Management</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Subscriber Management
+          </CardTitle>
           <CardDescription>
             View and manage users who have subscribed to your Telegram notifications
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8">
-            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              Subscriber management features coming soon...
-            </p>
-          </div>
+          {isLoadingSubscribers ? (
+            <div className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+              <p className="text-muted-foreground">Loading subscribers...</p>
+            </div>
+          ) : subscribers.length === 0 ? (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                No subscribers yet. Share your bot with team members to get started!
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {subscribers.length} subscriber{subscribers.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Username</TableHead>
+                    <TableHead>Chat ID</TableHead>
+                    <TableHead>Subscribed</TableHead>
+                    <TableHead className="w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscribers.map((subscriber) => (
+                    <TableRow key={subscriber.id}>
+                      <TableCell>
+                        {subscriber.telegram_username ? (
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary">
+                              @{subscriber.telegram_username}
+                            </Badge>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Anonymous</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {subscriber.telegram_chat_id}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(subscriber.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Remove Subscriber</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to remove this subscriber? They will no longer receive notifications.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteSubscriber(subscriber.id)}
+                              >
+                                Remove
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

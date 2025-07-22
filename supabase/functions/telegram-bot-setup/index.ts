@@ -157,7 +157,7 @@ async function handleTelegramWebhook(req: Request, parsedBody?: any): Promise<Re
     // Get organization details
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
-      .select('name, telegram_bot_token')
+      .select('name, telegram_bot_token, welcome_message')
       .eq('id', organizationId)
       .single();
 
@@ -192,7 +192,7 @@ async function handleTelegramWebhook(req: Request, parsedBody?: any): Promise<Re
         }
       }
 
-      const welcomeMessage = `🎉 Welcome to ${organization.name}!
+      const welcomeMessage = organization.welcome_message || `🎉 Welcome to ${organization.name}!
 
 You're now subscribed to receive room booking notifications. 
 
