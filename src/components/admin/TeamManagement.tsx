@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound } from "lucide-react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -311,6 +311,51 @@ export function TeamManagement() {
     }
   };
 
+  const deleteUser = async (userId: string, email: string) => {
+    if (!confirm(`Are you sure you want to delete ${email}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      // Delete user profile first (this will fail if there are bookings)
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', userId);
+
+      if (profileError) {
+        if (profileError.message.includes('violates foreign key constraint')) {
+          toast({
+            title: "Cannot delete user",
+            description: "This user has existing bookings. Cancel their bookings first before deleting the account.",
+            variant: "destructive",
+          });
+        } else {
+          throw profileError;
+        }
+        return;
+      }
+
+      // Delete from auth.users using admin API
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+
+      if (authError) throw authError;
+
+      toast({
+        title: "User deleted",
+        description: `${email} has been successfully removed`,
+      });
+      
+      fetchTeamData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Team Members */}
@@ -448,8 +493,15 @@ export function TeamManagement() {
                       >
                         <KeyRound className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" disabled>
-                        <UserCheck className="h-4 w-4" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteUser(member.user_id, member.email || '')}
+                        className="text-destructive hover:text-destructive"
+                        title="Delete user account"
+                        disabled={member.user_id === user?.id}
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
