@@ -179,23 +179,56 @@ const Auth = () => {
       
       authRateLimiter.recordAttempt(rateLimitKey);
       
-      // First, create the user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // STEP 1: Check if user already exists
+      const { data: existingUser, error: checkError } = await supabase.auth.signInWithPassword({
         email: sanitizedEmail,
         password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/${sanitizedSlug}`
-        }
       });
-
-      if (authError) {
-        logger.security('Organization signup failed', { error: authError.message, email: sanitizedEmail });
-        if (authError.message.includes("already registered")) {
-          toast.error("This email is already registered. Please sign in instead.");
-        } else {
-          toast.error(authError.message);
+      
+      // If login successful, user exists with matching password
+      let authData;
+      
+      if (existingUser?.user) {
+        // User exists and password matches
+        logger.debug('User already exists and password matches, proceeding with org creation');
+        authData = existingUser;
+      } else {
+        // User doesn't exist OR password doesn't match
+        if (checkError && !checkError.message.includes("Invalid login credentials")) {
+          // Some other error occurred
+          logger.error('Error checking existing user:', checkError);
+          toast.error("An error occurred. Please try again.");
+          return;
         }
-        return;
+        
+        // If login failed due to invalid credentials, check if email exists
+        const { data: emailCheck } = await supabase.auth.signInWithOtp({
+          email: sanitizedEmail,
+          options: { shouldCreateUser: false }
+        });
+        
+        if (emailCheck?.user) {
+          // Email exists but password doesn't match
+          toast.error("This email is already registered with a different password. Please use the correct password or reset it.");
+          return;
+        }
+        
+        // Email doesn't exist, create new user
+        const { data: newUser, error: authError } = await supabase.auth.signUp({
+          email: sanitizedEmail,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/${sanitizedSlug}`
+          }
+        });
+        
+        if (authError) {
+          logger.security('Organization signup failed', { error: authError.message, email: sanitizedEmail });
+          toast.error(authError.message);
+          return;
+        }
+        
+        authData = newUser;
       }
 
       if (authData.user) {
