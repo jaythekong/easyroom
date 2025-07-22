@@ -55,27 +55,6 @@ const LandingPage = () => {
             <p className="text-xl text-muted-foreground">Each organization gets its own private workspace, with fully isolated data, branding, and permissions</p>
           </div>
           
-          {/* Super Admin Feature */}
-          <div className="bg-background p-8 rounded-2xl shadow-sm mb-16 max-w-4xl mx-auto">
-            <div className="flex items-center gap-4 mb-6">
-              <BarChart3 className="h-16 w-16 text-primary" />
-              <div>
-                <h3 className="text-2xl font-bold mb-2">🚀 Super Admin Dashboard (New)</h3>
-                <p className="text-muted-foreground">Get a bird's-eye view of every organization on the platform</p>
-              </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6 text-sm">
-              <div className="space-y-2">
-                <p>• Track usage across tenants</p>
-                <p>• Manage organizations, users, and rooms</p>
-                <p>• View platform-wide analytics</p>
-              </div>
-              <div className="space-y-2">
-                <p>• Impersonate org admins for fast support</p>
-                <p>• Set limits and feature access per org</p>
-              </div>
-            </div>
-          </div>
 
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold mb-4">🧩 Core Features</h3>
