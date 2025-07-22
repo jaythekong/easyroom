@@ -291,8 +291,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
-    // Skip by 3 days on mobile (showing 3 days), 7 days on desktop (showing 7 days)
-    const daysToSkip = isMobile ? 3 : 7;
+    // Move by 1 day on mobile (small screen), 7 days on desktop (showing full week)
+    const daysToSkip = isMobile ? 1 : 7;
     const newDate = direction === 'prev' 
       ? subDays(selectedDate, daysToSkip)
       : addDays(selectedDate, daysToSkip);
