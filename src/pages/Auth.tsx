@@ -456,13 +456,29 @@ const Auth = () => {
     }
 
     try {
+      // Check if we have a valid session first
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        logger.security('Password update failed - no valid session', { error: sessionError?.message });
+        toast.error("Session expired. Please request a new password reset link.");
+        setShowUpdatePassword(false);
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
       if (error) {
         logger.security('Password update failed', { error: error.message });
-        toast.error(error.message);
+        if (error.message.includes("Auth session missing")) {
+          toast.error("Session expired. Please request a new password reset link.");
+          setShowUpdatePassword(false);
+        } else {
+          toast.error(error.message);
+        }
       } else {
         logger.security('Password updated successfully');
         toast.success("Password updated successfully!");
