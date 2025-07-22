@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { useBookings } from "@/hooks/useBookings";
+import { useRooms } from "@/hooks/useRooms";
 
 interface Room {
   id: string;
@@ -26,6 +27,7 @@ interface Room {
   description?: string;
   photo_url?: string;
   status: 'active' | 'inactive';
+  organization_id: string;
   amenities?: string[];
 }
 
@@ -41,7 +43,10 @@ export default function Dashboard() {
   const { organization, userRole } = useOrganization();
   useOrganizationTheme(); // Apply organization theme
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const [rooms, setRooms] = useState<Room[]>([]);
+  
+  // Use the organization-aware hook for rooms
+  const { data: rooms = [], isLoading: roomsLoading, error: roomsError } = useRooms();
+  
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [filteredRooms, setFilteredRooms] = useState<Room[]>([]);
@@ -50,7 +55,6 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
-  const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -58,47 +62,27 @@ export default function Dashboard() {
   // Memoize user ID to prevent unnecessary re-fetches
   const userId = useMemo(() => user?.id, [user?.id]);
 
+  // Update filteredRooms when rooms change
+  useEffect(() => {
+    setFilteredRooms(rooms);
+  }, [rooms]);
+
   useEffect(() => {
     if (userId) {
-      fetchRooms();
       fetchUserProfile();
     }
   }, [userId]);
 
-  const fetchRooms = useCallback(async () => {
-    try {
-      const { data: roomsData, error: roomsError } = await supabase
-        .from("rooms")
-        .select(`
-          *,
-          room_amenities (
-            amenities (
-              name
-            )
-          )
-        `)
-        .eq("status", "active");
-
-      if (roomsError) throw roomsError;
-
-      const formattedRooms = roomsData?.map(room => ({
-        ...room,
-        amenities: room.room_amenities?.map(ra => ra.amenities.name) || []
-      })) || [];
-
-      setRooms(formattedRooms);
-      setFilteredRooms(formattedRooms);
-    } catch (error) {
-      console.error("Error fetching rooms:", error);
+  // Show error toast if rooms fail to load
+  useEffect(() => {
+    if (roomsError) {
       toast({
         title: "Error",
         description: "Failed to fetch rooms",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
-  }, [toast]);
+  }, [roomsError, toast]);
 
   // Fetch user's bookings for this week
   const { data: userBookings = [] } = useBookings(new Date());
@@ -391,7 +375,7 @@ export default function Dashboard() {
           </TabsList>
 
           <TabsContent value="timeline" className="space-y-6">
-            {loading ? (
+            {roomsLoading ? (
               <LoadingSkeleton type="timeline" count={3} />
             ) : (
               <RoomTimeline
@@ -434,7 +418,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {loading ? (
+            {roomsLoading ? (
               <LoadingSkeleton type="room-cards" count={6} />
             ) : filteredRooms.length === 0 ? (
               <div className="text-center py-12">

@@ -14,6 +14,7 @@ interface Room {
   status: 'active' | 'inactive';
   created_at: string;
   organization_id: string;
+  amenities?: string[];
 }
 
 export function useRooms() {
@@ -28,12 +29,27 @@ export function useRooms() {
 
       const { data, error } = await supabase
         .from("rooms")
-        .select("*")
+        .select(`
+          *,
+          room_amenities (
+            amenities (
+              name
+            )
+          )
+        `)
         .eq("organization_id", organization.id)
+        .eq("status", "active")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data as Room[];
+      
+      // Format rooms with amenities
+      const formattedRooms = (data || []).map(room => ({
+        ...room,
+        amenities: room.room_amenities?.map((ra: any) => ra.amenities.name) || []
+      }));
+      
+      return formattedRooms as Room[];
     },
     enabled: !!organization?.id,
     staleTime: 1000 * 60 * 5, // 5 minutes
