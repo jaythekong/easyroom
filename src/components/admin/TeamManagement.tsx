@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2 } from "lucide-react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -263,6 +263,36 @@ export function TeamManagement() {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    if (!email || email === 'no-email@company.com') {
+      toast({
+        title: "Cannot reset password",
+        description: "This user doesn't have a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password reset sent",
+        description: `Password reset instructions sent to ${email}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send password reset",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Team Members */}
@@ -390,9 +420,20 @@ export function TeamManagement() {
                     {new Date(member.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" disabled>
-                      <UserCheck className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => resetPassword(member.email || '')}
+                        disabled={!member.email || member.email === 'no-email@company.com'}
+                        title="Reset password"
+                      >
+                        <KeyRound className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" disabled>
+                        <UserCheck className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
