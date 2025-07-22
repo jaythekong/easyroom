@@ -206,17 +206,21 @@ const Auth = () => {
           return;
         }
         
-        // If login failed due to invalid credentials, check if email exists
-        const { data: emailCheck } = await supabase.auth.signInWithOtp({
-          email: sanitizedEmail,
-          options: { shouldCreateUser: false }
-        });
-        
-        if (emailCheck?.user) {
-          // Email exists but password doesn't match - STOP PROCESS
-          toast.error("This email is already registered with a different password. Please use the correct password or reset it.");
-          setLoading(false);
-          return;
+        // If login failed, check if it's because email exists with different password
+        if (checkError?.message.includes("Invalid login credentials")) {
+          // Try to check if email exists by attempting signup (this will fail if email exists)
+          const { data: signupCheck, error: signupError } = await supabase.auth.signUp({
+            email: sanitizedEmail,
+            password: 'dummy-password-for-check', // We don't care about this password
+            options: { emailRedirectTo: `${window.location.origin}` }
+          });
+          
+          // If signup fails because user already registered, it means email exists
+          if (signupError?.message.includes("User already registered")) {
+            toast.error("This email is already registered with a different password. Please use the correct password or try logging in instead.");
+            setLoading(false);
+            return;
+          }
         }
         
         // Email doesn't exist, create new user
