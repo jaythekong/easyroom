@@ -47,12 +47,15 @@ const Auth = () => {
   }, [organizationName, orgSlug]);
 
   useEffect(() => {
-    // Check if user is already logged in
+    // Only redirect if user is already logged in AND we're in an organization context
+    // For /auth (new org signup), allow logged in users to create new orgs
+    if (!orgSlug) return; // Don't redirect on /auth - allow new org creation
+    
     const checkUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          const redirectTo = searchParams.get('redirectTo') || '/';
+          const redirectTo = searchParams.get('redirectTo') || `/${orgSlug}`;
           console.log('Auth: User already logged in, redirecting to:', redirectTo);
           navigate(redirectTo);
         }
@@ -61,7 +64,7 @@ const Auth = () => {
       }
     };
     checkUser();
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, orgSlug]);
 
   const handleOrganizationSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
