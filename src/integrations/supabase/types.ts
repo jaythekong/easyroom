@@ -168,7 +168,6 @@ export type Database = {
           slug: string
           tagline: string | null
           telegram_bot_token: string | null
-          telegram_chat_id: string | null
           timezone: string | null
           updated_at: string
         }
@@ -181,7 +180,6 @@ export type Database = {
           slug: string
           tagline?: string | null
           telegram_bot_token?: string | null
-          telegram_chat_id?: string | null
           timezone?: string | null
           updated_at?: string
         }
@@ -194,7 +192,6 @@ export type Database = {
           slug?: string
           tagline?: string | null
           telegram_bot_token?: string | null
-          telegram_chat_id?: string | null
           timezone?: string | null
           updated_at?: string
         }
@@ -324,6 +321,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      telegram_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          telegram_chat_id: string
+          telegram_username: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          telegram_chat_id: string
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          telegram_chat_id?: string
+          telegram_username?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_profiles: {
         Row: {

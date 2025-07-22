@@ -12,6 +12,14 @@ interface TelegramNotificationRequest {
   action: 'created' | 'updated' | 'cancelled';
 }
 
+interface TelegramUpdate {
+  message?: {
+    chat: { id: number, username?: string };
+    from: { id: number, username?: string };
+    text: string;
+  };
+}
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -19,6 +27,14 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const url = new URL(req.url);
+    
+    // Handle webhook setup for bot commands
+    if (req.method === 'POST' && url.pathname.includes('/webhook')) {
+      return await handleTelegramWebhook(req);
+    }
+
+    // Handle notification sending
     const { bookingId, organizationId, action }: TelegramNotificationRequest = await req.json();
 
     console.log(`Processing Telegram notification for booking ${bookingId}, action: ${action}`);
@@ -32,7 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Get organization's Telegram settings
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
-      .select('name, telegram_bot_token, telegram_chat_id')
+      .select('name, telegram_bot_token')
       .eq('id', organizationId)
       .single();
 
@@ -41,10 +57,31 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Failed to fetch organization');
     }
 
-    if (!organization.telegram_bot_token || !organization.telegram_chat_id) {
-      console.log('No Telegram configuration found for organization');
+    if (!organization.telegram_bot_token) {
+      console.log('No Telegram bot token found for organization');
       return new Response(JSON.stringify({ 
-        message: 'No Telegram configuration found' 
+        message: 'No Telegram bot token configured' 
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    // Get all subscribers for this organization
+    const { data: subscriptions, error: subsError } = await supabase
+      .from('telegram_subscriptions')
+      .select('telegram_chat_id')
+      .eq('organization_id', organizationId);
+
+    if (subsError) {
+      console.error('Error fetching subscriptions:', subsError);
+      throw new Error('Failed to fetch subscriptions');
+    }
+
+    if (!subscriptions || subscriptions.length === 0) {
+      console.log('No Telegram subscriptions found for organization');
+      return new Response(JSON.stringify({ 
+        message: 'No Telegram subscriptions found' 
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -116,33 +153,31 @@ ${booking.description ? `📝 *Notes:* ${booking.description}` : ''}
 
 _${organization.name}_`;
 
-    // Send message to Telegram
+    // Send message to all subscribers
     const telegramUrl = `https://api.telegram.org/bot${organization.telegram_bot_token}/sendMessage`;
     
-    const telegramResponse = await fetch(telegramUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        chat_id: organization.telegram_chat_id,
-        text: telegramMessage,
-        parse_mode: 'Markdown',
-      }),
-    });
+    const sendPromises = subscriptions.map(subscription => 
+      fetch(telegramUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: subscription.telegram_chat_id,
+          text: telegramMessage,
+          parse_mode: 'Markdown',
+        }),
+      })
+    );
 
-    const telegramResult = await telegramResponse.json();
-
-    if (!telegramResponse.ok) {
-      console.error('Telegram API error:', telegramResult);
-      throw new Error(`Telegram API error: ${telegramResult.description || 'Unknown error'}`);
-    }
-
-    console.log('Telegram notification sent successfully');
+    const results = await Promise.allSettled(sendPromises);
+    const successCount = results.filter(r => r.status === 'fulfilled').length;
+    
+    console.log(`Telegram notifications sent: ${successCount}/${subscriptions.length}`);
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Telegram notification sent successfully',
+      message: `Telegram notifications sent to ${successCount} subscribers`,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -158,5 +193,60 @@ _${organization.name}_`;
     });
   }
 };
+
+async function handleTelegramWebhook(req: Request): Promise<Response> {
+  try {
+    const update: TelegramUpdate = await req.json();
+    
+    if (!update.message?.text) {
+      return new Response('OK', { status: 200 });
+    }
+
+    const chatId = update.message.chat.id;
+    const username = update.message.from?.username || update.message.chat.username;
+    const text = update.message.text.trim();
+
+    console.log(`Received Telegram message from ${username}: ${text}`);
+
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    );
+
+    if (text === '/start') {
+      // For now, we'll need to determine which organization this bot belongs to
+      // This could be improved by having organization-specific bot tokens
+      
+      const responseText = `Welcome! 🎉
+
+To receive booking notifications, an admin needs to configure this bot for your organization.
+
+Commands:
+/start - Show this welcome message
+/stop - Unsubscribe from notifications
+/status - Check subscription status`;
+
+      const telegramUrl = `https://api.telegram.org/bot${Deno.env.get('TELEGRAM_BOT_TOKEN')}/sendMessage`;
+      
+      await fetch(telegramUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: responseText,
+        }),
+      });
+    }
+
+    return new Response('OK', { status: 200 });
+
+  } catch (error: any) {
+    console.error('Error handling Telegram webhook:', error);
+    return new Response('OK', { status: 200 });
+  }
+}
 
 serve(handler);
