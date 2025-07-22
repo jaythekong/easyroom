@@ -59,15 +59,15 @@ export function OrganizationClock() {
   const timezone = organization?.timezone || 'America/New_York';
 
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <div className="p-2 bg-primary/10 rounded-lg">
-        <Clock className="h-4 w-4 text-primary" />
+    <div className="flex items-center gap-2 text-sm">
+      <div className="p-1.5 bg-primary/10 rounded-lg">
+        <Clock className="h-3 w-3 text-primary" />
       </div>
       <div className="text-right">
-        <div className="font-mono text-lg font-semibold text-foreground">
+        <div className="font-mono text-sm font-semibold text-foreground">
           {formatTime(currentTime, timezone)}
         </div>
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground leading-none">
           {formatDate(currentTime, timezone)} • {getTimezoneAbbreviation(timezone)}
         </div>
       </div>

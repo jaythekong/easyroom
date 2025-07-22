@@ -256,23 +256,25 @@ export default function Dashboard() {
       {/* Enhanced Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <div>
+          <div className="flex items-center justify-between h-16 gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex-shrink-0">
                 {organization?.logo_url ? (
-                  <img src={organization.logo_url} alt={organization.name} className="h-16 w-16 object-contain" />
+                  <img src={organization.logo_url} alt={organization.name} className="h-8 w-8 sm:h-12 sm:w-12 object-contain" />
                 ) : (
-                  <Building className="h-16 w-16 text-primary" />
+                  <Building className="h-8 w-8 sm:h-12 sm:w-12 text-primary" />
                 )}
               </div>
-              <div>
-                <h1 className="text-xl font-bold gradient-text">{organization?.name || "Room Booking"}</h1>
-                <p className="text-sm text-muted-foreground">{organization?.tagline || "Find and book your perfect meeting space"}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm sm:text-xl font-bold gradient-text truncate">{organization?.name || "Room Booking"}</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate hidden sm:block">{organization?.tagline || "Find and book your perfect meeting space"}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
-              <OrganizationClock />
+            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+              <div className="hidden md:block">
+                <OrganizationClock />
+              </div>
               <Button variant="outline" size="sm" className="hidden sm:flex" asChild>
                 <Link to={`/${orgSlug}/my-bookings`}>
                   <Calendar className="h-4 w-4 mr-2" />
@@ -356,18 +358,21 @@ export default function Dashboard() {
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="timeline" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:w-auto lg:grid-cols-3">
-            <TabsTrigger value="timeline" className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4" />
-              Timeline View
+          <TabsList className="grid w-full grid-cols-3 sm:w-auto">
+            <TabsTrigger value="timeline" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <CalendarDays className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Timeline View</span>
+              <span className="sm:hidden">Timeline</span>
             </TabsTrigger>
-            <TabsTrigger value="grid" className="flex items-center gap-2">
-              <Grid3X3 className="h-4 w-4" />
-              Grid View
+            <TabsTrigger value="grid" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Grid View</span>
+              <span className="sm:hidden">Grid</span>
             </TabsTrigger>
-            <TabsTrigger value="filters" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Filters
+            <TabsTrigger value="filters" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+              <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Filters</span>
+              <span className="sm:hidden">Filters</span>
             </TabsTrigger>
           </TabsList>
 

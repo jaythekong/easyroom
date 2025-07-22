@@ -391,11 +391,17 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
+                  <div className={cn(
+                    "flex items-center gap-1",
+                    isMobile ? "flex-col gap-2" : "flex-row gap-2"
+                  )}>
                     {/* Day Selection */}
                     <Popover>
                       <PopoverTrigger asChild>
-                        <Button variant="outline" size="sm" className="gap-2">
+                        <Button variant="outline" size="sm" className={cn(
+                          "gap-2",
+                          isMobile ? "w-full" : ""
+                        )}>
                           <Calendar className="h-4 w-4" />
                           {isMobile ? format(selectedDate, 'MMM d') : format(selectedDate, 'PPP')}
                         </Button>
@@ -417,14 +423,16 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                     </Popover>
                     
                     {/* Week Navigation */}
-                    <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
-                      <ArrowLeft className="h-4 w-4" />
-                      {!isMobile && <span className="ml-2">Previous Week</span>}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
-                      {!isMobile && <span className="mr-2">Next Week</span>}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
+                        <ArrowLeft className="h-4 w-4" />
+                        {!isMobile && <span className="ml-2">Previous Week</span>}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
+                        {!isMobile && <span className="mr-2">Next Week</span>}
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardHeader>
