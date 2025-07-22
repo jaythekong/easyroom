@@ -442,6 +442,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_admin_org_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       get_user_memberships: {
         Args: { p_user_id: string }
         Returns: {
