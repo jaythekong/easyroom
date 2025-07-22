@@ -468,12 +468,9 @@ const RoomTimelineComponent = memo(function RoomTimeline({
 
               {expandedRooms.has(room.id) && (
                 <CardContent className="pt-0">
-                  <div className={cn(
-                    "w-full",
-                    isMobile ? "overflow-x-auto" : ""
-                  )}>
+                  <ScrollArea className="w-full">
                     <div className={cn(
-                      isMobile ? "min-w-[600px]" : "min-w-[800px]"
+                      isMobile ? "min-w-[100%]" : "min-w-[800px]"
                     )}>
                       {/* Day Headers */}
                       <div className={cn(
@@ -623,7 +620,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                         })}
                       </div>
                     </div>
-                  </div>
+                  </ScrollArea>
                 </CardContent>
               )}
             </Card>
