@@ -29,7 +29,7 @@ export function RoomManagement() {
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
   
   const debouncedSearch = useDebounce(searchQuery, 300);
-  const { data: rooms = [], isLoading, error } = useRooms();
+  const { data: rooms = [], isLoading, error } = useRooms(true); // Include inactive rooms for admin
   const toggleRoomStatus = useToggleRoomStatus();
   const deleteRoom = useDeleteRoom();
 

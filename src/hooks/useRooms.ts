@@ -17,17 +17,17 @@ interface Room {
   amenities?: string[];
 }
 
-export function useRooms() {
+export function useRooms(includeInactive = false) {
   const { organization } = useOrganization();
   
   return useQuery({
-    queryKey: ['rooms', organization?.id],
+    queryKey: ['rooms', organization?.id, includeInactive],
     queryFn: async () => {
       if (!organization?.id) {
         return [];
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("rooms")
         .select(`
           *,
@@ -37,9 +37,14 @@ export function useRooms() {
             )
           )
         `)
-        .eq("organization_id", organization.id)
-        .eq("status", "active")
-        .order("created_at", { ascending: false });
+        .eq("organization_id", organization.id);
+
+      // Only filter by active status if not including inactive rooms
+      if (!includeInactive) {
+        query = query.eq("status", "active");
+      }
+
+      const { data, error } = await query.order("created_at", { ascending: false });
 
       if (error) throw error;
       
@@ -84,6 +89,76 @@ export function useToggleRoomStatus() {
       toast({
         title: "Error",
         description: "Failed to update room status",
+        variant: "destructive",
+      });
+    },
+  });
+}
+
+export function useAddRoom() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const { organization } = useOrganization();
+
+  return useMutation({
+    mutationFn: async (roomData: {
+      name: string;
+      location?: string;
+      capacity: number;
+      description?: string;
+      photo_url?: string;
+      status: 'active' | 'inactive';
+      selectedAmenities: string[];
+    }) => {
+      if (!organization?.id) {
+        throw new Error('No organization selected');
+      }
+
+      // Insert room
+      const { data: room, error: roomError } = await supabase
+        .from("rooms")
+        .insert({
+          name: roomData.name,
+          location: roomData.location || null,
+          capacity: roomData.capacity,
+          description: roomData.description || null,
+          photo_url: roomData.photo_url || null,
+          status: roomData.status,
+          organization_id: organization.id,
+        })
+        .select()
+        .single();
+
+      if (roomError) throw roomError;
+
+      // Insert room amenities
+      if (roomData.selectedAmenities.length > 0) {
+        const roomAmenities = roomData.selectedAmenities.map(amenityId => ({
+          room_id: room.id,
+          amenity_id: amenityId,
+        }));
+
+        const { error: amenitiesError } = await supabase
+          .from("room_amenities")
+          .insert(roomAmenities);
+
+        if (amenitiesError) throw amenitiesError;
+      }
+
+      return room;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+      toast({
+        title: "Success",
+        description: "Room added successfully",
+      });
+    },
+    onError: (error) => {
+      console.error("Error adding room:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add room",
         variant: "destructive",
       });
     },

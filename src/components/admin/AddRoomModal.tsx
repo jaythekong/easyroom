@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useAddRoom } from "@/hooks/useRooms";
 
 interface AddRoomModalProps {
   open: boolean;
@@ -24,7 +25,6 @@ interface Amenity {
 }
 
 export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProps) {
-  const [loading, setLoading] = useState(false);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +37,7 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
   });
   const { toast } = useToast();
   const { organization } = useOrganization();
+  const addRoomMutation = useAddRoom();
 
   useEffect(() => {
     if (open) {
@@ -79,81 +80,42 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+
+    // Validate required fields
+    if (!formData.name || !formData.capacity) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const capacity = parseInt(formData.capacity);
+    if (isNaN(capacity) || capacity <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid capacity",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      // Validate required fields
-      if (!formData.name || !formData.capacity) {
-        toast({
-          title: "Error",
-          description: "Please fill in all required fields",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const capacity = parseInt(formData.capacity);
-      if (isNaN(capacity) || capacity <= 0) {
-        toast({
-          title: "Error",
-          description: "Please enter a valid capacity",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Check if organization is available
-      if (!organization?.id) {
-        throw new Error('No organization selected. Please contact admin.');
-      }
-
-      // Insert room
-      const { data: room, error: roomError } = await supabase
-        .from("rooms")
-        .insert({
-          name: formData.name,
-          location: formData.location || null,
-          capacity,
-          description: formData.description || null,
-          photo_url: formData.photo_url || null,
-          status: formData.status,
-          organization_id: organization.id,
-        })
-        .select()
-        .single();
-
-      if (roomError) throw roomError;
-
-      // Insert room amenities
-      if (formData.selectedAmenities.length > 0) {
-        const roomAmenities = formData.selectedAmenities.map(amenityId => ({
-          room_id: room.id,
-          amenity_id: amenityId,
-        }));
-
-        const { error: amenitiesError } = await supabase
-          .from("room_amenities")
-          .insert(roomAmenities);
-
-        if (amenitiesError) throw amenitiesError;
-      }
-
-      toast({
-        title: "Success",
-        description: "Room added successfully",
+      await addRoomMutation.mutateAsync({
+        name: formData.name,
+        location: formData.location,
+        capacity,
+        description: formData.description,
+        photo_url: formData.photo_url,
+        status: formData.status,
+        selectedAmenities: formData.selectedAmenities,
       });
 
       onSuccess();
       onOpenChange(false);
     } catch (error) {
-      console.error("Error adding room:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add room",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      // Error handling is done in the mutation
     }
   };
 
@@ -277,8 +239,8 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Adding..." : "Add Room"}
+            <Button type="submit" disabled={addRoomMutation.isPending}>
+              {addRoomMutation.isPending ? "Adding..." : "Add Room"}
             </Button>
           </div>
         </form>
