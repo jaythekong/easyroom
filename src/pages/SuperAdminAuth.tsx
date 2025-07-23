@@ -39,17 +39,34 @@ export default function SuperAdminAuth() {
       }
 
       if (data.user) {
-        // Check if user has super admin claim
-        const payload = JSON.parse(atob(data.session.access_token.split('.')[1]));
+        // Wait a moment and refresh session to get updated JWT with custom claims
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (payload.super_admin === true) {
-          toast.success("Welcome, Super Admin!");
-          const redirectTo = searchParams.get('redirectTo') || '/super-admin';
-          navigate(redirectTo);
+        const { data: sessionData } = await supabase.auth.refreshSession();
+        const session = sessionData.session;
+        
+        if (session) {
+          try {
+            // Parse JWT to check for super admin claim
+            const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+            console.log('JWT payload after refresh:', payload);
+            
+            if (payload.super_admin === true) {
+              toast.success("Welcome, Super Admin!");
+              const redirectTo = searchParams.get('redirectTo') || '/super-admin';
+              navigate(redirectTo);
+            } else {
+              // Sign out immediately if not super admin
+              await supabase.auth.signOut();
+              toast.error("Access denied. Super admin privileges required.");
+            }
+          } catch (parseError) {
+            console.error('Error parsing JWT:', parseError);
+            await supabase.auth.signOut();
+            toast.error("Authentication error. Please try again.");
+          }
         } else {
-          // Sign out immediately if not super admin
-          await supabase.auth.signOut();
-          toast.error("Access denied. Super admin privileges required.");
+          toast.error("Session refresh failed. Please try again.");
         }
       }
     } catch (error) {
