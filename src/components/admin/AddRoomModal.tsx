@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface AddRoomModalProps {
   open: boolean;
@@ -35,6 +36,7 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
     selectedAmenities: [] as string[],
   });
   const { toast } = useToast();
+  const { organization } = useOrganization();
 
   useEffect(() => {
     if (open) {
@@ -100,15 +102,9 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
         return;
       }
 
-      // Get user's organization ID from user_profiles
-      const { data: userProfile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (profileError || !userProfile) {
-        throw new Error('User profile not found. Please contact admin.');
+      // Check if organization is available
+      if (!organization?.id) {
+        throw new Error('No organization selected. Please contact admin.');
       }
 
       // Insert room
@@ -121,7 +117,7 @@ export function AddRoomModal({ open, onOpenChange, onSuccess }: AddRoomModalProp
           description: formData.description || null,
           photo_url: formData.photo_url || null,
           status: formData.status,
-          organization_id: userProfile.organization_id,
+          organization_id: organization.id,
         })
         .select()
         .single();
