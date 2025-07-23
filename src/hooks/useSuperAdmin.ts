@@ -42,15 +42,22 @@ export interface PlatformStats {
 export function useSuperAdminCheck() {
   const { user, session } = useAuth();
   
+  console.log('Super admin check:', { user: !!user, session: !!session });
+  
   const isSuperAdmin = session?.access_token ? 
     (() => {
       try {
         const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+        console.log('JWT payload:', payload);
+        console.log('super_admin claim:', payload.super_admin);
         return payload.super_admin === true;
-      } catch {
+      } catch (error) {
+        console.error('Error parsing JWT:', error);
         return false;
       }
     })() : false;
+
+  console.log('isSuperAdmin:', isSuperAdmin);
 
   return {
     isSuperAdmin,
