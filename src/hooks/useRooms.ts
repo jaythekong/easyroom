@@ -24,11 +24,8 @@ export function useRooms() {
     queryKey: ['rooms', organization?.id],
     queryFn: async () => {
       if (!organization?.id) {
-        console.log('🏠 useRooms: No organization ID, returning empty array');
         return [];
       }
-
-      console.log('🏠 useRooms: Fetching rooms for organization:', organization.id, organization.name);
 
       const { data, error } = await supabase
         .from("rooms")
@@ -44,20 +41,13 @@ export function useRooms() {
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error('🏠 useRooms: Error fetching rooms:', error);
-        throw error;
-      }
-      
-      console.log('🏠 useRooms: Raw rooms data:', data);
+      if (error) throw error;
       
       // Format rooms with amenities
       const formattedRooms = (data || []).map(room => ({
         ...room,
         amenities: room.room_amenities?.map((ra: any) => ra.amenities.name) || []
       }));
-      
-      console.log('🏠 useRooms: Formatted rooms:', formattedRooms);
       
       return formattedRooms as Room[];
     },
