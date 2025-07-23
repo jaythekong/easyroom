@@ -580,32 +580,30 @@ const Auth = () => {
             });
             
             if (!membership) {
-              // User doesn't have access to this organization
-              console.log('❌ ACCESS DENIED - User not member of organization');
-              toast.error(`You don't have access to ${organization.name}. Contact an admin to get invited.`);
+              // SECURITY FIX: User doesn't have access to this organization
+              console.log('❌ SECURITY: ACCESS DENIED - User not member of organization');
+              logger.security('SECURITY: Sign in denied - user not member of organization', {
+                userId: user.id,
+                organizationId: organization.id,
+                userEmail: user.email,
+                orgSlug
+              });
               
-              // Find user's available organizations
-              const { data: userOrgs } = await supabase
-                .from('user_organization_memberships')
-                .select(`
-                  organization_id, 
-                  organizations!inner(name, slug)
-                `)
-                .eq('user_id', user.id);
+              // Log unauthorized access attempt
+              await supabase.from('unauthorized_access_attempts').insert({
+                user_id: user.id,
+                attempted_slug: orgSlug,
+                user_email: user.email,
+                ip_address: null,
+                user_agent: navigator.userAgent
+              });
               
-              console.log('🔍 User available orgs:', userOrgs);
+              // Sign them out since they don't have access
+              await supabase.auth.signOut();
               
-              if (userOrgs && userOrgs.length > 0) {
-                // Redirect to user's first available organization  
-                const firstOrg = userOrgs[0].organizations;
-                console.log('🔀 Redirecting to first available org:', firstOrg);
-                toast.success(`Redirecting you to ${firstOrg.name}...`);
-                navigate(`/${firstOrg.slug}`);
-              } else {
-                // User has no organizations, redirect to main page
-                console.log('🏠 No orgs found, redirecting to home');
-                navigate('/');
-              }
+              // SECURITY FIX: Redirect to access denied page instead of fallback org
+              const currentPath = window.location.pathname;
+              navigate(`/access-denied?slug=${orgSlug}&redirectTo=${encodeURIComponent(currentPath)}`);
               return;
             } else {
               console.log('✅ ACCESS GRANTED - User is member of organization');

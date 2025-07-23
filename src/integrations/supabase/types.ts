@@ -354,6 +354,36 @@ export type Database = {
         }
         Relationships: []
       }
+      unauthorized_access_attempts: {
+        Row: {
+          attempted_at: string
+          attempted_slug: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          attempted_slug: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          attempted_slug?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_organization_memberships: {
         Row: {
           created_at: string

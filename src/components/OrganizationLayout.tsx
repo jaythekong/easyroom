@@ -1,11 +1,12 @@
 
 import { ReactNode } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { Loader2, Building, AlertCircle } from "lucide-react";
+import { Navigate, useLocation, useParams } from "react-router-dom";
+import { Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
+import { AccessDenied } from "@/components/AccessDenied";
 import { logger } from "@/lib/logger";
 
 interface OrganizationLayoutProps {
@@ -22,15 +23,11 @@ export function OrganizationLayout({
   const { organization, isLoading: orgLoading, error, isUserInOrganization, userRole } = useOrganization();
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
+  const params = useParams();
+  const orgSlug = params.orgSlug || '';
 
   const handleGoBack = () => {
-    // Try to go back in history, but if no history, go to root
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/');
-    }
+    window.history.back();
   };
 
   // Show loading only for initial loads
@@ -98,24 +95,7 @@ export function OrganizationLayout({
         userEmail: user.email
       });
       
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <Card className="w-full max-w-md">
-            <CardContent className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
-              <Building className="h-12 w-12 text-muted-foreground" />
-              <div>
-                <h2 className="text-lg font-semibold">Access Denied</h2>
-                <p className="text-muted-foreground mt-2">
-                  You don't have access to this organization.
-                </p>
-              </div>
-              <Button onClick={handleGoBack} variant="outline">
-                Go Back
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      );
+      return <AccessDenied orgSlug={orgSlug} orgName={organization?.name} />;
     }
 
     // Check admin requirements
