@@ -192,31 +192,17 @@ const Auth = () => {
       
       authRateLimiter.recordAttempt(rateLimitKey);
       
-      console.log('Starting simplified signup flow for email:', sanitizedEmail);
+      console.log('Starting organization creation for existing user');
       
-      // STEP 1: Try to create new user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: sanitizedEmail,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/${sanitizedSlug}`
-        }
-      });
+      // Check if user is already authenticated
+      const { data: { user } } = await supabase.auth.getUser();
       
-      console.log('Signup attempt result:', { 
-        success: !!authData.user, 
-        error: authError?.message || 'none' 
-      });
-      
-      if (authError) {
-        if (authError.message.includes("already registered")) {
-          toast.error("This email is already registered. Please sign in instead.");
-        } else {
-          toast.error(authError.message);
-        }
-        logger.security('Organization signup failed', { error: authError.message, email: sanitizedEmail });
+      if (!user) {
+        toast.error("User session not found. Please sign in first.");
         return;
       }
+      
+      const authData = { user };
 
       if (authData.user) {
         let orgData: any = null; // Declare orgData outside try block so it's accessible in catch
