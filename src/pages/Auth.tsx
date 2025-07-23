@@ -233,44 +233,71 @@ const Auth = () => {
         let orgData: any = null; // Declare orgData outside try block so it's accessible in catch
         
         try {
-          // Step 1: First check if slug is already taken
+          // Step 1: Check if user already has an organization with this slug
           const { data: existingOrg } = await supabase
             .from('organizations')
-            .select('slug')
+            .select(`
+              id, 
+              name, 
+              slug,
+              user_organization_memberships!inner(user_id, role),
+              user_profiles(id)
+            `)
             .eq('slug', sanitizedSlug)
+            .eq('user_organization_memberships.user_id', authData.user.id)
             .maybeSingle();
             
           if (existingOrg) {
-            toast.error("Organization slug already exists. Please choose a different name.");
-            return;
-          }
-            
-          // Step 2: Create the organization
-          const { data: createdOrgData, error: orgError } = await supabase
-            .from('organizations')
-            .insert({
-              name: sanitizedOrgName,
-              slug: sanitizedSlug,
-              org_type: orgType,
-              referral_source: referralSource
-            })
-            .select()
-            .single();
-
-          if (orgError) {
-            // If we still get a duplicate key error, it means another session created it in between our check
-            if (orgError.message.includes('duplicate key')) {
-              toast.error("Organization slug already exists. Please choose a different name.");
+            // User already has an organization with this slug
+            if (existingOrg.user_profiles?.length > 0) {
+              // Organization is complete, redirect to it
+              toast.success("Organization already exists! Redirecting...");
+              navigate(`/${sanitizedSlug}`);
+              return;
             } else {
-              logger.error('Organization creation failed:', orgError);
-              toast.error("Failed to create organization: " + orgError.message);
+              // Organization exists but profile is missing, complete the setup
+              orgData = existingOrg;
+              console.log('Completing setup for existing organization:', orgData.id);
             }
-            return;
+          } else {
+            // Check if slug is taken by someone else
+            const { data: slugTaken } = await supabase
+              .from('organizations')
+              .select('slug')
+              .eq('slug', sanitizedSlug)
+              .maybeSingle();
+              
+            if (slugTaken) {
+              toast.error("Organization slug already exists. Please choose a different name.");
+              return;
+            }
+            
+            // Create new organization
+            const { data: createdOrgData, error: orgError } = await supabase
+              .from('organizations')
+              .insert({
+                name: sanitizedOrgName,
+                slug: sanitizedSlug,
+                org_type: orgType,
+                referral_source: referralSource
+              })
+              .select()
+              .single();
+
+            if (orgError) {
+              if (orgError.message.includes('duplicate key')) {
+                toast.error("Organization slug already exists. Please choose a different name.");
+              } else {
+                logger.error('Organization creation failed:', orgError);
+                toast.error("Failed to create organization: " + orgError.message);
+              }
+              return;
+            }
+            
+            orgData = createdOrgData;
           }
           
-          orgData = createdOrgData; // Assign to the outer scope variable
-          
-          // Step 3: Check if user already has a membership, if not create one
+          // Step 2: Ensure user has membership (only create if doesn't exist)
           const { data: existingMembership } = await supabase
             .from('user_organization_memberships')
             .select('id')
@@ -288,16 +315,13 @@ const Auth = () => {
               });
 
             if (membershipError) {
-              // Clean up the organization if membership creation fails
-              await supabase.from('organizations').delete().eq('id', orgData.id);
-              
               logger.error('Membership creation failed:', membershipError);
               toast.error("Failed to create user membership: " + membershipError.message);
               return;
             }
           }
 
-          // Step 4: Check if user profile already exists, if not create one
+          // Step 3: Ensure user has profile (only create if doesn't exist)
           const { data: existingProfile } = await supabase
             .from('user_profiles')
             .select('id')
@@ -316,14 +340,6 @@ const Auth = () => {
               });
 
             if (profileError) {
-              // Clean up both organization and membership
-              await supabase.from('user_organization_memberships')
-                .delete()
-                .eq('user_id', authData.user.id)
-                .eq('organization_id', orgData.id);
-                
-              await supabase.from('organizations').delete().eq('id', orgData.id);
-              
               logger.error('Profile creation failed:', profileError);
               toast.error("Failed to create user profile: " + profileError.message);
               return;
