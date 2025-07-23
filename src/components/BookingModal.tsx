@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useOrganization } from "@/contexts/OrganizationContext";
 import { logger } from "@/lib/logger";
 import { 
   sanitizeInput, 
@@ -61,6 +62,7 @@ const timeSlots = [
 
 export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime, existingBooking }: BookingModalProps) {
   const { user } = useAuth();
+  const { organization } = useOrganization();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -238,18 +240,9 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       
       logger.debug("DateTime strings:", { startDateTime, endDateTime });
 
-      // Get user's organization ID
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      console.log("Profile fetch result:", { profile, profileError });
-
-      if (profileError || !profile?.organization_id) {
-        console.error('Profile/organization error:', profileError);
-        throw new Error('User organization not found - please contact admin');
+      // Check if organization is available
+      if (!organization?.id) {
+        throw new Error('No organization selected. Please contact admin.');
       }
 
       let bookingData: any = {
@@ -260,7 +253,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         end_time: endDateTime,
         attendees: parseInt(formData.attendees) || 1,
         recurring: formData.recurring,
-        organization_id: profile.organization_id
+        organization_id: organization.id
       };
 
       // For new bookings, set the current user as the owner
@@ -313,7 +306,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           await supabase.functions.invoke('send-telegram-notification', {
             body: {
               bookingId: booking.id,
-              organizationId: profile.organization_id,
+              organizationId: organization.id,
               action: existingBooking ? 'updated' : 'created'
             }
           });
