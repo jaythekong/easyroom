@@ -554,6 +554,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      remove_user_super_admin: {
+        Args: { user_email: string }
+        Returns: string
+      }
+      set_user_super_admin: {
+        Args: { user_email: string }
+        Returns: string
+      }
     }
     Enums: {
       room_status: "active" | "inactive"
