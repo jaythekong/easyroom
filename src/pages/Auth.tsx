@@ -330,13 +330,16 @@ const Auth = () => {
             .maybeSingle();
           
           if (!existingProfile) {
+            // Use upsert to handle potential race conditions and duplicate key issues
             const { error: profileError } = await supabase
               .from('user_profiles')
-              .insert({
+              .upsert({
                 user_id: authData.user.id,
                 organization_id: orgData.id,
                 email: sanitizedEmail,
                 role: 'admin'
+              }, {
+                onConflict: 'user_id,organization_id'
               });
 
             if (profileError) {
