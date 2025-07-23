@@ -245,58 +245,64 @@ const Auth = () => {
           
           orgData = createdOrgData; // Assign to the outer scope variable
           
-          // Step 3: Create user membership for the NEW organization
-          const { error: membershipError } = await supabase
+          // Step 3: Check if user already has a membership, if not create one
+          const { data: existingMembership } = await supabase
             .from('user_organization_memberships')
-            .insert({
-              user_id: authData.user.id,
-              organization_id: orgData.id,
-              role: 'admin'
-            });
+            .select('id')
+            .eq('user_id', authData.user.id)
+            .eq('organization_id', orgData.id)
+            .maybeSingle();
+          
+          if (!existingMembership) {
+            const { error: membershipError } = await supabase
+              .from('user_organization_memberships')
+              .insert({
+                user_id: authData.user.id,
+                organization_id: orgData.id,
+                role: 'admin'
+              });
 
-          if (membershipError) {
-            // Clean up the organization if membership creation fails
-            await supabase.from('organizations').delete().eq('id', orgData.id);
-            
-            if (membershipError.message.includes('duplicate key')) {
-              // This shouldn't happen since we just created a new org
-              logger.error('Unexpected duplicate membership:', membershipError);
-              toast.error("An unexpected error occurred. Please try again with a different organization name.");
-            } else {
+            if (membershipError) {
+              // Clean up the organization if membership creation fails
+              await supabase.from('organizations').delete().eq('id', orgData.id);
+              
               logger.error('Membership creation failed:', membershipError);
               toast.error("Failed to create user membership: " + membershipError.message);
+              return;
             }
-            return;
           }
 
-          // Step 4: Create user profile for the NEW organization
-          const { error: profileError } = await supabase
+          // Step 4: Check if user profile already exists, if not create one
+          const { data: existingProfile } = await supabase
             .from('user_profiles')
-            .insert({
-              user_id: authData.user.id,
-              organization_id: orgData.id,
-              email: sanitizedEmail,
-              role: 'admin'
-            });
+            .select('id')
+            .eq('user_id', authData.user.id)
+            .eq('organization_id', orgData.id)
+            .maybeSingle();
+          
+          if (!existingProfile) {
+            const { error: profileError } = await supabase
+              .from('user_profiles')
+              .insert({
+                user_id: authData.user.id,
+                organization_id: orgData.id,
+                email: sanitizedEmail,
+                role: 'admin'
+              });
 
-          if (profileError) {
-            // Clean up both organization and membership
-            await supabase.from('user_organization_memberships')
-              .delete()
-              .eq('user_id', authData.user.id)
-              .eq('organization_id', orgData.id);
+            if (profileError) {
+              // Clean up both organization and membership
+              await supabase.from('user_organization_memberships')
+                .delete()
+                .eq('user_id', authData.user.id)
+                .eq('organization_id', orgData.id);
+                
+              await supabase.from('organizations').delete().eq('id', orgData.id);
               
-            await supabase.from('organizations').delete().eq('id', orgData.id);
-            
-            if (profileError.message.includes('duplicate key')) {
-              // This shouldn't happen since we just created a new org
-              logger.error('Unexpected duplicate profile:', profileError);
-              toast.error("An unexpected error occurred. Please try again with a different organization name.");
-            } else {
               logger.error('Profile creation failed:', profileError);
               toast.error("Failed to create user profile: " + profileError.message);
+              return;
             }
-            return;
           }
 
         } catch (error) {
