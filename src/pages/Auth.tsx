@@ -192,17 +192,42 @@ const Auth = () => {
       
       authRateLimiter.recordAttempt(rateLimitKey);
       
-      console.log('Starting organization creation for existing user');
+      console.log('Step 3: Creating organization and user account');
       
       // Check if user is already authenticated
       const { data: { user } } = await supabase.auth.getUser();
+      let authData;
       
-      if (!user) {
-        toast.error("User session not found. Please sign in first.");
-        return;
+      if (user) {
+        // User is already authenticated, use existing session
+        authData = { user };
+      } else {
+        // Create new user account
+        const { data: newAuthData, error: authError } = await supabase.auth.signUp({
+          email: sanitizedEmail,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/${sanitizedSlug}`
+          }
+        });
+        
+        if (authError) {
+          if (authError.message.includes("already registered")) {
+            toast.error("This email is already registered. Please sign in instead.");
+          } else {
+            toast.error(authError.message);
+          }
+          logger.security('Organization signup failed', { error: authError.message, email: sanitizedEmail });
+          return;
+        }
+        
+        if (!newAuthData.user) {
+          toast.error("Failed to create user account. Please try again.");
+          return;
+        }
+        
+        authData = newAuthData;
       }
-      
-      const authData = { user };
 
       if (authData.user) {
         let orgData: any = null; // Declare orgData outside try block so it's accessible in catch
@@ -902,25 +927,21 @@ const Auth = () => {
                                     return;
                                   }
                                   
-                                   // Direct signup - let Supabase handle existing email cases
-                                   const { data: newUser, error: authError } = await supabase.auth.signUp({
-                                     email: sanitizedEmail,
-                                     password,
-                                     options: {
-                                       emailRedirectTo: window.location.origin
-                                     }
-                                   });
-                                  
-                                  if (authError) {
-                                    logger.error('Error creating new user:', authError);
-                                    toast.error(authError.message);
-                                    return;
-                                  }
-                                  
-                                  if (newUser) {
-                                    toast.success("Account created successfully!");
-                                    setOrgCreationStep(2);
-                                  }
+                                   // Just validate that email/password are acceptable
+                                   // Don't create the account yet - that happens in step 3
+                                   console.log('Step 1: Validating credentials for:', sanitizedEmail);
+                                   
+                                   // Check if user is already signed in
+                                   const { data: { user } } = await supabase.auth.getUser();
+                                   if (user) {
+                                     // User is already authenticated, proceed to step 2
+                                     setOrgCreationStep(2);
+                                     return;
+                                   }
+                                   
+                                   // Credentials look good, proceed to step 2
+                                   toast.success("Credentials validated! Please continue with organization setup.");
+                                   setOrgCreationStep(2);
                                 } catch (error) {
                                   logger.error('Admin account setup error:', error);
                                   toast.error("An error occurred while setting up your account.");
