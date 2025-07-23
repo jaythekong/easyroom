@@ -39,27 +39,63 @@ export function useBookings(selectedDate: Date) {
       console.log(`Fetching bookings from ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')} for org: ${organization.slug}`);
       console.log('Query range:', { startDateTime, endDateTime });
       
-      const { data, error } = await supabase
+      // First fetch bookings
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
-          *,
-          user_profiles!bookings_user_id_fkey (
-            email,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select('*')
         .eq('organization_id', organization.id)
         .gte('start_time', startDateTime)
         .lt('start_time', endDateTime);
       
-      if (error) {
-        console.error('Error fetching bookings:', error);
-        throw error;
+      if (bookingsError) {
+        console.error('Error fetching bookings:', bookingsError);
+        throw bookingsError;
       }
+
+      if (!bookingsData || bookingsData.length === 0) {
+        console.log(`No bookings found in date range for org ${organization.slug}`);
+        return [];
+      }
+
+      // Get unique user IDs from the bookings
+      const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
       
-      console.log(`Found ${data?.length || 0} bookings in date range for org ${organization.slug}`);
-      return data as Booking[];
+      // Fetch user profiles for these users in this organization
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('user_id, email, display_name, avatar_url')
+        .eq('organization_id', organization.id)
+        .in('user_id', userIds);
+      
+      if (profilesError) {
+        console.error('Error fetching user profiles:', profilesError);
+        // Don't throw error, just continue without profile data
+      }
+
+      // Create a map of user profiles for quick lookup
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.user_id, {
+            email: profile.email,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url,
+          });
+        });
+      }
+
+      // Combine bookings with user profile data
+      const bookingsWithProfiles = bookingsData.map(booking => ({
+        ...booking,
+        user_profiles: profilesMap.get(booking.user_id) || {
+          email: 'Unknown user',
+          display_name: null,
+          avatar_url: null,
+        }
+      }));
+      
+      console.log(`Found ${bookingsWithProfiles.length} bookings in date range for org ${organization.slug}`);
+      return bookingsWithProfiles as Booking[];
     },
     enabled: !!organization?.id,
     staleTime: 1000 * 30, // 30 seconds
