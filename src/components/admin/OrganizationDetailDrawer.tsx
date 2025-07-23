@@ -1,10 +1,11 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useOrganizationAuditLog } from "@/hooks/useSuperAdmin";
+import { Button } from "@/components/ui/button";
+import { useOrganizationAuditLog, useImpersonateAdmin } from "@/hooks/useSuperAdmin";
 import { formatDistance } from "date-fns";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { Building2, Users, MapPin, Calendar, Clock, User } from "lucide-react";
+import { Building2, Users, MapPin, Calendar, Clock, User, UserCheck, Eye, Settings } from "lucide-react";
 import type { PlatformOrganization } from "@/hooks/useSuperAdmin";
 
 interface OrganizationDetailDrawerProps {
@@ -21,8 +22,16 @@ export function OrganizationDetailDrawer({
   const { data: auditLog, isLoading: auditLoading } = useOrganizationAuditLog(
     organization?.id || ""
   );
+  const impersonateAdmin = useImpersonateAdmin();
 
   if (!organization) return null;
+
+  const handleImpersonate = (mode: 'view_only' | 'full') => {
+    impersonateAdmin.mutate({
+      organizationId: organization.id,
+      mode
+    });
+  };
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
@@ -64,6 +73,50 @@ export function OrganizationDetailDrawer({
                     {formatDistance(new Date(organization.created_at), new Date(), { addSuffix: true })}
                   </div>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Impersonate Admin */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Impersonate Admin
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Switch to this organization's admin view for support purposes. All actions are logged.
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleImpersonate('view_only')}
+                    disabled={impersonateAdmin.isPending || organization.status === 'suspended'}
+                    className="flex items-center gap-2"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View Only
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handleImpersonate('full')}
+                    disabled={impersonateAdmin.isPending || organization.status === 'suspended'}
+                    className="flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Full Access
+                  </Button>
+                </div>
+                {organization.status === 'suspended' && (
+                  <p className="text-xs text-yellow-600">
+                    ⚠️ Impersonation disabled for suspended organizations
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

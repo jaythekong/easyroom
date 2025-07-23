@@ -22,6 +22,7 @@ import ThankYouPage from "./pages/ThankYouPage";
 import FirstRoomOnboarding from "./pages/FirstRoomOnboarding";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminAuth from "./pages/SuperAdminAuth";
+import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <PostConfirmationHandler />
+              <ImpersonationBanner />
               <Routes>
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />

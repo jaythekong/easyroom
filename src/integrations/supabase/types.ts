@@ -504,6 +504,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      end_impersonation: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_organization_stats: {
         Args: { org_id: string }
         Returns: Json
@@ -553,6 +557,10 @@ export type Database = {
           org_id?: string
         }
         Returns: boolean
+      }
+      impersonate_admin: {
+        Args: { target_org_id: string; impersonation_mode?: string }
+        Returns: Json
       }
       remove_user_super_admin: {
         Args: { user_email: string }

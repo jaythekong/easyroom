@@ -193,3 +193,85 @@ export function useUpdateOrganizationStatus() {
     },
   });
 }
+
+export function useImpersonateAdmin() {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ 
+      organizationId, 
+      mode = 'view_only' 
+    }: { 
+      organizationId: string; 
+      mode?: 'view_only' | 'full';
+    }) => {
+      const { data, error } = await supabase.rpc('impersonate_admin', {
+        target_org_id: organizationId,
+        impersonation_mode: mode
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      // Store original session for restoration
+      const currentSession = JSON.stringify(supabase.auth.getSession());
+      sessionStorage.setItem('original_super_admin_session', currentSession);
+      
+      toast({
+        title: "Impersonation Started",
+        description: `Now acting as admin for organization. Mode: ${variables.mode}`,
+      });
+      
+      // Refresh the session to get the impersonated user's session
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    },
+    onError: (error) => {
+      toast({
+        title: "Impersonation Failed",
+        description: "Failed to start impersonation session.",
+        variant: "destructive",
+      });
+      console.error('Error starting impersonation:', error);
+    },
+  });
+}
+
+export function useEndImpersonation() {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.rpc('end_impersonation');
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      // Restore original session
+      const originalSession = sessionStorage.getItem('original_super_admin_session');
+      if (originalSession) {
+        sessionStorage.removeItem('original_super_admin_session');
+      }
+      
+      toast({
+        title: "Impersonation Ended",
+        description: "Returned to super admin session.",
+      });
+      
+      // Redirect back to super admin dashboard
+      setTimeout(() => {
+        window.location.href = '/super-admin';
+      }, 1000);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to end impersonation session.",
+        variant: "destructive",
+      });
+      console.error('Error ending impersonation:', error);
+    },
+  });
+}
