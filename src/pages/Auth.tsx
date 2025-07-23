@@ -199,10 +199,14 @@ const Auth = () => {
       let authData;
       
       if (user) {
-        // User is already authenticated, use existing session
+        // User is already authenticated, verify email matches
+        if (user.email !== sanitizedEmail) {
+          toast.error("Email mismatch. Please sign out and try again with the correct email.");
+          return;
+        }
         authData = { user };
       } else {
-        // Create new user account
+        // Create new user account - Supabase will handle duplicate email prevention
         const { data: newAuthData, error: authError } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password,
@@ -212,17 +216,27 @@ const Auth = () => {
         });
         
         if (authError) {
-          if (authError.message.includes("already registered")) {
+          if (authError.message.includes("already registered") || authError.message.includes("User already registered")) {
             toast.error("This email is already registered. Please sign in instead.");
           } else {
             toast.error(authError.message);
           }
-          logger.security('Organization signup failed', { error: authError.message, email: sanitizedEmail });
+          logger.security('Organization signup failed - possible duplicate email attempt', { error: authError.message, email: sanitizedEmail });
           return;
         }
         
         if (!newAuthData.user) {
           toast.error("Failed to create user account. Please try again.");
+          return;
+        }
+        
+        // Additional security check: ensure the created user email matches input
+        if (newAuthData.user.email !== sanitizedEmail) {
+          toast.error("Account creation failed - email verification error.");
+          logger.security('Email mismatch during org creation', { 
+            input: sanitizedEmail, 
+            created: newAuthData.user.email 
+          });
           return;
         }
         
