@@ -213,16 +213,6 @@ export function OrganizationSettings() {
 
     setIsLoading(true);
     try {
-      console.log('🏢 Saving organization settings:', {
-        id: organization.id,
-        name: orgName.trim(),
-        slug: subdomain.trim(),
-        logo_url: logoUrl || null,
-        primary_color: primaryColor,
-        timezone: timezone,
-        tagline: tagline.trim(),
-      });
-
       const { error } = await supabase
         .from('organizations')
         .update({
