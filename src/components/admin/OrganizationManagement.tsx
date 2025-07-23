@@ -49,20 +49,28 @@ export function OrganizationManagement() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Organization Management</CardTitle>
+      <Card className="glass-card border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
+        <CardHeader className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-secondary/10 border border-secondary/20">
+              <Building2 className="h-5 w-5 text-secondary" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Organization Management</CardTitle>
+              <p className="text-muted-foreground text-sm">Monitor and manage all platform organizations</p>
+            </div>
+          </div>
           <div className="flex items-center space-x-2">
             <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search organizations..."
+                placeholder="Search organizations by name or slug..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-8"
+                className="pl-10 bg-background/50 border-border/50 focus:bg-background transition-colors"
               />
             </div>
           </div>
