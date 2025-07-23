@@ -1,4 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
+import { usePlatformStats } from "@/hooks/useSuperAdmin";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, Users, Calendar, TrendingUp } from "lucide-react";
+import { OrganizationManagement } from "@/components/admin/OrganizationManagement";
 
 export default function SuperAdminDashboard() {
   console.log('SuperAdminDashboard component rendering...');
@@ -39,6 +43,12 @@ export default function SuperAdminDashboard() {
     );
   }
 
+  return <SuperAdminDashboardContent user={user} />;
+}
+
+function SuperAdminDashboardContent({ user }: { user: any }) {
+  const { data: platformStats, isLoading } = usePlatformStats();
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8 px-4">
@@ -49,20 +59,71 @@ export default function SuperAdminDashboard() {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-primary/10 p-6 rounded-lg">
-            <h3 className="font-semibold">Organizations</h3>
-            <p className="text-2xl font-bold mt-2">Loading...</p>
-          </div>
-          <div className="bg-blue-500/10 p-6 rounded-lg">
-            <h3 className="font-semibold">Users</h3>
-            <p className="text-2xl font-bold mt-2">Loading...</p>
-          </div>
-          <div className="bg-green-500/10 p-6 rounded-lg">
-            <h3 className="font-semibold">Bookings</h3>
-            <p className="text-2xl font-bold mt-2">Loading...</p>
-          </div>
+        {/* Platform Analytics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Organizations</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading ? "..." : platformStats?.total_organizations || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {isLoading ? "Loading..." : `${platformStats?.active_organizations || 0} active, ${platformStats?.suspended_organizations || 0} suspended`}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading ? "..." : platformStats?.total_users || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Across all organizations
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Rooms</CardTitle>
+              <Building2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading ? "..." : platformStats?.total_rooms || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Meeting spaces available
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {isLoading ? "..." : platformStats?.total_bookings || 0}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                All-time bookings
+              </p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Organization Management Section */}
+        <OrganizationManagement />
       </div>
     </div>
   );
