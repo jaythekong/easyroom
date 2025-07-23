@@ -88,13 +88,12 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Get booking details with room and user information
+    // Get booking details with room information
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
       .select(`
         *,
-        rooms!inner(name, location),
-        user_profiles!inner(display_name, email)
+        rooms!inner(name, location)
       `)
       .eq('id', bookingId)
       .single();
@@ -102,6 +101,19 @@ const handler = async (req: Request): Promise<Response> => {
     if (bookingError) {
       console.error('Error fetching booking:', bookingError);
       throw new Error('Failed to fetch booking details');
+    }
+
+    // Get user profile information separately for the multi-organization structure
+    const { data: userProfile, error: userProfileError } = await supabase
+      .from('user_profiles')
+      .select('display_name, email')
+      .eq('user_id', booking.user_id)
+      .eq('organization_id', organizationId)
+      .single();
+
+    if (userProfileError) {
+      console.error('Error fetching user profile:', userProfileError);
+      // Continue with fallback user info instead of throwing error
     }
 
     // Format date and time
@@ -145,7 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
 📍 *Room:* ${booking.rooms.name}
 ${booking.rooms.location ? `🏢 *Location:* ${booking.rooms.location}` : ''}
 📋 *Meeting:* ${booking.title}
-👤 *Booked by:* ${booking.user_profiles.display_name || booking.user_profiles.email}
+👤 *Booked by:* ${userProfile?.display_name || userProfile?.email || 'Unknown user'}
 📅 *Date:* ${dateStr}
 🕐 *Time:* ${timeStr}
 ${booking.attendees ? `👥 *Attendees:* ${booking.attendees}` : ''}
