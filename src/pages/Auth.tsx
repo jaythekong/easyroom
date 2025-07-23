@@ -86,6 +86,12 @@ const Auth = () => {
     const resetParam = searchParams.get('reset');
     if (resetParam === 'true') return; // Don't redirect during password reset
     
+    // Don't check until organization context is loaded
+    if (orgLoading) {
+      console.log('⏳ INITIAL CHECK - Waiting for organization to load...');
+      return;
+    }
+    
     const checkUser = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -135,6 +141,12 @@ const Auth = () => {
             } else {
               console.log('✅ INITIAL CHECK - User has access to organization');
             }
+          } else if (orgSlug && !organization) {
+            // Organization slug provided but organization not found
+            console.log('❌ INITIAL CHECK - Organization not found');
+            toast.error('Organization not found.');
+            navigate('/');
+            return;
           }
           
           const redirectTo = searchParams.get('redirectTo') || `/${orgSlug}`;
@@ -146,7 +158,7 @@ const Auth = () => {
       }
     };
     checkUser();
-  }, [navigate, searchParams, orgSlug]);
+  }, [navigate, searchParams, orgSlug, organization, orgLoading]);
 
   const handleOrganizationRedirect = async (e: React.FormEvent) => {
     e.preventDefault();
