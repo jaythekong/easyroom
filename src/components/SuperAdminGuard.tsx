@@ -10,7 +10,9 @@ interface SuperAdminGuardProps {
 }
 
 export function SuperAdminGuard({ children }: SuperAdminGuardProps) {
+  console.log('SuperAdminGuard rendering...');
   const { isSuperAdmin, user, loading } = useSuperAdminCheck();
+  console.log('SuperAdminGuard state:', { isSuperAdmin, user: !!user, loading });
 
   if (loading) {
     return (
