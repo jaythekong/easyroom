@@ -233,8 +233,7 @@ export function useImpersonateAdmin() {
           .single();
           
         if (orgData && !error) {
-          // Force a session refresh and then redirect
-          await supabase.auth.refreshSession();
+          // Direct redirect - the backend has already updated the metadata
           window.location.href = `/${orgData.slug}`;
         } else {
           console.error('Failed to get organization slug:', error);
