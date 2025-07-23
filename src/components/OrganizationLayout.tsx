@@ -79,6 +79,31 @@ export function OrganizationLayout({
     );
   }
 
+  // Check if organization is suspended
+  if (organization?.status === 'suspended') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex flex-col items-center justify-center p-8 space-y-4 text-center">
+            <AlertCircle className="h-12 w-12 text-destructive" />
+            <div>
+              <h2 className="text-lg font-semibold">Organization Suspended</h2>
+              <p className="text-muted-foreground mt-2">
+                <strong>{organization.name}</strong> has been temporarily suspended.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Please contact your administrator or platform support for more information.
+              </p>
+            </div>
+            <Button onClick={() => window.location.href = '/'} variant="outline">
+              Go to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Only check auth if explicitly required
   if (requireAuth) {
     // If no user, redirect to org auth

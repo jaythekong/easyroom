@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type OrgGuardStatus = 'loading' | 'authorized' | 'unauthorized' | 'not_found';
+export type OrgGuardStatus = 'loading' | 'authorized' | 'unauthorized' | 'not_found' | 'suspended';
 
 export interface OrgGuardResult {
   status: OrgGuardStatus;
@@ -25,10 +25,10 @@ export function useOrgGuard(orgSlug: string): OrgGuardResult {
         return { status: 'unauthorized', error: 'User not authenticated' };
       }
 
-      // First, check if the organization exists
+      // First, check if the organization exists and get its status
       const { data: org, error: orgError } = await supabase
         .from('organizations')
-        .select('id, name, slug')
+        .select('id, name, slug, status')
         .eq('slug', orgSlug)
         .maybeSingle();
 
@@ -39,6 +39,15 @@ export function useOrgGuard(orgSlug: string): OrgGuardResult {
 
       if (!org) {
         return { status: 'not_found', error: 'Organization not found' };
+      }
+
+      // Check if organization is suspended
+      if (org.status === 'suspended') {
+        return { 
+          status: 'suspended', 
+          organization: { id: org.id, name: org.name, slug: org.slug },
+          error: 'This organization has been suspended' 
+        };
       }
 
       // Then check if user has membership in this organization
@@ -57,14 +66,14 @@ export function useOrgGuard(orgSlug: string): OrgGuardResult {
       if (!membership) {
         return { 
           status: 'unauthorized', 
-          organization: org,
+          organization: { id: org.id, name: org.name, slug: org.slug },
           error: 'User is not a member of this organization' 
         };
       }
 
       return { 
         status: 'authorized', 
-        organization: org,
+        organization: { id: org.id, name: org.name, slug: org.slug },
         userRole: membership.role as 'admin' | 'member'
       };
     },

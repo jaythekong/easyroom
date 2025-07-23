@@ -8,6 +8,7 @@ interface Organization {
   id: string;
   name: string;
   slug: string;
+  status: string;
   logo_url?: string;
   primary_color?: string;
   timezone?: string;
