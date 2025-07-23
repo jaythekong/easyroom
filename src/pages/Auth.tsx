@@ -383,7 +383,14 @@ const Auth = () => {
           userId: authData.user.id,
           email: sanitizedEmail 
         });
-        toast.success("Organization created! Check your email for the confirmation link.");
+        
+        // If user is already confirmed, redirect to the organization dashboard
+        if (authData.user.email_confirmed_at) {
+          toast.success("Organization created successfully!");
+          navigate(`/${orgData.slug}`);
+        } else {
+          toast.success("Organization created! Check your email for the confirmation link.");
+        }
       }
     } catch (error) {
       logger.error('Organization signup unexpected error:', error);
