@@ -44,19 +44,9 @@ export function useSuperAdminCheck() {
   
   console.log('Super admin check:', { user: !!user, session: !!session });
   
-  const isSuperAdmin = session?.access_token ? 
-    (() => {
-      try {
-        const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-        console.log('JWT payload:', payload);
-        console.log('super_admin claim:', payload.super_admin);
-        return payload.super_admin === true;
-      } catch (error) {
-        console.error('Error parsing JWT:', error);
-        return false;
-      }
-    })() : false;
+  const isSuperAdmin = session?.user?.app_metadata?.super_admin === true;
 
+  console.log('app_metadata:', session?.user?.app_metadata);
   console.log('isSuperAdmin:', isSuperAdmin);
 
   return {

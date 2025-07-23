@@ -39,34 +39,22 @@ export default function SuperAdminAuth() {
       }
 
       if (data.user) {
-        // Wait a moment and refresh session to get updated JWT with custom claims
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Force token refresh to get updated app_metadata
+        await supabase.auth.refreshSession();
         
-        const { data: sessionData } = await supabase.auth.refreshSession();
-        const session = sessionData.session;
+        // Check if user has super admin claim in app_metadata
+        const isSuperAdmin = data.user.app_metadata?.super_admin === true;
+        console.log('Login app_metadata:', data.user.app_metadata);
+        console.log('isSuperAdmin:', isSuperAdmin);
         
-        if (session) {
-          try {
-            // Parse JWT to check for super admin claim
-            const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-            console.log('JWT payload after refresh:', payload);
-            
-            if (payload.super_admin === true) {
-              toast.success("Welcome, Super Admin!");
-              const redirectTo = searchParams.get('redirectTo') || '/super-admin';
-              navigate(redirectTo);
-            } else {
-              // Sign out immediately if not super admin
-              await supabase.auth.signOut();
-              toast.error("Access denied. Super admin privileges required.");
-            }
-          } catch (parseError) {
-            console.error('Error parsing JWT:', parseError);
-            await supabase.auth.signOut();
-            toast.error("Authentication error. Please try again.");
-          }
+        if (isSuperAdmin) {
+          toast.success("Welcome, Super Admin!");
+          const redirectTo = searchParams.get('redirectTo') || '/super-admin';
+          navigate(redirectTo);
         } else {
-          toast.error("Session refresh failed. Please try again.");
+          // Sign out immediately if not super admin
+          await supabase.auth.signOut();
+          toast.error("Access denied. Super admin privileges required.");
         }
       }
     } catch (error) {
