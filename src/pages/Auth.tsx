@@ -192,6 +192,8 @@ const Auth = () => {
       
       authRateLimiter.recordAttempt(rateLimitKey);
       
+      console.log('Starting simplified signup flow for email:', sanitizedEmail);
+      
       // STEP 1: Try to create new user account
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: sanitizedEmail,
@@ -199,6 +201,11 @@ const Auth = () => {
         options: {
           emailRedirectTo: `${window.location.origin}/${sanitizedSlug}`
         }
+      });
+      
+      console.log('Signup attempt result:', { 
+        success: !!authData.user, 
+        error: authError?.message || 'none' 
       });
       
       if (authError) {
