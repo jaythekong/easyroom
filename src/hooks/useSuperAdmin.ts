@@ -223,10 +223,27 @@ export function useImpersonateAdmin() {
         description: `Now acting as admin for organization. Mode: ${variables.mode}`,
       });
       
-      // Refresh the session to get the impersonated user's session
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      // Get the organization slug to redirect to the correct dashboard
+      // We need to fetch the organization data to get the slug
+      const redirectToOrgDashboard = async () => {
+        const { data: orgData, error } = await supabase
+          .from('organizations')
+          .select('slug')
+          .eq('id', variables.organizationId)
+          .single();
+          
+        if (orgData && !error) {
+          // Force a session refresh and then redirect
+          await supabase.auth.refreshSession();
+          window.location.href = `/${orgData.slug}`;
+        } else {
+          console.error('Failed to get organization slug:', error);
+          window.location.reload();
+        }
+      };
+      
+      // Small delay to ensure the backend metadata update is complete
+      setTimeout(redirectToOrgDashboard, 1000);
     },
     onError: (error) => {
       toast({
