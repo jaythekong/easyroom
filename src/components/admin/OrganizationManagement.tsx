@@ -1,17 +1,17 @@
 import { useState } from "react";
-import { usePlatformOrganizations, useOrganizationAuditLog, useUpdateOrganizationStatus } from "@/hooks/useSuperAdmin";
+import { usePlatformOrganizations, useUpdateOrganizationStatus } from "@/hooks/useSuperAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, Pause, Play, Users, Building2, Calendar, Clock } from "lucide-react";
+import { Search, Eye, Pause, Play, Building2 } from "lucide-react";
 import { format } from "date-fns";
-import type { PlatformOrganization, AuditLogEntry } from "@/hooks/useSuperAdmin";
+import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
+import type { PlatformOrganization } from "@/hooks/useSuperAdmin";
 
 export function OrganizationManagement() {
   const [search, setSearch] = useState("");
@@ -22,7 +22,6 @@ export function OrganizationManagement() {
   const [reason, setReason] = useState("");
 
   const { data, isLoading } = usePlatformOrganizations(search, currentPage, 10);
-  const { data: auditLog } = useOrganizationAuditLog(selectedOrg?.id || "");
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrganizationStatus();
 
   const handleStatusChange = (org: PlatformOrganization, action: 'suspend' | 'reactivate') => {
@@ -173,109 +172,12 @@ export function OrganizationManagement() {
       </Card>
 
       {/* Organization Detail Drawer */}
-      <Sheet open={!!selectedOrg && !showStatusModal} onOpenChange={() => setSelectedOrg(null)}>
-        <SheetContent className="w-[500px] sm:w-[600px]">
-          {selectedOrg && (
-            <>
-              <SheetHeader>
-                <SheetTitle>{selectedOrg.name}</SheetTitle>
-                <div className="flex items-center space-x-2">
-                  <Badge variant={selectedOrg.status === 'active' ? 'default' : 'destructive'}>
-                    {selectedOrg.status}
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">/{selectedOrg.slug}</span>
-                </div>
-              </SheetHeader>
-
-              <div className="mt-6 space-y-6">
-                {/* Quick Stats */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <Users className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                    <div className="text-2xl font-bold">{selectedOrg.user_count}</div>
-                    <div className="text-xs text-muted-foreground">Users</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <Building2 className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                    <div className="text-2xl font-bold">{selectedOrg.room_count}</div>
-                    <div className="text-xs text-muted-foreground">Rooms</div>
-                  </div>
-                  <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <Calendar className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
-                    <div className="text-2xl font-bold">{selectedOrg.booking_count}</div>
-                    <div className="text-xs text-muted-foreground">Bookings (30d)</div>
-                  </div>
-                </div>
-
-                {/* Organization Info */}
-                <div>
-                  <h3 className="font-semibold mb-3">Organization Details</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Created:</span>
-                      <span>{format(new Date(selectedOrg.created_at), 'MMM d, yyyy HH:mm')}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">ID:</span>
-                      <span className="font-mono text-xs">{selectedOrg.id}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Audit Log */}
-                <div>
-                  <h3 className="font-semibold mb-3">Recent Activity</h3>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {auditLog && auditLog.length > 0 ? (
-                      auditLog.slice(0, 5).map((entry) => (
-                        <div key={entry.id} className="flex items-start space-x-2 text-sm p-2 bg-muted/30 rounded">
-                          <Clock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="font-medium">{entry.action}</div>
-                            {entry.reason && (
-                              <div className="text-muted-foreground">{entry.reason}</div>
-                            )}
-                            <div className="text-xs text-muted-foreground">
-                              {format(new Date(entry.created_at), 'MMM d, HH:mm')}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4 text-muted-foreground text-sm">
-                        No recent activity
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex space-x-2 pt-4 border-t">
-                  {selectedOrg.status === 'active' ? (
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleStatusChange(selectedOrg, 'suspend')}
-                      className="flex-1"
-                    >
-                      <Pause className="h-4 w-4 mr-2" />
-                      Suspend Organization
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="default"
-                      onClick={() => handleStatusChange(selectedOrg, 'reactivate')}
-                      className="flex-1"
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      Reactivate Organization
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+      <OrganizationDetailDrawer
+        organization={selectedOrg}
+        open={!!selectedOrg && !showStatusModal}
+        onClose={() => setSelectedOrg(null)}
+        onStatusChange={handleStatusChange}
+      />
 
       {/* Status Change Confirmation Modal */}
       <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>

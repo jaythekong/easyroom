@@ -5,19 +5,21 @@ import { Button } from "@/components/ui/button";
 import { useOrganizationAuditLog, useImpersonateAdmin } from "@/hooks/useSuperAdmin";
 import { formatDistance } from "date-fns";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { Building2, Users, MapPin, Calendar, Clock, User, UserCheck, Eye, Settings } from "lucide-react";
+import { Building2, Users, MapPin, Calendar, Clock, User, UserCheck, Eye, Settings, Pause, Play } from "lucide-react";
 import type { PlatformOrganization } from "@/hooks/useSuperAdmin";
 
 interface OrganizationDetailDrawerProps {
   organization: PlatformOrganization | null;
   open: boolean;
   onClose: () => void;
+  onStatusChange?: (org: PlatformOrganization, action: 'suspend' | 'reactivate') => void;
 }
 
 export function OrganizationDetailDrawer({ 
   organization, 
   open, 
-  onClose 
+  onClose,
+  onStatusChange
 }: OrganizationDetailDrawerProps) {
   const { data: auditLog, isLoading: auditLoading } = useOrganizationAuditLog(
     organization?.id || ""
@@ -31,6 +33,12 @@ export function OrganizationDetailDrawer({
       organizationId: organization.id,
       mode
     });
+  };
+
+  const handleStatusAction = (action: 'suspend' | 'reactivate') => {
+    if (onStatusChange) {
+      onStatusChange(organization, action);
+    }
   };
 
   return (
@@ -189,6 +197,38 @@ export function OrganizationDetailDrawer({
               )}
             </CardContent>
           </Card>
+
+          {/* Organization Actions */}
+          {onStatusChange && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Organization Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-3">
+                  {organization.status === 'active' ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleStatusAction('suspend')}
+                      className="flex items-center gap-2"
+                    >
+                      <Pause className="h-4 w-4" />
+                      Suspend Organization
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="default"
+                      onClick={() => handleStatusAction('reactivate')}
+                      className="flex items-center gap-2"
+                    >
+                      <Play className="h-4 w-4" />
+                      Reactivate Organization
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </SheetContent>
     </Sheet>
