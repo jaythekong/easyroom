@@ -564,36 +564,61 @@ const Auth = () => {
         
         // If we're in an org-specific auth page, check if user has access to this organization
         if (orgSlug && organization) {
+          console.log('🔐 Checking organization access:', {
+            orgSlug,
+            organizationName: organization.name,
+            organizationId: organization.id,
+            userEmail: sanitizedEmail
+          });
+          
           // Check if user has membership in this organization
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
-            const { data: membership } = await supabase
+            console.log('👤 User found:', { userId: user.id, email: user.email });
+            
+            const { data: membership, error: membershipError } = await supabase
               .from('user_organization_memberships')
               .select('role')
               .eq('user_id', user.id)
               .eq('organization_id', organization.id)
               .maybeSingle();
             
+            console.log('🏢 Membership check result:', { 
+              membership, 
+              membershipError,
+              hasAccess: !!membership 
+            });
+            
             if (!membership) {
               // User doesn't have access to this organization
+              console.log('❌ ACCESS DENIED - User not member of organization');
               toast.error(`You don't have access to ${organization.name}. Contact an admin to get invited.`);
               
               // Find user's available organizations
               const { data: userOrgs } = await supabase
                 .from('user_organization_memberships')
-                .select('organization_id, organizations(name, slug)')
+                .select(`
+                  organization_id, 
+                  organizations!inner(name, slug)
+                `)
                 .eq('user_id', user.id);
               
+              console.log('🔍 User available orgs:', userOrgs);
+              
               if (userOrgs && userOrgs.length > 0) {
-                // Redirect to user's first available organization
+                // Redirect to user's first available organization  
                 const firstOrg = userOrgs[0].organizations;
+                console.log('🔀 Redirecting to first available org:', firstOrg);
                 toast.success(`Redirecting you to ${firstOrg.name}...`);
                 navigate(`/${firstOrg.slug}`);
               } else {
                 // User has no organizations, redirect to main page
+                console.log('🏠 No orgs found, redirecting to home');
                 navigate('/');
               }
               return;
+            } else {
+              console.log('✅ ACCESS GRANTED - User is member of organization');
             }
           }
         }
