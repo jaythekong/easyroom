@@ -44,32 +44,24 @@ export function AccessDenied({ orgSlug, orgName }: AccessDeniedProps) {
           <div>
             <h2 className="text-lg font-semibold">Access Denied</h2>
             <p className="text-muted-foreground mt-2">
-              You don't have permission to view{" "}
+              You don't have access to{" "}
               <span className="font-semibold">
                 {orgName || orgSlug}
               </span>
               .
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Contact an admin to get invited to this organization.
+              Contact an admin to get invited.
             </p>
           </div>
           
           <div className="flex flex-col gap-2 w-full">
-            <Button asChild variant="outline">
-              <Link to="/select-org">
+            <Button asChild>
+              <Link to="/auth">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Go to My Organizations
+                Back to Login
               </Link>
             </Button>
-            
-            {redirectTo && (
-              <Button asChild variant="ghost" size="sm">
-                <Link to={redirectTo}>
-                  Back to where you came from
-                </Link>
-              </Button>
-            )}
           </div>
         </CardContent>
       </Card>
