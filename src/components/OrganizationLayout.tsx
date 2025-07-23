@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
+import { logger } from "@/lib/logger";
 
 interface OrganizationLayoutProps {
   children: ReactNode;
@@ -22,25 +23,14 @@ export function OrganizationLayout({
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
 
-  console.log('OrganizationLayout state:', {
-    orgLoading,
-    authLoading,
-    organization: organization?.name,
-    user: user?.email,
-    requireAuth,
-    isUserInOrganization,
-    userRole,
-    pathname: location.pathname
-  });
-
-  // Show loading only for initial loads, not quick navigation transitions
+  // Show loading only for initial loads
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
             <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="text-muted-foreground">Checking authentication...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </CardContent>
         </Card>
       </div>
@@ -70,7 +60,7 @@ export function OrganizationLayout({
             <div>
               <h2 className="text-lg font-semibold">Organization Not Found</h2>
               <p className="text-muted-foreground mt-2">
-                {error || "The organization you're looking for doesn't exist."}
+                The organization you're looking for doesn't exist.
               </p>
             </div>
             <Button onClick={() => window.history.back()} variant="outline">
@@ -87,13 +77,17 @@ export function OrganizationLayout({
     // If no user, redirect to org auth
     if (!user) {
       const redirectPath = `/${organization.slug}${location.pathname.replace(/^\/[^\/]+/, '')}`;
-      console.log('OrganizationLayout: No user, redirecting to org auth with redirectTo:', redirectPath);
       return <Navigate to={`/${organization.slug}/auth?redirectTo=${encodeURIComponent(redirectPath)}`} replace />;
     }
 
-    // If user exists but not in organization, show access denied (only if not loading)
+    // If user exists but not in organization, show access denied
     if (!isUserInOrganization && !orgLoading) {
-      console.log('OrganizationLayout: User not in organization, showing access denied');
+      logger.security('Access denied - user not in organization', {
+        userId: user.id,
+        organizationId: organization.id,
+        userEmail: user.email
+      });
+      
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <Card className="w-full max-w-md">
@@ -102,10 +96,7 @@ export function OrganizationLayout({
               <div>
                 <h2 className="text-lg font-semibold">Access Denied</h2>
                 <p className="text-muted-foreground mt-2">
-                  You don't have access to <span className="font-medium">{organization.name}</span>
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  User: {user.email}
+                  You don't have access to this organization.
                 </p>
               </div>
               <Button onClick={() => window.history.back()} variant="outline">
@@ -119,6 +110,13 @@ export function OrganizationLayout({
 
     // Check admin requirements
     if (requireAdmin && userRole !== 'admin') {
+      logger.security('Access denied - admin required', {
+        userId: user.id,
+        organizationId: organization.id,
+        requiredRole: 'admin',
+        userRole
+      });
+      
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <Card className="w-full max-w-md">
@@ -127,7 +125,7 @@ export function OrganizationLayout({
               <div>
                 <h2 className="text-lg font-semibold">Admin Access Required</h2>
                 <p className="text-muted-foreground mt-2">
-                  You need admin privileges to access this section of <span className="font-medium">{organization.name}</span>
+                  You need admin privileges to access this section.
                 </p>
               </div>
               <Button onClick={() => window.history.back()} variant="outline">
@@ -140,7 +138,6 @@ export function OrganizationLayout({
     }
   }
 
-  console.log('OrganizationLayout: All checks passed, rendering children');
   // Render children with organization context
   return <>{children}</>;
 }
