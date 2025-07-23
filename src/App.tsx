@@ -30,12 +30,12 @@ const App = () => (
       disableTransitionOnChange
     >
       <AuthProvider>
-        <PostConfirmationHandler />
         <TooltipProvider>
           <NavigationErrorBoundary>
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <PostConfirmationHandler />
               <Routes>
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />
