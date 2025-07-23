@@ -68,41 +68,39 @@ export function PlatformAnalytics() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-lg bg-accent/10 border border-accent/20">
-          <BarChart3 className="h-5 w-5 text-accent" />
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <div className="p-1.5 rounded-lg bg-accent/10 border border-accent/20">
+          <BarChart3 className="h-4 w-4 text-accent" />
         </div>
         <div>
-          <h2 className="text-2xl font-semibold">Platform Analytics</h2>
-          <p className="text-muted-foreground">Real-time platform statistics and insights</p>
+          <h2 className="text-lg font-semibold">Platform Analytics</h2>
+          <p className="text-xs text-muted-foreground">Real-time statistics</p>
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         {metrics.map((metric, index) => {
           const IconComponent = metric.icon;
           return (
             <Card 
               key={metric.title} 
-              className={`glass-card hover-scale border-0 bg-gradient-to-br ${metric.gradient} backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/5`}
-              style={{ animationDelay: `${index * 100}ms` }}
+              className={`glass-card hover-scale border-0 bg-gradient-to-br ${metric.gradient} backdrop-blur-sm transition-all duration-300 hover:shadow-md hover:shadow-primary/5`}
+              style={{ animationDelay: `${index * 50}ms` }}
             >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <div className="space-y-1">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {metric.title}
-                  </CardTitle>
-                </div>
-                <div className={`p-2.5 rounded-xl ${metric.iconBg} border border-white/10`}>
-                  <IconComponent className={`h-5 w-5 ${metric.iconColor}`} />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-xs font-medium text-muted-foreground">
+                  {metric.title}
+                </CardTitle>
+                <div className={`p-1.5 rounded-lg ${metric.iconBg} border border-white/10`}>
+                  <IconComponent className={`h-4 w-4 ${metric.iconColor}`} />
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-3xl font-bold tracking-tight">
+              <CardContent className="space-y-1">
+                <div className="text-2xl font-bold tracking-tight">
                   {metric.value.toLocaleString()}
                 </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
+                <p className="text-xs text-muted-foreground leading-tight">
                   {metric.subtitle}
                 </p>
               </CardContent>
