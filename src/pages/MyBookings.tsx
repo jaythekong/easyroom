@@ -74,11 +74,6 @@ export default function MyBookings() {
         .from('bookings')
         .select(`
           *,
-          user_profiles!bookings_user_id_fkey (
-            email,
-            display_name,
-            avatar_url
-          ),
           rooms (
             id,
             name,
@@ -97,18 +92,68 @@ export default function MyBookings() {
         query = query.eq('user_id', user?.id);
       }
 
-      const { data, error } = await query.order('start_time', { ascending: true });
+      const { data: bookingsData, error: bookingsError } = await query.order('start_time', { ascending: true });
 
-      if (error) throw error;
+      if (bookingsError) throw bookingsError;
+
+      if (!bookingsData || bookingsData.length === 0) {
+        setBookings([]);
+        return;
+      }
+
+      // Get unique user IDs from the bookings
+      const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
+      
+      // Get the current user's organization from their profile
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('user_id', user?.id || '')
+        .maybeSingle();
+
+      if (!userProfile?.organization_id) {
+        console.error('No organization found for user');
+        setBookings([]);
+        return;
+      }
+      
+      // Fetch user profiles for these users in this organization
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('user_id, email, display_name, avatar_url')
+        .eq('organization_id', userProfile.organization_id)
+        .in('user_id', userIds);
+      
+      if (profilesError) {
+        console.error('Error fetching user profiles:', profilesError);
+        // Don't throw error, just continue without profile data
+      }
+
+      // Create a map of user profiles for quick lookup
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.user_id, {
+            email: profile.email,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url,
+          });
+        });
+      }
 
       // Transform the data to match our interface
-      const formattedBookings = data?.map(booking => ({
+      const formattedBookings = bookingsData.map(booking => ({
         ...booking,
+        user_profiles: profilesMap.get(booking.user_id) || {
+          email: 'Unknown user',
+          display_name: null,
+          avatar_url: null,
+        },
         room: {
           ...booking.rooms,
           amenities: booking.rooms?.room_amenities?.map(ra => ra.amenities.name) || []
         }
-      })) || [];
+      }));
 
       setBookings(formattedBookings);
     } catch (error) {
