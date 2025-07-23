@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { User, Upload, Save } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { User, Upload, Save, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { passwordSchema } from "@/lib/validation";
 
 interface ProfileModalProps {
   profile: {
@@ -36,6 +39,12 @@ export function ProfileModal({ profile, onProfileUpdate, isOpen: externalIsOpen,
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [bio, setBio] = useState(profile?.bio || "");
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
+  
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -77,6 +86,65 @@ export function ProfileModal({ profile, onProfileUpdate, isOpen: externalIsOpen,
       });
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!newPassword || !currentPassword) {
+      toast({
+        title: "Error",
+        description: "Please fill in all password fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "New passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const passwordValidation = passwordSchema.safeParse(newPassword);
+      if (!passwordValidation.success) {
+        toast({
+          title: "Error",
+          description: passwordValidation.error.errors[0]?.message || "Password does not meet requirements",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setLoading(true);
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password updated!",
+        description: "Your password has been changed successfully.",
+      });
+
+      // Clear password fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setShowPasswordSection(false);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -192,6 +260,72 @@ export function ProfileModal({ profile, onProfileUpdate, isOpen: externalIsOpen,
             onChange={(e) => setBio(e.target.value)}
             rows={3}
           />
+        </div>
+
+        <Separator />
+
+        {/* Password Change Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4" />
+              <span className="font-medium">Change Password</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPasswordSection(!showPasswordSection)}
+            >
+              {showPasswordSection ? "Cancel" : "Change"}
+            </Button>
+          </div>
+
+          {showPasswordSection && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Current Password</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  placeholder="Enter current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+                <PasswordStrength password={newPassword} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+
+              <Button
+                onClick={handlePasswordChange}
+                disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+                className="w-full"
+              >
+                <Lock className="h-4 w-4 mr-2" />
+                {loading ? "Updating..." : "Update Password"}
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
