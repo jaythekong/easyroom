@@ -42,12 +42,14 @@ export interface PlatformStats {
 export function useSuperAdminCheck() {
   const { user, session } = useAuth();
   
-  console.log('Super admin check:', { user: !!user, session: !!session });
+  console.log('=== useSuperAdminCheck Debug ===');
+  console.log('user exists:', !!user);
+  console.log('session exists:', !!session);
+  console.log('session.user exists:', !!session?.user);
+  console.log('session.user.app_metadata:', session?.user?.app_metadata);
   
   const isSuperAdmin = session?.user?.app_metadata?.super_admin === true;
-
-  console.log('app_metadata:', session?.user?.app_metadata);
-  console.log('isSuperAdmin:', isSuperAdmin);
+  console.log('final isSuperAdmin result:', isSuperAdmin);
 
   return {
     isSuperAdmin,

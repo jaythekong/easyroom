@@ -21,19 +21,10 @@ export default function SuperAdminDashboard() {
     );
   }
 
-  // Check super admin status
-  const isSuperAdmin = session?.access_token ? 
-    (() => {
-      try {
-        const payload = JSON.parse(atob(session.access_token.split('.')[1]));
-        console.log('JWT payload super_admin:', payload.super_admin);
-        return payload.super_admin === true;
-      } catch (error) {
-        console.error('Error parsing JWT:', error);
-        return false;
-      }
-    })() : false;
-
+  // Check super admin status using app_metadata
+  const isSuperAdmin = session?.user?.app_metadata?.super_admin === true;
+  
+  console.log('session.user.app_metadata:', session?.user?.app_metadata);
   console.log('isSuperAdmin:', isSuperAdmin);
 
   if (!isSuperAdmin) {
