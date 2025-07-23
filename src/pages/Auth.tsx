@@ -967,21 +967,49 @@ const Auth = () => {
                                     return;
                                   }
                                   
-                                   // Just validate that email/password are acceptable
-                                   // Don't create the account yet - that happens in step 3
+                                   // Validate credentials before proceeding
                                    console.log('Step 1: Validating credentials for:', sanitizedEmail);
                                    
                                    // Check if user is already signed in
                                    const { data: { user } } = await supabase.auth.getUser();
                                    if (user) {
-                                     // User is already authenticated, proceed to step 2
+                                     // User is already authenticated, verify email matches
+                                     if (user.email !== sanitizedEmail) {
+                                       toast.error("Email mismatch. Please sign out and try again with the correct email.");
+                                       return;
+                                     }
+                                     // Email matches, proceed to step 2
                                      setOrgCreationStep(2);
                                      return;
                                    }
                                    
-                                   // Credentials look good, proceed to step 2
-                                   toast.success("Credentials validated! Please continue with organization setup.");
-                                   setOrgCreationStep(2);
+                                   // User not signed in - attempt to validate credentials by trying to sign in
+                                   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                                     email: sanitizedEmail,
+                                     password: password,
+                                   });
+                                   
+                                   if (authError) {
+                                     if (authError.message.includes("Invalid login credentials") || 
+                                         authError.message.includes("Email not confirmed")) {
+                                       toast.error("Invalid email or password. Please check your credentials.");
+                                     } else {
+                                       toast.error(authError.message);
+                                     }
+                                     logger.security('Step 1 credential validation failed', { 
+                                       error: authError.message, 
+                                       email: sanitizedEmail 
+                                     });
+                                     return;
+                                   }
+                                   
+                                   if (authData.user) {
+                                     // Credentials are valid, proceed to step 2
+                                     toast.success("Credentials validated! Please continue with organization setup.");
+                                     setOrgCreationStep(2);
+                                   } else {
+                                     toast.error("Authentication failed. Please try again.");
+                                   }
                                 } catch (error) {
                                   logger.error('Admin account setup error:', error);
                                   toast.error("An error occurred while setting up your account.");
