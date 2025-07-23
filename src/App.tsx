@@ -21,6 +21,7 @@ import { SelectOrg } from "./pages/SelectOrg";
 import ThankYouPage from "./pages/ThankYouPage";
 import FirstRoomOnboarding from "./pages/FirstRoomOnboarding";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminAuth from "./pages/SuperAdminAuth";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
                 <Route path="/access-denied" element={<AccessDeniedPage />} />
                 <Route path="/select-org" element={<SelectOrg />} />
                 <Route path="/super-admin" element={<SuperAdminDashboard />} />
+                <Route path="/super-admin/auth" element={<SuperAdminAuth />} />
                 
               {/* Organization-specific auth route */}
               <Route path="/:orgSlug/auth" element={

@@ -13,7 +13,7 @@ export default function SuperAdminDashboard() {
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Super Admin Dashboard</h1>
           <p className="text-muted-foreground">Please log in to continue</p>
-          <a href="/auth?redirectTo=/super-admin" className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded">
+          <a href="/super-admin/auth?redirectTo=/super-admin" className="inline-block bg-primary text-primary-foreground px-4 py-2 rounded">
             Log In
           </a>
         </div>
