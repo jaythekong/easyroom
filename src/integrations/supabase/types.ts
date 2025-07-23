@@ -161,6 +161,7 @@ export type Database = {
           primary_color: string | null
           referral_source: string | null
           slug: string
+          status: string | null
           tagline: string | null
           telegram_bot_token: string | null
           timezone: string | null
@@ -176,6 +177,7 @@ export type Database = {
           primary_color?: string | null
           referral_source?: string | null
           slug: string
+          status?: string | null
           tagline?: string | null
           telegram_bot_token?: string | null
           timezone?: string | null
@@ -191,11 +193,42 @@ export type Database = {
           primary_color?: string | null
           referral_source?: string | null
           slug?: string
+          status?: string | null
           tagline?: string | null
           telegram_bot_token?: string | null
           timezone?: string | null
           updated_at?: string
           welcome_message?: string | null
+        }
+        Relationships: []
+      }
+      platform_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          organization_id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          reason?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -471,6 +504,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_organization_stats: {
+        Args: { org_id: string }
+        Returns: Json
+      }
+      get_platform_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_user_admin_org_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
