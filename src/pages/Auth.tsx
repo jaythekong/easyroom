@@ -259,6 +259,8 @@ const Auth = () => {
       }
 
       if (authData.user) {
+        let orgData: any = null; // Declare orgData outside try block so it's accessible in catch
+        
         try {
           // Step 1: First check if slug is already taken
           const { data: existingOrg } = await supabase
@@ -273,7 +275,7 @@ const Auth = () => {
           }
             
           // Step 2: Create the organization
-          const { data: orgData, error: orgError } = await supabase
+          const { data: createdOrgData, error: orgError } = await supabase
             .from('organizations')
             .insert({
               name: sanitizedOrgName,
@@ -294,6 +296,8 @@ const Auth = () => {
             }
             return;
           }
+          
+          orgData = createdOrgData; // Assign to the outer scope variable
           
           // Step 3: Create user membership for the NEW organization
           const { error: membershipError } = await supabase
