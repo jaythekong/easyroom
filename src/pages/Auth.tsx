@@ -387,6 +387,9 @@ const Auth = () => {
         // Always require email confirmation for proper verification
         toast.success("Organization created! Please check your email to confirm your account and access your organization.");
         
+        // Store the organization slug for post-confirmation redirect
+        localStorage.setItem('pendingOrgSlug', orgData.slug);
+        
         // Note: User will be redirected automatically after email confirmation
       }
     } catch (error) {

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "./hooks/useAuth";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
+import { PostConfirmationHandler } from "./components/PostConfirmationHandler";
 import { OrganizationLayout } from "./components/OrganizationLayout";
 import { NavigationErrorBoundary } from "./components/NavigationErrorBoundary";
 import Index from "./pages/Index";
@@ -16,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
 import LandingPage from "./pages/LandingPage";
 import ThankYouPage from "./pages/ThankYouPage";
+import FirstRoomOnboarding from "./pages/FirstRoomOnboarding";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,7 @@ const App = () => (
       disableTransitionOnChange
     >
       <AuthProvider>
+        <PostConfirmationHandler />
         <TooltipProvider>
           <NavigationErrorBoundary>
             <Toaster />
@@ -59,6 +62,11 @@ const App = () => (
                     <Route path="my-bookings" element={
                       <OrganizationLayout requireAuth={true}>
                         <MyBookings />
+                      </OrganizationLayout>
+                    } />
+                    <Route path="onboarding" element={
+                      <OrganizationLayout requireAuth={true}>
+                        <FirstRoomOnboarding />
                       </OrganizationLayout>
                     } />
                     <Route path="admin" element={
