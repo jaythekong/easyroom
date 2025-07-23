@@ -1,6 +1,6 @@
 
 import { ReactNode } from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Loader2, Building, AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,16 @@ export function OrganizationLayout({
   const { organization, isLoading: orgLoading, error, isUserInOrganization, userRole } = useOrganization();
   const { user, loading: authLoading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleGoBack = () => {
+    // Try to go back in history, but if no history, go to root
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
 
   // Show loading only for initial loads
   if (authLoading) {
@@ -63,7 +73,7 @@ export function OrganizationLayout({
                 The organization you're looking for doesn't exist.
               </p>
             </div>
-            <Button onClick={() => window.history.back()} variant="outline">
+            <Button onClick={handleGoBack} variant="outline">
               Go Back
             </Button>
           </CardContent>
@@ -99,7 +109,7 @@ export function OrganizationLayout({
                   You don't have access to this organization.
                 </p>
               </div>
-              <Button onClick={() => window.history.back()} variant="outline">
+              <Button onClick={handleGoBack} variant="outline">
                 Go Back
               </Button>
             </CardContent>
@@ -128,7 +138,7 @@ export function OrganizationLayout({
                   You need admin privileges to access this section.
                 </p>
               </div>
-              <Button onClick={() => window.history.back()} variant="outline">
+              <Button onClick={handleGoBack} variant="outline">
                 Go Back
               </Button>
             </CardContent>
