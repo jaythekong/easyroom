@@ -90,6 +90,53 @@ const Auth = () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
+          // If we're in an org-specific auth page, check if user has access to this organization
+          if (orgSlug && organization) {
+            console.log('🔐 INITIAL CHECK - Verifying org access for existing session:', {
+              orgSlug,
+              organizationName: organization.name,
+              organizationId: organization.id,
+              userEmail: session.user.email
+            });
+            
+            const { data: membership } = await supabase
+              .from('user_organization_memberships')
+              .select('role')
+              .eq('user_id', session.user.id)
+              .eq('organization_id', organization.id)
+              .maybeSingle();
+            
+            if (!membership) {
+              // User doesn't have access to this organization
+              console.log('❌ INITIAL CHECK - User not member of organization, blocking access');
+              toast.error(`You don't have access to ${organization.name}. Contact an admin to get invited.`);
+              
+              // Find user's available organizations
+              const { data: userOrgs } = await supabase
+                .from('user_organization_memberships')
+                .select(`
+                  organization_id, 
+                  organizations!inner(name, slug)
+                `)
+                .eq('user_id', session.user.id);
+              
+              if (userOrgs && userOrgs.length > 0) {
+                // Redirect to user's first available organization  
+                const firstOrg = userOrgs[0].organizations;
+                console.log('🔀 INITIAL CHECK - Redirecting to first available org:', firstOrg);
+                toast.success(`Redirecting you to ${firstOrg.name}...`);
+                navigate(`/${firstOrg.slug}`);
+              } else {
+                // User has no organizations, redirect to main page
+                console.log('🏠 INITIAL CHECK - No orgs found, redirecting to home');
+                navigate('/');
+              }
+              return;
+            } else {
+              console.log('✅ INITIAL CHECK - User has access to organization');
+            }
+          }
+          
           const redirectTo = searchParams.get('redirectTo') || `/${orgSlug}`;
           logger.debug('Auth: User already logged in, redirecting to:', redirectTo);
           navigate(redirectTo);
