@@ -9,7 +9,6 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
-  forceRefresh: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -101,47 +100,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const forceRefresh = useCallback(async () => {
-    try {
-      logger.debug('Force refreshing authentication session...');
-      
-      // First try to refresh the session
-      const { data: { session }, error } = await supabase.auth.refreshSession();
-      
-      if (error) {
-        logger.error('Session refresh failed:', error);
-        // If refresh fails, get the current session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        if (currentSession) {
-          setSession(currentSession);
-          setUser(currentSession.user);
-          logger.debug('Used current session after refresh failure');
-        } else {
-          // No valid session at all
-          setSession(null);
-          setUser(null);
-          logger.debug('No valid session found');
-        }
-      } else if (session) {
-        setSession(session);
-        setUser(session.user);
-        logger.debug('Session refreshed successfully');
-      }
-    } catch (error) {
-      logger.error('Force refresh failed:', error);
-      setSession(null);
-      setUser(null);
-    }
-  }, []);
-
   // Memoize context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     user,
     session,
     loading,
     signOut,
-    forceRefresh,
-  }), [user, session, loading, signOut, forceRefresh]);
+  }), [user, session, loading, signOut]);
 
   return (
     <AuthContext.Provider value={contextValue}>

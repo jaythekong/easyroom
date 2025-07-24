@@ -22,7 +22,7 @@ interface OrganizationStats {
 }
 
 export function AdminStats() {
-  const { user, forceRefresh } = useAuth();
+  const { user } = useAuth();
   const { organization } = useOrganization();
   const [stats, setStats] = useState<StatsData>({
     totalRooms: 0,
@@ -51,14 +51,8 @@ export function AdminStats() {
       console.log('Current user:', user.id);
       
       try {
-        // CRITICAL: Force refresh authentication context to sync with database
-        console.log('Forcing authentication refresh...');
-        await forceRefresh();
-        
-        // Small delay to ensure auth context is properly set
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        console.log('Auth refreshed, calling get_organization_stats function...');
+        // Use the dedicated database function that bypasses RLS issues
+        console.log('Calling get_organization_stats function...');
         const { data: orgStats, error: statsError } = await supabase
           .rpc('get_organization_stats', { 
             org_id: organization.id 
@@ -131,7 +125,7 @@ export function AdminStats() {
       console.log('Missing user or organization:', { user: !!user, orgId: organization?.id });
       setLoading(false);
     }
-  }, [user, organization?.id, forceRefresh]);
+  }, [user, organization?.id]);
 
   const statsCards = [
     {
