@@ -102,7 +102,9 @@ export function TeamManagement() {
         .from('invitations')
         .select('*')
         .eq('organization_id', organization.id)
+        .eq('status', 'pending')
         .is('accepted_at', null)
+        .is('revoked_at', null)
         .gt('expires_at', new Date().toISOString());
 
       if (invitesError) {
