@@ -213,7 +213,13 @@ export default function InviteSignup() {
 
       if (authData.user) {
         // Wait for session to be fully established (prevents race condition)
-        await supabase.auth.getSession();
+        const { data: sessionData } = await supabase.auth.getSession();
+        console.log('Session after signup:', {
+          hasSession: !!sessionData.session,
+          hasUser: !!sessionData.session?.user,
+          userId: sessionData.session?.user?.id,
+          accessToken: sessionData.session?.access_token ? 'EXISTS' : 'MISSING'
+        });
         
         // Use our secure function to handle everything atomically
         // No need to pass auth_user_id - function uses auth.uid() internally
