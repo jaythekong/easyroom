@@ -208,7 +208,7 @@ async function handleTelegramWebhook(req: Request, parsedBody?: any): Promise<Re
         if (insertError) {
           console.error('Error subscribing user:', insertError);
         } else {
-          console.log(`Successfully subscribed user ${userId} to organization ${organizationId}`);
+          console.log(`✅ TELEGRAM CONNECTION SUCCESS: User ${userId} (${username}) connected to ${organization.name}`);
         }
       } else {
         console.log(`User already subscribed with chat_id ${chatId}`);

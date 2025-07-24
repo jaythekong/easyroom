@@ -60,6 +60,16 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
 
   const link = `https://t.me/${organization.telegram_bot_username}?start=${organization.slug}_${session?.user?.id}`;
 
+  const handleConnect = () => {
+    console.log('🔗 User clicked Telegram Connect button', {
+      orgSlug: organization.slug,
+      userId: session?.user?.id,
+      link
+    });
+    // Open the link in a new tab
+    window.open(link, '_blank', 'noopener,noreferrer');
+  };
+
   const handleDismiss = () => {
     localStorage.setItem(`tgDismiss_${organization.id}`, '1');
     setDismissed(true);
@@ -99,10 +109,10 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
           <>
             <p className="font-medium text-foreground flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              Connected to Telegram notifications
+              ✅ Successfully connected to Telegram!
             </p>
             <p className="text-sm text-muted-foreground">
-              You'll receive booking alerts in your Telegram DMs.
+              You'll receive booking alerts in your Telegram DMs. Check your chat with @{organization.telegram_bot_username}
             </p>
           </>
         ) : (
@@ -115,10 +125,8 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
         )}
       </div>
       {!hasSub && (
-        <Button asChild className="shrink-0">
-          <a href={link} target="_blank" rel="noopener noreferrer">
-            Connect
-          </a>
+        <Button onClick={handleConnect} className="shrink-0">
+          Connect
         </Button>
       )}
       <Button
