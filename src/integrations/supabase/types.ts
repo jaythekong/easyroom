@@ -236,6 +236,7 @@ export type Database = {
           status: string | null
           tagline: string | null
           telegram_bot_token: string | null
+          telegram_cta_enabled: boolean | null
           timezone: string | null
           updated_at: string
           welcome_message: string | null
@@ -252,6 +253,7 @@ export type Database = {
           status?: string | null
           tagline?: string | null
           telegram_bot_token?: string | null
+          telegram_cta_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string
           welcome_message?: string | null
@@ -268,6 +270,7 @@ export type Database = {
           status?: string | null
           tagline?: string | null
           telegram_bot_token?: string | null
+          telegram_cta_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string
           welcome_message?: string | null
@@ -648,6 +651,10 @@ export type Database = {
           required_role: Database["public"]["Enums"]["user_role"]
           org_id?: string
         }
+        Returns: boolean
+      }
+      has_telegram_sub: {
+        Args: { p_user: string; p_org: string }
         Returns: boolean
       }
       impersonate_admin: {

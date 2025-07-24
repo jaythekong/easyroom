@@ -18,6 +18,7 @@ import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { useBookings } from "@/hooks/useBookings";
 import { useRooms } from "@/hooks/useRooms";
+import { TelegramBanner } from "@/components/TelegramBanner";
 
 interface Room {
   id: string;
@@ -347,6 +348,11 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Telegram CTA Banner */}
+        {organization && (
+          <TelegramBanner organization={organization} />
+        )}
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="timeline" className="space-y-4 sm:space-y-6">
