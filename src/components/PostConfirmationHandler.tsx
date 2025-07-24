@@ -16,6 +16,9 @@ export const PostConfirmationHandler = () => {
         
         // Redirect to the onboarding page for the new organization
         navigate(`/${pendingOrgSlug}/onboarding`);
+      } else {
+        // If no pending org slug, redirect to select organization page
+        navigate('/select-org');
       }
     }
   }, [user?.email_confirmed_at, navigate]);
