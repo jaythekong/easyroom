@@ -582,6 +582,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation_and_create_user: {
+        Args: {
+          invitation_token: string
+          user_email: string
+          auth_user_id: string
+        }
+        Returns: Json
+      }
       end_impersonation: {
         Args: Record<PropertyKey, never>
         Returns: Json
