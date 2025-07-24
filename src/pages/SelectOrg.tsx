@@ -84,7 +84,11 @@ export function SelectOrg() {
           {organizations.map((membership) => {
             const org = membership.organizations;
             return (
-              <Card key={org.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card 
+                key={org.id} 
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/${org.slug}`)}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
@@ -102,13 +106,7 @@ export function SelectOrg() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      onClick={() => navigate(`/${org.slug}`)}
-                      variant="ghost"
-                      size="sm"
-                    >
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </CardContent>
               </Card>
