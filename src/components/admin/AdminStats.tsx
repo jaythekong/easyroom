@@ -28,25 +28,52 @@ export function AdminStats() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!organization?.id) return;
+      if (!organization?.id) {
+        console.log('No organization ID available');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Fetching admin stats for organization:', organization.id);
       
       try {
         // Get room statistics for current organization
-        const { data: rooms } = await supabase
+        console.log('Fetching rooms...');
+        const { data: rooms, error: roomsError } = await supabase
           .from("rooms")
           .select("status")
           .eq("organization_id", organization.id);
         
-        const { data: amenities } = await supabase
+        if (roomsError) {
+          console.error('Error fetching rooms:', roomsError);
+        } else {
+          console.log('Rooms fetched:', rooms?.length || 0);
+        }
+        
+        console.log('Fetching amenities...');
+        const { data: amenities, error: amenitiesError } = await supabase
           .from("amenities")
           .select("id")
           .eq("organization_id", organization.id);
+          
+        if (amenitiesError) {
+          console.error('Error fetching amenities:', amenitiesError);
+        } else {
+          console.log('Amenities fetched:', amenities?.length || 0);
+        }
 
         // Get booking statistics for current organization
-        const { data: allBookings } = await supabase
+        console.log('Fetching bookings...');
+        const { data: allBookings, error: bookingsError } = await supabase
           .from("bookings")
           .select("user_id")
           .eq("organization_id", organization.id);
+          
+        if (bookingsError) {
+          console.error('Error fetching bookings:', bookingsError);
+        } else {
+          console.log('Bookings fetched:', allBookings?.length || 0);
+        }
 
         const totalRooms = rooms?.length || 0;
         const activeRooms = rooms?.filter(room => room.status === 'active').length || 0;
@@ -55,6 +82,14 @@ export function AdminStats() {
         // Calculate personal and organization bookings
         const personalBookings = allBookings?.filter(booking => booking.user_id === user?.id).length || 0;
         const organizationBookings = allBookings?.length || 0;
+
+        console.log('Stats calculated:', {
+          totalRooms,
+          activeRooms, 
+          totalAmenities,
+          personalBookings,
+          organizationBookings
+        });
 
         setStats({
           totalRooms,
@@ -65,6 +100,14 @@ export function AdminStats() {
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
+        // Set stats to show something even on error
+        setStats({
+          totalRooms: 0,
+          activeRooms: 0,
+          totalAmenities: 0,
+          personalBookings: 0,
+          organizationBookings: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -72,6 +115,9 @@ export function AdminStats() {
 
     if (user && organization?.id) {
       fetchStats();
+    } else {
+      console.log('Missing user or organization:', { user: !!user, orgId: organization?.id });
+      setLoading(false);
     }
   }, [user, organization?.id]);
 
