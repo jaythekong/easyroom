@@ -19,6 +19,18 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("User email:", user.email);
     
+    // Validate RESEND_API_KEY
+    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    if (!resendApiKey || resendApiKey.trim() === "") {
+      console.error("RESEND_API_KEY is missing or empty");
+      return new Response(null, { 
+        status: 204,
+        headers: corsHeaders
+      });
+    }
+    
+    console.log("RESEND_API_KEY found, length:", resendApiKey.length);
+    
     // Build the confirmation URL
     const confirmationUrl = `${email_data.site_url}/auth/callback?token_hash=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to || '/')}`;
     
@@ -26,7 +38,7 @@ const handler = async (req: Request): Promise<Response> => {
     fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+        "Authorization": `Bearer ${resendApiKey.trim()}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -74,11 +86,16 @@ const handler = async (req: Request): Promise<Response> => {
           </html>
         `
       })
-    }).then(response => {
+    }).then(async response => {
       console.log("Resend API response status:", response.status);
-      return response.json();
-    }).then(data => {
-      console.log("Email sent successfully:", data);
+      const responseText = await response.text();
+      console.log("Resend API response:", responseText);
+      
+      if (!response.ok) {
+        console.error("Resend API error:", response.status, responseText);
+      } else {
+        console.log("Email sent successfully via Resend");
+      }
     }).catch(error => {
       console.error("Error sending email:", error);
     });
