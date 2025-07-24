@@ -31,6 +31,24 @@ export default function InviteRedirect() {
           .eq('short_code', shortCode.toUpperCase())
           .single();
 
+        // Update open count when accessed
+        if (data?.invite_token) {
+          // First get current count, then increment
+          const { data: currentData } = await supabase
+            .from('invitations')
+            .select('open_count')
+            .eq('invite_token', data.invite_token)
+            .single();
+          
+          await supabase
+            .from('invitations')
+            .update({ 
+              open_count: (currentData?.open_count || 0) + 1, 
+              last_opened_at: new Date().toISOString() 
+            })
+            .eq('invite_token', data.invite_token);
+        }
+
         if (error || !data) {
           console.error('Invalid short code:', error);
           navigate("/");
