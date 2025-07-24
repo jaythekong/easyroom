@@ -163,13 +163,10 @@ export function TeamManagement() {
 
     setIsLoading(true);
     try {
-      // Use a unique identifier for link-only invites to avoid constraint violations
-      const linkIdentifier = `link-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
       const { data, error } = await supabase
         .from('invitations')
         .insert({
-          email: linkIdentifier, // Use unique identifier instead of empty string
+          email: null, // NULL for link invites - allows any email to use the link
           role: linkRole as 'admin' | 'member',
           invited_by: user.id,
           organization_id: organization.id,
@@ -544,9 +541,9 @@ export function TeamManagement() {
                 {invitations.map((invite) => (
                   <TableRow key={invite.id}>
                     <TableCell className="font-medium">
-                      {invite.email?.startsWith('link-') ? 
-                        <span className="italic text-muted-foreground">Link invite</span> : 
-                        invite.email || <span className="italic text-muted-foreground">Link invite</span>
+                      {invite.email ? 
+                        invite.email : 
+                        <span className="italic text-muted-foreground">Link invite</span>
                       }
                     </TableCell>
                     <TableCell>
