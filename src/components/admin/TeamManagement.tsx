@@ -351,7 +351,7 @@ export function TeamManagement() {
       }
       console.log('✅ Deleted telegram subscriptions');
 
-      // Step 4: Delete invitation audit log entries
+      // Step 4: Delete invitation audit log entries  
       const { error: auditError } = await supabase
         .from('invitation_audit_log')
         .delete()
