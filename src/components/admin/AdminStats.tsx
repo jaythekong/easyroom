@@ -14,6 +14,13 @@ interface StatsData {
   organizationBookings: number;
 }
 
+interface OrganizationStats {
+  users: number;
+  rooms: number;
+  bookings_30_days: number;
+  total_bookings: number;
+}
+
 export function AdminStats() {
   const { user } = useAuth();
   const { organization } = useOrganization();
@@ -43,77 +50,59 @@ export function AdminStats() {
       console.log('Fetching admin stats for organization:', organization.id);
       console.log('Current user:', user.id);
       
-      // Force refresh the Supabase session
-      const { error: refreshError } = await supabase.auth.getSession();
-      if (refreshError) {
-        console.error('Session refresh error:', refreshError);
-        setLoading(false);
-        return;
-      }
-      
       try {
-        // Get room statistics for current organization
-        // Note: RLS only allows viewing 'active' rooms, so we can only count active rooms
-        console.log('Fetching active rooms...');
-        const { data: activeRooms, error: roomsError } = await supabase
-          .from("rooms")
-          .select("id")
-          .eq("organization_id", organization.id);
+        // Use the dedicated database function that bypasses RLS issues
+        console.log('Calling get_organization_stats function...');
+        const { data: orgStats, error: statsError } = await supabase
+          .rpc('get_organization_stats', { 
+            org_id: organization.id 
+          });
         
-        if (roomsError) {
-          console.error('Error fetching rooms:', roomsError);
-        } else {
-          console.log('Active rooms fetched:', activeRooms?.length || 0);
+        if (statsError) {
+          console.error('Error fetching organization stats:', statsError);
+          throw statsError;
         }
-        
-        console.log('Fetching amenities...');
+
+        console.log('Organization stats received:', orgStats);
+
+        // Cast to proper type
+        const stats = orgStats as unknown as OrganizationStats;
+
+        // Get amenities count separately if needed
+        console.log('Fetching amenities count...');
         const { data: amenities, error: amenitiesError } = await supabase
           .from("amenities")
-          .select("id")
+          .select("id", { count: 'exact' })
           .eq("organization_id", organization.id);
           
         if (amenitiesError) {
           console.error('Error fetching amenities:', amenitiesError);
-        } else {
-          console.log('Amenities fetched:', amenities?.length || 0);
         }
 
-        // Get booking statistics for current organization
-        console.log('Fetching bookings...');
-        const { data: allBookings, error: bookingsError } = await supabase
+        // Calculate personal bookings
+        const personalBookingsCount = await supabase
           .from("bookings")
-          .select("user_id")
-          .eq("organization_id", organization.id);
-          
-        if (bookingsError) {
-          console.error('Error fetching bookings:', bookingsError);
-        } else {
-          console.log('Bookings fetched:', allBookings?.length || 0);
-        }
+          .select("id", { count: 'exact' })
+          .eq("organization_id", organization.id)
+          .eq("user_id", user.id);
 
-        // Calculate stats - Note: Due to RLS, we can only see active rooms
-        const activeRoomsCount = activeRooms?.length || 0;
-        const totalRoomsCount = activeRoomsCount; // RLS limits us to active rooms only
+        const personalBookings = personalBookingsCount.data?.length || 0;
         const totalAmenities = amenities?.length || 0;
-        
-        // Calculate personal and organization bookings
-        const personalBookings = allBookings?.filter(booking => booking.user_id === user?.id).length || 0;
-        const organizationBookings = allBookings?.length || 0;
 
-        console.log('Stats calculated:', {
-          totalRooms: totalRoomsCount,
-          activeRooms: activeRoomsCount, 
+        console.log('Final stats calculated:', {
+          totalRooms: stats.rooms,
+          activeRooms: stats.rooms, // Function returns all rooms
           totalAmenities,
           personalBookings,
-          organizationBookings
+          organizationBookings: stats.total_bookings
         });
 
         setStats({
-          totalRooms: totalRoomsCount,
-          activeRooms: activeRoomsCount,
+          totalRooms: stats.rooms || 0,
+          activeRooms: stats.rooms || 0, // Assuming all rooms from function are active
           totalAmenities,
           personalBookings,
-          organizationBookings,
+          organizationBookings: stats.total_bookings || 0,
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
