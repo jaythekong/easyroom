@@ -4,9 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, UserPlus, AlertCircle } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, Building2 } from "lucide-react";
 
 interface InviteData {
   email: string;
@@ -16,11 +17,21 @@ interface InviteData {
   accepted_at?: string;
 }
 
+interface OrganizationData {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url?: string;
+  primary_color?: string;
+  tagline?: string;
+}
+
 export default function InviteSignup() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
+  const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [email, setEmail] = useState("");
@@ -56,6 +67,25 @@ export default function InviteSignup() {
       }
 
       setInviteData(data);
+      
+      // Fetch organization data
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .select('id, name, slug, logo_url, primary_color, tagline')
+        .eq('id', data.organization_id)
+        .single();
+
+      if (orgError) {
+        console.error('Failed to fetch organization data:', orgError);
+      } else {
+        setOrganizationData(orgData);
+        
+        // Apply organization theme
+        if (orgData.primary_color) {
+          applyOrganizationTheme(orgData.primary_color);
+        }
+      }
+      
       // Check if it's a link invite (email starts with "link-" or is empty)
       const isLinkInvite = !data.email || data.email.startsWith('link-');
       if (isLinkInvite) {
@@ -68,6 +98,76 @@ export default function InviteSignup() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to apply organization theme
+  const applyOrganizationTheme = (primaryColor: string) => {
+    try {
+      // Convert hex to HSL
+      const hsl = hexToHsl(primaryColor);
+      
+      // Generate color variants
+      const primaryForeground = adjustHslLightness(hsl, -45);
+      const primaryGlow = adjustHslLightness(hsl, 15);
+      const accent = adjustHslLightness(hsl, 10);
+      const accentForeground = adjustHslLightness(hsl, -40);
+
+      // Apply CSS variables
+      const root = document.documentElement;
+      root.style.setProperty('--primary', hsl);
+      root.style.setProperty('--primary-foreground', primaryForeground);
+      root.style.setProperty('--primary-glow', primaryGlow);
+      root.style.setProperty('--accent', accent);
+      root.style.setProperty('--accent-foreground', accentForeground);
+
+      // Update gradients
+      root.style.setProperty('--gradient-primary', `linear-gradient(135deg, hsl(${hsl}), hsl(${primaryGlow}))`);
+      
+      // Update shadows with the primary color
+      root.style.setProperty('--shadow-elegant', `0 10px 30px -10px hsl(${hsl} / 0.3)`);
+      root.style.setProperty('--shadow-glow', `0 0 40px hsl(${primaryGlow} / 0.4)`);
+
+    } catch (error) {
+      console.error('Error applying organization theme:', error);
+    }
+  };
+
+  // Helper functions for color conversion (same as in useOrganizationTheme)
+  const hexToHsl = (hex: string): string => {
+    const r = parseInt(hex.slice(1, 3), 16) / 255;
+    const g = parseInt(hex.slice(3, 5), 16) / 255;
+    const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h, s, l;
+
+    l = (max + min) / 2;
+
+    if (max === min) {
+      h = s = 0; // achromatic
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+        default: h = 0;
+      }
+
+      h /= 6;
+    }
+
+    return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+  };
+
+  const adjustHslLightness = (hsl: string, adjustment: number): string => {
+    const [h, s, lStr] = hsl.split(' ');
+    const l = parseInt(lStr.replace('%', ''));
+    const newL = Math.max(0, Math.min(100, l + adjustment));
+    return `${h} ${s} ${newL}%`;
   };
 
   const handleSignup = async () => {
@@ -171,7 +271,28 @@ export default function InviteSignup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
+        <CardHeader className="text-center space-y-6">
+          {/* Organization Logo and Branding */}
+          {organizationData && (
+            <div className="flex flex-col items-center space-y-4">
+              <div className="flex items-center space-x-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={organizationData.logo_url} alt={organizationData.name} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    <Building2 className="h-6 w-6" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-left">
+                  <h3 className="font-semibold text-lg">{organizationData.name}</h3>
+                  {organizationData.tagline && (
+                    <p className="text-sm text-muted-foreground">{organizationData.tagline}</p>
+                  )}
+                </div>
+              </div>
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+            </div>
+          )}
+          
           <div className="flex justify-center">
             <div className="p-3 rounded-full bg-primary/10">
               <UserPlus className="h-8 w-8 text-primary" />
@@ -180,7 +301,7 @@ export default function InviteSignup() {
           <div>
             <CardTitle className="text-2xl">Join the Team</CardTitle>
             <CardDescription className="mt-2">
-              You've been invited to join as a{" "}
+              You've been invited to join{organizationData ? ` ${organizationData.name}` : ""} as a{" "}
               <span className="font-medium capitalize">{inviteData.role}</span>
               {!inviteData.email?.startsWith('link-') && inviteData.email ? ` for ${inviteData.email}` : ""}
             </CardDescription>
