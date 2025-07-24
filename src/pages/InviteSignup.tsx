@@ -181,13 +181,13 @@ export default function InviteSignup() {
   const handleSignup = async () => {
     if (!inviteData || !password || !email) return;
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
+    if (password.length < 8) {
+      setError("Password must be 8+ chars");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
       return;
     }
 
@@ -200,20 +200,15 @@ export default function InviteSignup() {
         email: email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/complete-invite?token=${token}`,
+          emailRedirectTo: `${window.location.origin}/invite/verify?token=${token}&slug=${organizationData?.slug}`,
         }
       });
 
       if (authError) throw authError;
 
-      if (authData.user) {
-        toast({
-          title: "Check your inbox!",
-          description: "Please check your email and click the confirmation link to complete your invitation.",
-        });
-
-        // Don't navigate away - let the user know to check their email
-        setIsSigningUp(false);
+      if (authData.user && !authError) {
+        // Navigate to the holding page
+        navigate(`/invite/verify?token=${token}&slug=${organizationData?.slug}&email=${encodeURIComponent(email)}`);
       }
     } catch (error: any) {
       console.error('Signup error:', error);

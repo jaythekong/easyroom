@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
 import CompleteInvite from "./pages/CompleteInvite";
 import InviteRedirect from "./pages/InviteRedirect";
+import InviteAwaitVerify from "./pages/InviteAwaitVerify";
 import LandingPage from "./pages/LandingPage";
 import { AccessDeniedPage } from "./pages/AccessDeniedPage";
 import { SelectOrg } from "./pages/SelectOrg";
@@ -57,6 +58,7 @@ const App = () => (
                 {/* Invite routes - MUST be before organization routes */}
                 <Route path="/invite/:shortCode" element={<InviteRedirect />} />
                 <Route path="/invite" element={<InviteSignup />} />
+                <Route path="/invite/verify" element={<InviteAwaitVerify />} />
                 <Route path="/complete-invite" element={<CompleteInvite />} />
                 
                 {/* Organization-specific auth route */}
