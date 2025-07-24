@@ -19,6 +19,17 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
     () => localStorage.getItem(`tgDismiss_${organization.id}`) === '1'
   );
 
+  // Debug logging
+  console.log('TelegramBanner debug:', {
+    organizationId: organization.id,
+    hasSub,
+    isLoading,
+    dismissed,
+    telegram_cta_enabled: organization.telegram_cta_enabled,
+    telegram_bot_token: !!organization.telegram_bot_token,
+    telegram_bot_username: !!organization.telegram_bot_username
+  });
+
   // Don't show if: loading, user has subscription, dismissed, CTA disabled, no bot token, or no bot username
   if (
     isLoading || 
