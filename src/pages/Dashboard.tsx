@@ -350,17 +350,19 @@ export default function Dashboard() {
         </div>
 
         {/* Telegram CTA Banner */}
+        {(() => {
+          console.log('Dashboard - Organization data check:', {
+            hasOrg: !!organization,
+            orgData: organization,
+            telegram_cta_enabled: organization?.telegram_cta_enabled,
+            telegram_bot_token: organization?.telegram_bot_token ? 'HAS_TOKEN' : 'NO_TOKEN',
+            telegram_bot_username: organization?.telegram_bot_username || 'NO_USERNAME'
+          });
+          return null;
+        })()}
+        
         {organization && (
-          <>
-            {console.log('Dashboard organization data:', {
-              id: organization.id,
-              slug: organization.slug, 
-              telegram_cta_enabled: organization.telegram_cta_enabled,
-              telegram_bot_token: !!organization.telegram_bot_token,
-              telegram_bot_username: organization.telegram_bot_username
-            })}
-            <TelegramBanner organization={organization} />
-          </>
+          <TelegramBanner organization={organization} />
         )}
 
         {/* Main Content with Tabs */}
