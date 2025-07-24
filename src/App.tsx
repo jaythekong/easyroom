@@ -53,14 +53,16 @@ const App = () => (
                 <Route path="/super-admin" element={<SuperAdminDashboard />} />
                 <Route path="/super-admin/auth" element={<SuperAdminAuth />} />
                 
-              {/* Organization-specific auth route */}
-              <Route path="/:orgSlug/auth" element={
-                <OrganizationProvider>
-                  <Auth />
-                </OrganizationProvider>
-              } />
+                {/* Invite routes - MUST be before organization routes */}
                 <Route path="/invite/:shortCode" element={<InviteRedirect />} />
                 <Route path="/invite" element={<InviteSignup />} />
+                
+                {/* Organization-specific auth route */}
+                <Route path="/:orgSlug/auth" element={
+                  <OrganizationProvider>
+                    <Auth />
+                  </OrganizationProvider>
+                } />
               
               {/* All organization-specific routes under one provider */}
               <Route path="/:orgSlug/*" element={
