@@ -112,6 +112,51 @@ export type Database = {
           },
         ]
       }
+      invitation_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          invitation_id: string
+          metadata: Json | null
+          organization_id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          invitation_id: string
+          metadata?: Json | null
+          organization_id: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          invitation_id?: string
+          metadata?: Json | null
+          organization_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitation_audit_log_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "invitations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitation_audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invitations: {
         Row: {
           accepted_at: string | null
@@ -121,8 +166,17 @@ export type Database = {
           id: string
           invite_token: string
           invited_by: string
+          last_opened_at: string | null
+          last_resent_at: string | null
+          open_count: number | null
           organization_id: string
+          resend_count: number | null
+          revoked_at: string | null
+          revoked_by: string | null
           role: Database["public"]["Enums"]["user_role"]
+          sent_by: string | null
+          short_code: string | null
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -133,8 +187,17 @@ export type Database = {
           id?: string
           invite_token?: string
           invited_by: string
+          last_opened_at?: string | null
+          last_resent_at?: string | null
+          open_count?: number | null
           organization_id: string
+          resend_count?: number | null
+          revoked_at?: string | null
+          revoked_by?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          sent_by?: string | null
+          short_code?: string | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -145,8 +208,17 @@ export type Database = {
           id?: string
           invite_token?: string
           invited_by?: string
+          last_opened_at?: string | null
+          last_resent_at?: string | null
+          open_count?: number | null
           organization_id?: string
+          resend_count?: number | null
+          revoked_at?: string | null
+          revoked_by?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          sent_by?: string | null
+          short_code?: string | null
+          status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -508,6 +580,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      generate_invitation_short_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_organization_stats: {
         Args: { org_id: string }
         Returns: Json
@@ -562,13 +638,35 @@ export type Database = {
         Args: { target_org_id: string; impersonation_mode?: string }
         Returns: Json
       }
+      log_invitation_event: {
+        Args: {
+          invitation_id: string
+          organization_id: string
+          action: string
+          user_id?: string
+          metadata?: Json
+        }
+        Returns: undefined
+      }
       remove_user_super_admin: {
         Args: { user_email: string }
         Returns: string
       }
+      resend_invitation: {
+        Args: { invitation_id: string }
+        Returns: Json
+      }
+      revoke_invitation: {
+        Args: { invitation_id: string }
+        Returns: Json
+      }
       set_user_super_admin: {
         Args: { user_email: string }
         Returns: string
+      }
+      track_invitation_open: {
+        Args: { invitation_token?: string; invitation_short_code?: string }
+        Returns: Json
       }
     }
     Enums: {
