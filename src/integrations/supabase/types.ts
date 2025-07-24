@@ -236,6 +236,7 @@ export type Database = {
           status: string | null
           tagline: string | null
           telegram_bot_token: string | null
+          telegram_bot_username: string | null
           telegram_cta_enabled: boolean | null
           timezone: string | null
           updated_at: string
@@ -253,6 +254,7 @@ export type Database = {
           status?: string | null
           tagline?: string | null
           telegram_bot_token?: string | null
+          telegram_bot_username?: string | null
           telegram_cta_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string
@@ -270,6 +272,7 @@ export type Database = {
           status?: string | null
           tagline?: string | null
           telegram_bot_token?: string | null
+          telegram_bot_username?: string | null
           telegram_cta_enabled?: boolean | null
           timezone?: string | null
           updated_at?: string

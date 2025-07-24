@@ -189,6 +189,7 @@ export function TelegramNotifications() {
         .from('organizations')
         .update({
           telegram_bot_token: telegramBotToken || null,
+          telegram_bot_username: botInfo?.username || null,
           welcome_message: welcomeMessage,
         })
         .eq('id', organization.id);

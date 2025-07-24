@@ -9,6 +9,7 @@ interface TelegramBannerProps {
     slug: string;
     telegram_cta_enabled?: boolean;
     telegram_bot_token?: string;
+    telegram_bot_username?: string;
   };
 }
 
@@ -18,21 +19,19 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
     () => localStorage.getItem(`tgDismiss_${organization.id}`) === '1'
   );
 
-  // Don't show if: loading, user has subscription, dismissed, CTA disabled, or no bot token
+  // Don't show if: loading, user has subscription, dismissed, CTA disabled, no bot token, or no bot username
   if (
     isLoading || 
     hasSub || 
     dismissed || 
     organization.telegram_cta_enabled === false ||
-    !organization.telegram_bot_token
+    !organization.telegram_bot_token ||
+    !organization.telegram_bot_username
   ) {
     return null;
   }
 
-  // Extract bot username from token format: "1234567890:ABC..."
-  const botToken = organization.telegram_bot_token;
-  const botId = botToken.split(':')[0];
-  const link = `https://t.me/bot${botId}?start=${organization.slug}`;
+  const link = `https://t.me/${organization.telegram_bot_username}?start=${organization.slug}`;
 
   const handleDismiss = () => {
     localStorage.setItem(`tgDismiss_${organization.id}`, '1');
