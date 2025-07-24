@@ -15,6 +15,7 @@ import MyBookings from "./pages/MyBookings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
+import CompleteInvite from "./pages/CompleteInvite";
 import InviteRedirect from "./pages/InviteRedirect";
 import LandingPage from "./pages/LandingPage";
 import { AccessDeniedPage } from "./pages/AccessDeniedPage";
@@ -56,6 +57,7 @@ const App = () => (
                 {/* Invite routes - MUST be before organization routes */}
                 <Route path="/invite/:shortCode" element={<InviteRedirect />} />
                 <Route path="/invite" element={<InviteSignup />} />
+                <Route path="/complete-invite" element={<CompleteInvite />} />
                 
                 {/* Organization-specific auth route */}
                 <Route path="/:orgSlug/auth" element={

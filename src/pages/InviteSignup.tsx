@@ -195,53 +195,29 @@ export default function InviteSignup() {
     setError("");
 
     try {
-      // Sign up the user
+      // Sign up the user with email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/complete-invite?token=${token}`,
         }
       });
 
       if (authError) throw authError;
 
       if (authData.user) {
-        // Wait for session to be fully established (prevents race condition)
-        await supabase.auth.getSession();
-        
-        // Use simplified link invitation function
-        const { data: result, error: functionError } = await supabase.rpc(
-          'accept_invitation_link',
-          {
-            invitation_token: token
-          }
-        );
-
-        if (functionError) {
-          console.error('Function error:', functionError);
-          
-          // Handle specific error codes for better UX
-          if (functionError.message?.includes('INVITE_INVALID')) {
-            throw new Error('This invitation link is invalid, expired, or has already been used.');
-          } else if (functionError.message?.includes('AUTH_REQUIRED')) {
-            throw new Error('Authentication failed. Please try signing up again.');
-          }
-          
-          throw new Error(`Failed to accept invitation: ${functionError.message}`);
-        }
-
         toast({
-          title: "Welcome!",
-          description: "Your account has been created successfully",
+          title: "Check your inbox!",
+          description: "Please check your email and click the confirmation link to complete your invitation.",
         });
 
-        navigate("/");
+        // Don't navigate away - let the user know to check their email
+        setIsSigningUp(false);
       }
     } catch (error: any) {
       console.error('Signup error:', error);
       setError(error.message || "Failed to create account");
-    } finally {
       setIsSigningUp(false);
     }
   };
@@ -367,7 +343,7 @@ export default function InviteSignup() {
             {isSigningUp ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Account...
+                Sending Confirmation Email...
               </>
             ) : (
               "Create Account & Join Team"
