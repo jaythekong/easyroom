@@ -584,6 +584,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_invitation_details: {
+        Args: { invitation_token: string }
+        Returns: Json
+      }
       get_organization_stats: {
         Args: { org_id: string }
         Returns: Json

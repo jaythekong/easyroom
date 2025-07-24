@@ -49,7 +49,7 @@ export default function InviteSignup() {
     if (!token) return;
 
     try {
-      const { data, error } = await supabase.rpc('track_invitation_open', {
+      const { data, error } = await supabase.rpc('get_invitation_details', {
         invitation_token: token
       });
 
@@ -63,40 +63,38 @@ export default function InviteSignup() {
         return;
       }
 
-      // Type assertion since we know the RPC returns invitation data
-      const inviteData = data as unknown as InviteData;
+      // Cast the data to our expected interface
+      const inviteInfo = data as any;
 
-      if (new Date(inviteData.expires_at) < new Date()) {
-        setError("This invitation has expired");
-        return;
-      }
+      // Set invitation data
+      setInviteData({
+        email: inviteInfo.email,
+        role: inviteInfo.role,
+        organization_id: inviteInfo.organization.id,
+        expires_at: inviteInfo.expires_at
+      });
 
-      setInviteData(inviteData);
-      
-      // Fetch organization data
-      const { data: orgData, error: orgError } = await supabase
-        .from('organizations')
-        .select('id, name, slug, logo_url, primary_color, tagline')
-        .eq('id', inviteData.organization_id)
-        .single();
+      // Set organization data  
+      setOrganizationData({
+        id: inviteInfo.organization.id,
+        name: inviteInfo.organization.name,
+        slug: inviteInfo.organization.slug,
+        logo_url: inviteInfo.organization.logo_url,
+        primary_color: inviteInfo.organization.primary_color,
+        tagline: inviteInfo.organization.tagline
+      });
 
-      if (orgError) {
-        console.error('Failed to fetch organization data:', orgError);
-      } else {
-        setOrganizationData(orgData);
-        
-        // Apply organization theme
-        if (orgData.primary_color) {
-          applyOrganizationTheme(orgData.primary_color);
-        }
+      // Apply organization theme
+      if (inviteInfo.organization.primary_color) {
+        applyOrganizationTheme(inviteInfo.organization.primary_color);
       }
       
       // Check if it's a link invite (email starts with "link-" or is empty)
-      const isLinkInvite = !inviteData.email || inviteData.email.startsWith('link-');
+      const isLinkInvite = !inviteInfo.email || inviteInfo.email.startsWith('link-');
       if (isLinkInvite) {
         setEmail(""); // User will need to enter their email
       } else {
-        setEmail(inviteData.email);
+        setEmail(inviteInfo.email);
       }
     } catch (error) {
       setError("Failed to load invitation details");
