@@ -38,23 +38,23 @@ export function AdminStats() {
       
       try {
         // Get room statistics for current organization
-        console.log('Fetching rooms...');
-        const { data: rooms, error: roomsError } = await supabase
+        // Note: RLS only allows viewing 'active' rooms, so we can only count active rooms
+        console.log('Fetching active rooms...');
+        const { data: activeRooms, error: roomsError } = await supabase
           .from("rooms")
-          .select("status")
+          .select("id")
           .eq("organization_id", organization.id);
         
         if (roomsError) {
           console.error('Error fetching rooms:', roomsError);
         } else {
-          console.log('Rooms fetched:', rooms?.length || 0);
+          console.log('Active rooms fetched:', activeRooms?.length || 0);
         }
         
         console.log('Fetching amenities...');
         const { data: amenities, error: amenitiesError } = await supabase
           .from("amenities")
-          .select("id")
-          .eq("organization_id", organization.id);
+          .select("id");
           
         if (amenitiesError) {
           console.error('Error fetching amenities:', amenitiesError);
@@ -66,8 +66,7 @@ export function AdminStats() {
         console.log('Fetching bookings...');
         const { data: allBookings, error: bookingsError } = await supabase
           .from("bookings")
-          .select("user_id")
-          .eq("organization_id", organization.id);
+          .select("user_id");
           
         if (bookingsError) {
           console.error('Error fetching bookings:', bookingsError);
@@ -75,8 +74,9 @@ export function AdminStats() {
           console.log('Bookings fetched:', allBookings?.length || 0);
         }
 
-        const totalRooms = rooms?.length || 0;
-        const activeRooms = rooms?.filter(room => room.status === 'active').length || 0;
+        // Calculate stats - Note: Due to RLS, we can only see active rooms
+        const activeRoomsCount = activeRooms?.length || 0;
+        const totalRoomsCount = activeRoomsCount; // RLS limits us to active rooms only
         const totalAmenities = amenities?.length || 0;
         
         // Calculate personal and organization bookings
@@ -84,16 +84,16 @@ export function AdminStats() {
         const organizationBookings = allBookings?.length || 0;
 
         console.log('Stats calculated:', {
-          totalRooms,
-          activeRooms, 
+          totalRooms: totalRoomsCount,
+          activeRooms: activeRoomsCount, 
           totalAmenities,
           personalBookings,
           organizationBookings
         });
 
         setStats({
-          totalRooms,
-          activeRooms,
+          totalRooms: totalRoomsCount,
+          activeRooms: activeRoomsCount,
           totalAmenities,
           personalBookings,
           organizationBookings,
