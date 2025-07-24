@@ -399,9 +399,22 @@ export function TeamManagement() {
       }
       console.log('✅ Deleted user profile');
 
-      // All application data successfully deleted
-      // Note: Auth user record remains but is harmless (no app data references it)
-      console.log('✅ All user data completely cleaned up from application tables');
+      // Step 8: Delete from auth.users using edge function (has service role permissions)
+      const { error: authError } = await supabase.functions.invoke('delete-auth-user', {
+        body: { userId }
+      });
+
+      if (authError) {
+        console.error('Error deleting auth user:', authError);
+        console.warn('Auth user deletion failed, but all application data has been removed');
+        toast({
+          title: "Partial deletion completed",
+          description: "All application data removed, but auth user still exists. Delete manually from Supabase dashboard.",
+          variant: "destructive",
+        });
+      } else {
+        console.log('✅ Deleted auth user');
+      }
 
       toast({
         title: "User completely deleted",
