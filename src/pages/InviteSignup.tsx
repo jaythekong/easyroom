@@ -212,7 +212,21 @@ export default function InviteSignup() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Create user profile
+        // FIRST: Create organization membership (required for RLS)
+        const { error: membershipError } = await supabase
+          .from('user_organization_memberships')
+          .insert({
+            user_id: authData.user.id,
+            organization_id: inviteData.organization_id,
+            role: inviteData.role as 'admin' | 'member'
+          });
+
+        if (membershipError) {
+          console.error('Membership creation error:', membershipError);
+          throw new Error(`Failed to create organization membership: ${membershipError.message}`);
+        }
+
+        // THEN: Create user profile (now RLS will pass)
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
@@ -222,15 +236,24 @@ export default function InviteSignup() {
             email: email,
           });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          throw new Error(`Failed to create user profile: ${profileError.message}`);
+        }
 
-        // Mark invitation as accepted
+        // FINALLY: Mark invitation as accepted
         const { error: inviteError } = await supabase
           .from('invitations')
-          .update({ accepted_at: new Date().toISOString() })
+          .update({ 
+            accepted_at: new Date().toISOString(),
+            status: 'accepted'
+          })
           .eq('invite_token', token);
 
-        if (inviteError) console.error('Failed to mark invite as accepted:', inviteError);
+        if (inviteError) {
+          console.error('Failed to mark invite as accepted:', inviteError);
+          // Don't throw here - user is already created successfully
+        }
 
         toast({
           title: "Welcome!",
@@ -240,6 +263,7 @@ export default function InviteSignup() {
         navigate("/");
       }
     } catch (error: any) {
+      console.error('Signup error:', error);
       setError(error.message || "Failed to create account");
     } finally {
       setIsSigningUp(false);

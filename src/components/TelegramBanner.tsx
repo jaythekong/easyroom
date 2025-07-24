@@ -21,26 +21,6 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
     () => localStorage.getItem(`tgDismiss_${organization.id}`) === '1'
   );
 
-  // Debug what we receive
-  console.log('TelegramBanner received:', {
-    orgId: organization.id,
-    telegram_cta_enabled: organization.telegram_cta_enabled,
-    telegram_bot_token: organization.telegram_bot_token ? 'EXISTS' : 'MISSING',
-    telegram_bot_username: organization.telegram_bot_username || 'MISSING',
-    hasSub,
-    isLoading,
-    dismissed
-  });
-
-  // FORCE-SHOW DEBUG - Remove after testing
-  console.log('FORCE-SHOW DEBUG:', { 
-    isLoading, 
-    hasSub, 
-    dismissed, 
-    cta: organization?.telegram_cta_enabled,
-    has_token: !!organization?.telegram_bot_token,
-    has_username: !!organization?.telegram_bot_username
-  });
 
   // Don't show if CTA disabled, no bot configured, or user dismissed it
   if (
@@ -49,12 +29,6 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
     !organization.telegram_bot_username ||
     dismissed
   ) {
-    console.log('TelegramBanner: Hidden due to config', {
-      cta_enabled: organization.telegram_cta_enabled,
-      has_token: !!organization.telegram_bot_token,
-      has_username: !!organization.telegram_bot_username,
-      dismissed
-    });
     return null;
   }
 
