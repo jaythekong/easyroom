@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { PasswordStrength } from "@/components/ui/password-strength";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, UserPlus, AlertCircle, Building2 } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, Building2, Eye, EyeOff } from "lucide-react";
 
 interface InviteData {
   email: string;
@@ -38,6 +39,8 @@ export default function InviteSignup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -256,20 +259,22 @@ export default function InviteSignup() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-6">
-          {/* Organization Logo and Branding */}
+          {/* Clean Organization Section */}
           {organizationData && (
             <div className="flex flex-col items-center space-y-4">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-12 w-12">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-14 w-14">
                   <AvatarImage src={organizationData.logo_url} alt={organizationData.name} />
                   <AvatarFallback className="bg-primary/10 text-primary">
-                    <Building2 className="h-6 w-6" />
+                    <Building2 className="h-7 w-7" />
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-left">
-                  <h3 className="font-semibold text-lg">{organizationData.name}</h3>
+                <div className="text-center">
+                  <h3 className="font-semibold text-xl text-foreground">{organizationData.name}</h3>
                   {organizationData.tagline && (
-                    <p className="text-sm text-muted-foreground">{organizationData.tagline}</p>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+                      {organizationData.tagline}
+                    </p>
                   )}
                 </div>
               </div>
@@ -282,11 +287,12 @@ export default function InviteSignup() {
               <UserPlus className="h-8 w-8 text-primary" />
             </div>
           </div>
+          
           <div>
             <CardTitle className="text-2xl">Join the Team</CardTitle>
             <CardDescription className="mt-2">
-              You've been invited to join{organizationData ? ` ${organizationData.name}` : ""} as a{" "}
-              <span className="font-medium capitalize">{inviteData.role}</span>
+              You've been invited as a{" "}
+              <span className="font-medium capitalize text-primary">{inviteData.role}</span>
             </CardDescription>
           </div>
         </CardHeader>
@@ -302,26 +308,59 @@ export default function InviteSignup() {
             />
           </div>
           
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Create a password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
+            {password && <PasswordStrength password={password} />}
           </div>
 
-          <div>
+          <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pr-10"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </div>
 
           {error && (
