@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Clock, Users, MapPin } from "lucide-react";
+import { CalendarIcon, Clock, Users, MapPin, AlertCircle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   const { organization } = useOrganization();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingBookings, setExistingBookings] = useState<any[]>([]);
+  const [timeConflictError, setTimeConflictError] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     date: initialDate || new Date(),
@@ -78,6 +81,81 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Update form data when initial props change
   const updateFormData = (updates: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  // Fetch existing bookings when modal opens or date/room changes
+  useEffect(() => {
+    const fetchExistingBookings = async () => {
+      if (!isOpen || !room || !organization?.id) return;
+
+      const dateStr = format(formData.date, 'yyyy-MM-dd');
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('room_id', room.id)
+        .eq('organization_id', organization.id)
+        .gte('start_time', `${dateStr}T00:00:00`)
+        .lt('start_time', `${dateStr}T23:59:59`)
+        .neq('id', existingBooking?.id || 'none'); // Exclude current booking if editing
+
+      if (!error && data) {
+        setExistingBookings(data);
+      }
+    };
+
+    fetchExistingBookings();
+  }, [isOpen, room?.id, formData.date, organization?.id, existingBooking?.id]);
+
+  // Check for time conflicts
+  const checkTimeConflict = (startTime: string, endTime: string) => {
+    if (!startTime || !endTime || !formData.date) return false;
+
+    const dateStr = format(formData.date, 'yyyy-MM-dd');
+    const checkStart = new Date(`${dateStr}T${startTime}:00`);
+    const checkEnd = new Date(`${dateStr}T${endTime}:00`);
+
+    return existingBookings.some(booking => {
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      
+      // Check if times overlap
+      return (checkStart < bookingEnd && checkEnd > bookingStart);
+    });
+  };
+
+  // Check if a specific time slot has conflicts
+  const isTimeSlotConflicted = (time: string, isEndTime = false) => {
+    if (!time || !formData.date) return false;
+
+    const dateStr = format(formData.date, 'yyyy-MM-dd');
+    const slotTime = new Date(`${dateStr}T${time}:00`);
+
+    return existingBookings.some(booking => {
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      
+      if (isEndTime) {
+        // For end time, check if the slot falls within an existing booking
+        return slotTime > bookingStart && slotTime <= bookingEnd;
+      } else {
+        // For start time, check if the slot falls within an existing booking
+        return slotTime >= bookingStart && slotTime < bookingEnd;
+      }
+    });
+  };
+
+  // Get conflicting booking details for tooltip
+  const getConflictingBooking = (time: string) => {
+    if (!time || !formData.date) return null;
+
+    const dateStr = format(formData.date, 'yyyy-MM-dd');
+    const slotTime = new Date(`${dateStr}T${time}:00`);
+
+    return existingBookings.find(booking => {
+      const bookingStart = new Date(booking.start_time);
+      const bookingEnd = new Date(booking.end_time);
+      return slotTime >= bookingStart && slotTime < bookingEnd;
+    });
   };
 
   // Reset form data when modal opens with new initial values
@@ -155,10 +233,26 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         console.log('📝 Setting new booking form data:', newFormData);
         setFormData(newFormData);
       }
+      
+      // Clear any previous conflict errors
+      setTimeConflictError("");
     }
   }, [isOpen, initialDate, initialStartTime, existingBooking]);
 
-  // Filter end time options to only show times after start time
+  // Validate start time for conflicts
+  useEffect(() => {
+    if (formData.startTime && formData.date) {
+      if (isTimeSlotConflicted(formData.startTime)) {
+        setTimeConflictError("Start overlaps an existing booking.");
+      } else if (formData.endTime && checkTimeConflict(formData.startTime, formData.endTime)) {
+        setTimeConflictError("Time range conflicts with existing booking.");
+      } else {
+        setTimeConflictError("");
+      }
+    }
+  }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
+
+  // Filter end time options to only show times after start time and exclude conflicted slots
   const getAvailableEndTimes = () => {
     console.log('📝 getAvailableEndTimes called:', {
       formDataStartTime: formData.startTime,
@@ -459,15 +553,47 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                   }
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className={cn(timeConflictError && "border-destructive")}>
                   <SelectValue placeholder="Start time" />
                 </SelectTrigger>
                 <SelectContent>
-                  {timeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>{time}</SelectItem>
-                  ))}
+                  <TooltipProvider>
+                    {timeSlots.map((time) => {
+                      const isConflicted = isTimeSlotConflicted(time);
+                      const conflictingBooking = getConflictingBooking(time);
+                      
+                      if (isConflicted && conflictingBooking) {
+                        return (
+                          <Tooltip key={time}>
+                            <TooltipTrigger asChild>
+                              <SelectItem 
+                                value={time} 
+                                disabled
+                                className="text-muted-foreground opacity-50 cursor-not-allowed"
+                              >
+                                {time}
+                              </SelectItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Conflicts with existing booking: {conflictingBooking.title}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+                      
+                      return (
+                        <SelectItem key={time} value={time}>{time}</SelectItem>
+                      );
+                    })}
+                  </TooltipProvider>
                 </SelectContent>
               </Select>
+              {timeConflictError && (
+                <div className="flex items-center gap-1 text-destructive text-sm">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{timeConflictError}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -480,9 +606,35 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                   <SelectValue placeholder="End time" />
                 </SelectTrigger>
                 <SelectContent>
-                  {getAvailableEndTimes().map((time) => (
-                    <SelectItem key={time} value={time}>{time}</SelectItem>
-                  ))}
+                  <TooltipProvider>
+                    {getAvailableEndTimes().map((time) => {
+                      const isConflicted = isTimeSlotConflicted(time, true);
+                      const conflictingBooking = getConflictingBooking(time);
+                      
+                      if (isConflicted && conflictingBooking) {
+                        return (
+                          <Tooltip key={time}>
+                            <TooltipTrigger asChild>
+                              <SelectItem 
+                                value={time} 
+                                disabled
+                                className="text-muted-foreground opacity-50 cursor-not-allowed"
+                              >
+                                {time}
+                              </SelectItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Conflicts with existing booking: {conflictingBooking.title}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+                      
+                      return (
+                        <SelectItem key={time} value={time}>{time}</SelectItem>
+                      );
+                    })}
+                  </TooltipProvider>
                 </SelectContent>
               </Select>
             </div>
@@ -558,7 +710,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                 "flex-1 transition-all duration-200",
                 isSubmitting && "animate-pulse scale-95"
               )}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !!timeConflictError}
             >
               <Clock className={cn("h-4 w-4 mr-2", isSubmitting && "animate-spin")} />
               {isSubmitting 
