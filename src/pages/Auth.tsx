@@ -412,6 +412,13 @@ const Auth = () => {
     setLoading(true);
     
     try {
+      // SECURITY: Block signup on org-specific auth pages
+      if (orgSlug) {
+        toast.error("Only invited users can sign up. Ask an admin for an invite link.");
+        logger.security('Blocked signup attempt on org-specific auth', { orgSlug, email });
+        return;
+      }
+      
       // Input validation and sanitization
       const sanitizedEmail = sanitizeEmail(email);
       
@@ -1224,14 +1231,10 @@ const Auth = () => {
                     </TabsContent>
                   </Tabs>
                 ) : (
-                  // Existing organization-specific auth tabs
-                  <Tabs defaultValue="signin" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="signin">Sign In</TabsTrigger>
-                      <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="signin" className="space-y-4 mt-6">
+                  // Existing organization-specific auth - LOGIN ONLY
+                  <div className="w-full">
+                    {/* Organization Sign In Form */}
+                    <div className="space-y-6">{/* Add space for sign in form */}
                       {!showForgotPassword ? (
                         <>
                           <form onSubmit={handleSignIn} className="space-y-4">
@@ -1281,6 +1284,18 @@ const Auth = () => {
                               )}
                             </Button>
                           </form>
+                          
+                          {/* Need access message */}
+                          <div className="mt-6 p-4 bg-muted/50 rounded-lg border border-border/50">
+                            <div className="flex items-start gap-3">
+                              <Shield className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                              <div className="text-sm">
+                                <p className="text-muted-foreground">
+                                  <strong>Need access?</strong> Ask an admin for an invite link.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         </>
                       ) : (
                         <div className="space-y-4">
@@ -1329,79 +1344,8 @@ const Auth = () => {
                           </form>
                         </div>
                       )}
-                    </TabsContent>
-                    
-                    <TabsContent value="signup" className="space-y-4 mt-6">
-                      <form onSubmit={!organization ? handleOrganizationSignUp : handleSignUp} className="space-y-4">
-                        {!organization && (
-                          <>
-                            <div className="space-y-2">
-                              <Label htmlFor="org-name">Organization Name</Label>
-                              <Input
-                                id="org-name"
-                                type="text"
-                                placeholder="Your company name"
-                                value={organizationName}
-                                onChange={(e) => setOrganizationName(e.target.value)}
-                                required
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="org-slug">Organization URL</Label>
-                              <div className="relative">
-                                <Input
-                                  id="org-slug"
-                                  type="text"
-                                  placeholder="your-org"
-                                  value={organizationSlug}
-                                  onChange={(e) => setOrganizationSlug(e.target.value)}
-                                  required
-                                  className="pr-32"
-                                />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                                  .easyroom.app
-                                </span>
-                              </div>
-                            </div>
-                          </>
-                        )}
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-email">Your Email</Label>
-                          <Input
-                            id="signup-email"
-                            type="email"
-                            placeholder="Enter your email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                          />
-                        </div>
-                         <div className="space-y-2">
-                           <Label htmlFor="signup-password">Password</Label>
-                           <Input
-                             id="signup-password"
-                             type="password"
-                             placeholder="Create a password"
-                             value={password}
-                             onChange={(e) => setPassword(e.target.value)}
-                             required
-                             minLength={6}
-                           />
-                           <PasswordStrength password={password} />
-                         </div>
-                        <Button type="submit" className="w-full" disabled={loading}>
-                          {loading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              {!organization ? "Creating organization..." : "Creating account..."}
-                            </>
-                          ) : (
-                            !organization ? "Create Organization" : "Sign Up"
-                          )}
-                        </Button>
-                      </form>
-                    </TabsContent>
-                  </Tabs>
+                    </div>
+                  </div>
                 )}
               </CardContent>
             </Card>
