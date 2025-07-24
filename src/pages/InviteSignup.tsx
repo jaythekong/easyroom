@@ -47,19 +47,28 @@ export default function InviteSignup() {
   }, [token]);
 
   const fetchInviteData = async () => {
-    if (!token) return;
+    if (!token) {
+      console.log('[InviteSignup] No token provided');
+      return;
+    }
+
+    console.log('[InviteSignup] Fetching invite data for token:', token);
 
     try {
       const { data, error } = await supabase.rpc('get_invitation_details', {
         invitation_token: token
       });
 
+      console.log('[InviteSignup] RPC response:', { data, error });
+
       if (error) {
+        console.error('[InviteSignup] RPC error:', error);
         setError("Invalid or expired invitation link");
         return;
       }
 
       if (!data) {
+        console.log('[InviteSignup] No data returned from RPC');
         setError("Invalid or expired invitation link");
         return;
       }

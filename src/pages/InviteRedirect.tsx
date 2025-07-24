@@ -65,6 +65,7 @@ export default function InviteRedirect() {
 
         // Redirect to full invite URL
         console.log('[InviteRedirect] Found invite token, redirecting to:', `/invite?token=${data.invite_token}`);
+        console.log('[InviteRedirect] Full redirect URL will be:', `${window.location.origin}/invite?token=${data.invite_token}`);
         navigate(`/invite?token=${data.invite_token}`);
       } catch (error) {
         console.error('[InviteRedirect] Error handling invite redirect:', error);
