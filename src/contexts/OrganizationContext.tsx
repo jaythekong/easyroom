@@ -13,6 +13,9 @@ interface Organization {
   primary_color?: string;
   timezone?: string;
   tagline?: string;
+  telegram_cta_enabled?: boolean;
+  telegram_bot_token?: string;
+  telegram_bot_username?: string;
   created_at: string;
   updated_at: string;
 }

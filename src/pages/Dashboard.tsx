@@ -351,7 +351,16 @@ export default function Dashboard() {
 
         {/* Telegram CTA Banner */}
         {organization && (
-          <TelegramBanner organization={organization} />
+          <>
+            {console.log('Dashboard organization data:', {
+              id: organization.id,
+              slug: organization.slug, 
+              telegram_cta_enabled: organization.telegram_cta_enabled,
+              telegram_bot_token: !!organization.telegram_bot_token,
+              telegram_bot_username: organization.telegram_bot_username
+            })}
+            <TelegramBanner organization={organization} />
+          </>
         )}
 
         {/* Main Content with Tabs */}
