@@ -33,8 +33,23 @@ export function AdminStats() {
         setLoading(false);
         return;
       }
+
+      if (!user) {
+        console.log('No user available - authentication required');
+        setLoading(false);
+        return;
+      }
       
       console.log('Fetching admin stats for organization:', organization.id);
+      console.log('Current user:', user.id);
+      
+      // Force refresh the Supabase session
+      const { error: refreshError } = await supabase.auth.getSession();
+      if (refreshError) {
+        console.error('Session refresh error:', refreshError);
+        setLoading(false);
+        return;
+      }
       
       try {
         // Get room statistics for current organization
@@ -54,7 +69,8 @@ export function AdminStats() {
         console.log('Fetching amenities...');
         const { data: amenities, error: amenitiesError } = await supabase
           .from("amenities")
-          .select("id");
+          .select("id")
+          .eq("organization_id", organization.id);
           
         if (amenitiesError) {
           console.error('Error fetching amenities:', amenitiesError);
@@ -66,7 +82,8 @@ export function AdminStats() {
         console.log('Fetching bookings...');
         const { data: allBookings, error: bookingsError } = await supabase
           .from("bookings")
-          .select("user_id");
+          .select("user_id")
+          .eq("organization_id", organization.id);
           
         if (bookingsError) {
           console.error('Error fetching bookings:', bookingsError);
