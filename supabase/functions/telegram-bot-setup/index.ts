@@ -168,7 +168,24 @@ async function handleTelegramWebhook(req: Request, parsedBody?: any): Promise<Re
 
     const telegramUrl = `https://api.telegram.org/bot${organization.telegram_bot_token}/sendMessage`;
 
-    if (text === '/start') {
+    if (text.startsWith('/start')) {
+      // Parse user ID from start parameter (format: /start kampus_userId or /start userId)
+      let userId = null;
+      const startParam = text.split(' ')[1]; // Get parameter after /start
+      
+      if (startParam) {
+        if (startParam.includes('_')) {
+          // Format: kampus_userId
+          const parts = startParam.split('_');
+          userId = parts[1];
+        } else {
+          // Format: userId only
+          userId = startParam;
+        }
+      }
+
+      console.log(`Start command from ${username}, extracted userId: ${userId}`);
+
       // Check if user is already subscribed
       const { data: existing } = await supabase
         .from('telegram_subscriptions')
@@ -184,12 +201,17 @@ async function handleTelegramWebhook(req: Request, parsedBody?: any): Promise<Re
           .insert({
             organization_id: organizationId,
             telegram_chat_id: chatId.toString(),
-            telegram_username: username
+            telegram_username: username,
+            user_id: userId || null // Link to specific user if provided
           });
 
         if (insertError) {
           console.error('Error subscribing user:', insertError);
+        } else {
+          console.log(`Successfully subscribed user ${userId} to organization ${organizationId}`);
         }
+      } else {
+        console.log(`User already subscribed with chat_id ${chatId}`);
       }
 
       const welcomeMessage = organization.welcome_message || `🎉 Welcome to ${organization.name}!

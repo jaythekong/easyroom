@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { X, CheckCircle } from "lucide-react";
 import { useTelegramStatus } from "@/hooks/useTelegramStatus";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TelegramBannerProps {
   organization: {
@@ -14,6 +15,7 @@ interface TelegramBannerProps {
 }
 
 export function TelegramBanner({ organization }: TelegramBannerProps) {
+  const { session } = useAuth();
   const { data: hasSub, isLoading } = useTelegramStatus(organization.id);
   const [dismissed, setDismissed] = useState(
     () => localStorage.getItem(`tgDismiss_${organization.id}`) === '1'
@@ -56,7 +58,7 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
     return null;
   }
 
-  const link = `https://t.me/${organization.telegram_bot_username}?start=${organization.slug}`;
+  const link = `https://t.me/${organization.telegram_bot_username}?start=${organization.slug}_${session?.user?.id}`;
 
   const handleDismiss = () => {
     localStorage.setItem(`tgDismiss_${organization.id}`, '1');
