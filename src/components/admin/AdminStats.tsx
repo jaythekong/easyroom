@@ -32,27 +32,27 @@ export function AdminStats() {
     organizationBookings: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!organization?.id) {
-        console.log('No organization ID available');
+      // Prevent multiple concurrent requests
+      if (isRequestInProgress) {
+        console.log('Request already in progress, skipping...');
+        return;
+      }
+
+      if (!organization?.id || !user) {
+        console.log('Missing organization or user:', { orgId: organization?.id, user: !!user });
         setLoading(false);
         return;
       }
 
-      if (!user) {
-        console.log('No user available - authentication required');
-        setLoading(false);
-        return;
-      }
-      
+      setIsRequestInProgress(true);
       console.log('Fetching admin stats for organization:', organization.id);
-      console.log('Current user:', user.id);
       
       try {
-        // Use the dedicated database function that bypasses RLS issues
-        console.log('Calling get_organization_stats function...');
+        // Use the organization stats function
         const { data: orgStats, error: statsError } = await supabase
           .rpc('get_organization_stats', { 
             org_id: organization.id 
@@ -64,12 +64,9 @@ export function AdminStats() {
         }
 
         console.log('Organization stats received:', orgStats);
-
-        // Cast to proper type
         const stats = orgStats as unknown as OrganizationStats;
 
-        // Get amenities count separately if needed
-        console.log('Fetching amenities count...');
+        // Get amenities count
         const { data: amenities, error: amenitiesError } = await supabase
           .from("amenities")
           .select("id", { count: 'exact' })
@@ -79,53 +76,43 @@ export function AdminStats() {
           console.error('Error fetching amenities:', amenitiesError);
         }
 
-        // Calculate personal bookings
-        const personalBookingsCount = await supabase
+        // Get personal bookings count
+        const { data: personalBookings, error: personalError } = await supabase
           .from("bookings")
           .select("id", { count: 'exact' })
           .eq("organization_id", organization.id)
           .eq("user_id", user.id);
 
-        const personalBookings = personalBookingsCount.data?.length || 0;
-        const totalAmenities = amenities?.length || 0;
+        if (personalError) {
+          console.error('Error fetching personal bookings:', personalError);
+        }
 
-        console.log('Final stats calculated:', {
-          totalRooms: stats.rooms,
-          activeRooms: stats.rooms, // Function returns all rooms
-          totalAmenities,
-          personalBookings,
-          organizationBookings: stats.total_bookings
-        });
-
-        setStats({
+        const finalStats = {
           totalRooms: stats.rooms || 0,
-          activeRooms: stats.rooms || 0, // Assuming all rooms from function are active
-          totalAmenities,
-          personalBookings,
+          activeRooms: stats.rooms || 0,
+          totalAmenities: amenities?.length || 0,
+          personalBookings: personalBookings?.length || 0,
           organizationBookings: stats.total_bookings || 0,
-        });
+        };
+
+        console.log('Final stats calculated:', finalStats);
+        setStats(finalStats);
       } catch (error) {
         console.error("Error fetching stats:", error);
-        // Set stats to show something even on error
-        setStats({
-          totalRooms: 0,
-          activeRooms: 0,
-          totalAmenities: 0,
-          personalBookings: 0,
-          organizationBookings: 0,
-        });
+        // Keep existing stats on error to avoid flashing zeros
       } finally {
         setLoading(false);
+        setIsRequestInProgress(false);
       }
     };
 
-    if (user && organization?.id) {
+    // Only fetch if we have the required data and no request is in progress
+    if (user && organization?.id && !isRequestInProgress) {
       fetchStats();
-    } else {
-      console.log('Missing user or organization:', { user: !!user, orgId: organization?.id });
+    } else if (!user || !organization?.id) {
       setLoading(false);
     }
-  }, [user, organization?.id]);
+  }, [user, organization?.id, isRequestInProgress]);
 
   const statsCards = [
     {
