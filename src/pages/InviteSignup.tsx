@@ -49,30 +49,35 @@ export default function InviteSignup() {
     if (!token) return;
 
     try {
-      const { data, error } = await supabase
-        .from('invitations')
-        .select('*')
-        .eq('invite_token', token)
-        .is('accepted_at', null)
-        .single();
+      const { data, error } = await supabase.rpc('track_invitation_open', {
+        invitation_token: token
+      });
 
       if (error) {
         setError("Invalid or expired invitation link");
         return;
       }
 
-      if (new Date(data.expires_at) < new Date()) {
+      if (!data) {
+        setError("Invalid or expired invitation link");
+        return;
+      }
+
+      // Type assertion since we know the RPC returns invitation data
+      const inviteData = data as unknown as InviteData;
+
+      if (new Date(inviteData.expires_at) < new Date()) {
         setError("This invitation has expired");
         return;
       }
 
-      setInviteData(data);
+      setInviteData(inviteData);
       
       // Fetch organization data
       const { data: orgData, error: orgError } = await supabase
         .from('organizations')
         .select('id, name, slug, logo_url, primary_color, tagline')
-        .eq('id', data.organization_id)
+        .eq('id', inviteData.organization_id)
         .single();
 
       if (orgError) {
@@ -87,11 +92,11 @@ export default function InviteSignup() {
       }
       
       // Check if it's a link invite (email starts with "link-" or is empty)
-      const isLinkInvite = !data.email || data.email.startsWith('link-');
+      const isLinkInvite = !inviteData.email || inviteData.email.startsWith('link-');
       if (isLinkInvite) {
         setEmail(""); // User will need to enter their email
       } else {
-        setEmail(data.email);
+        setEmail(inviteData.email);
       }
     } catch (error) {
       setError("Failed to load invitation details");
