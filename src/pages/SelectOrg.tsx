@@ -4,11 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Building2, ArrowRight, Loader2 } from "lucide-react";
+import { Building2, ArrowRight, Loader2, ArrowLeft, LogOut, User } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function SelectOrg() {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  const handleNavigation = (slug: string) => {
+    console.log('🔄 Navigating to organization:', slug);
+    navigate(`/${slug}`);
+  };
 
   const { data: organizations, isLoading } = useQuery({
     queryKey: ['user-organizations', user?.id],
@@ -71,47 +83,90 @@ export function SelectOrg() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="w-full max-w-2xl p-6">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold">Select Organization</h1>
-          <p className="text-muted-foreground mt-2">
-            Choose which organization you'd like to access
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Header with back button and user menu */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/')}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs">
+                      {user?.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline">{user?.email}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem disabled>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        
-        <div className="grid gap-4">
-          {organizations.map((membership) => {
-            const org = membership.organizations;
-            return (
-              <Card 
-                key={org.id} 
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/${org.slug}`)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                        {org.logo_url ? (
-                          <img src={org.logo_url} alt={org.name} className="h-8 w-8 rounded" />
-                        ) : (
-                          <Building2 className="h-6 w-6 text-primary" />
-                        )}
+      </div>
+
+      {/* Main content */}
+      <div className="flex items-center justify-center py-16">
+        <div className="w-full max-w-2xl px-6">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold">Select Organization</h1>
+            <p className="text-muted-foreground mt-2">
+              Choose which organization you'd like to access
+            </p>
+          </div>
+          
+          <div className="grid gap-4">
+            {organizations.map((membership) => {
+              const org = membership.organizations;
+              return (
+                <Card 
+                  key={org.id} 
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => handleNavigation(org.slug)}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                          {org.logo_url ? (
+                            <img src={org.logo_url} alt={org.name} className="h-8 w-8 rounded" />
+                          ) : (
+                            <Building2 className="h-6 w-6 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">{org.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {org.tagline || `Role: ${membership.role}`}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold">{org.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {org.tagline || `Role: ${membership.role}`}
-                        </p>
-                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
