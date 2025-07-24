@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Clock, Users, MapPin, AlertCircle } from "lucide-react";
+import { CalendarIcon, Clock, Users, MapPin, AlertCircle, AlertTriangle } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -22,6 +22,8 @@ import {
   bookingDescriptionSchema, 
   attendeesSchema 
 } from "@/lib/validation";
+import { useRoomGaps } from "@/hooks/useRoomGaps";
+import { useMemo } from "react";
 
 interface Room {
   id: string;
@@ -54,12 +56,20 @@ interface BookingModalProps {
   } | null;
 }
 
-const timeSlots = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-  "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-  "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00", "19:30",
-  "20:00", "20:30", "21:00"
-];
+// Generate all possible time slots (30-minute intervals)
+const generateAllTimeSlots = () => {
+  const slots = [];
+  for (let hour = 8; hour <= 22; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      if (hour === 22 && minute > 0) break; // Stop at 22:00
+      const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      slots.push(timeStr);
+    }
+  }
+  return slots;
+};
+
+const allTimeSlots = generateAllTimeSlots();
 
 export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime, existingBooking }: BookingModalProps) {
   const { user } = useAuth();
@@ -77,6 +87,55 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     description: "",
     recurring: "none"
   });
+
+  // Fetch room gaps for smart time selection
+  const { data: roomGaps = [], isLoading: isLoadingGaps } = useRoomGaps(
+    room?.id || '',
+    formData.date,
+    isOpen && !!room
+  );
+
+  // Helper function to check if a time falls within any gap
+  const timeInGaps = (timeStr: string) => {
+    const dateStr = format(formData.date, 'yyyy-MM-dd');
+    const timeToCheck = new Date(`${dateStr}T${timeStr}:00.000Z`);
+    
+    return roomGaps.some(gap => {
+      const gapStart = new Date(gap.gap_start);
+      const gapEnd = new Date(gap.gap_end);
+      return timeToCheck >= gapStart && timeToCheck < gapEnd;
+    });
+  };
+
+  // Get available start times (only times that fall within gaps)
+  const availableStartTimes = useMemo(() => {
+    if (!roomGaps.length) return [];
+    return allTimeSlots.filter(timeInGaps);
+  }, [roomGaps, formData.date]);
+
+  // Get available end times (only times within the same gap as start time)
+  const availableEndTimes = useMemo(() => {
+    if (!formData.startTime || !roomGaps.length) return [];
+    
+    const dateStr = format(formData.date, 'yyyy-MM-dd');
+    const startTime = new Date(`${dateStr}T${formData.startTime}:00.000Z`);
+    
+    // Find the gap that contains the start time
+    const currentGap = roomGaps.find(gap => {
+      const gapStart = new Date(gap.gap_start);
+      const gapEnd = new Date(gap.gap_end);
+      return startTime >= gapStart && startTime < gapEnd;
+    });
+    
+    if (!currentGap) return [];
+    
+    // Return all times after start time but within the same gap
+    return allTimeSlots.filter(timeStr => {
+      const time = new Date(`${dateStr}T${timeStr}:00.000Z`);
+      const gapEnd = new Date(currentGap.gap_end);
+      return time > startTime && time <= gapEnd;
+    });
+  }, [formData.startTime, roomGaps, formData.date]);
 
   // Update form data when initial props change
   const updateFormData = (updates: Partial<typeof formData>) => {
@@ -241,9 +300,9 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           endUTC: endUTC.toISOString(),
           formattedStartTime,
           formattedEndTime,
-          availableTimeSlots: timeSlots,
-          startTimeInSlots: timeSlots.includes(formattedStartTime),
-          endTimeInSlots: timeSlots.includes(formattedEndTime)
+          availableTimeSlots: allTimeSlots,
+          startTimeInSlots: allTimeSlots.includes(formattedStartTime),
+          endTimeInSlots: allTimeSlots.includes(formattedEndTime)
         });
 
         const newFormData = {
@@ -290,41 +349,30 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
   }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
 
-  // Filter end time options to only show times after start time and exclude conflicted slots
+  // Legacy function for backward compatibility with existing booking edits
   const getAvailableEndTimes = () => {
-    console.log('📝 getAvailableEndTimes called:', {
-      formDataStartTime: formData.startTime,
-      formDataEndTime: formData.endTime,
-      existingBooking: !!existingBooking,
-      allTimeSlots: timeSlots
-    });
-
-    if (!formData.startTime) return timeSlots;
-    
-    const startIndex = timeSlots.findIndex(time => time === formData.startTime);
-    const availableTimes = timeSlots.slice(startIndex + 1); // Only show times after start time
-    
-    console.log('📝 Available times after start:', {
-      startIndex,
-      availableTimes,
-      endTimeIncluded: availableTimes.includes(formData.endTime)
-    });
-    
-    // When editing an existing booking, ensure the original end time is always available
-    if (existingBooking && formData.endTime && !availableTimes.includes(formData.endTime)) {
-      console.log('📝 Adding missing end time to available options');
-      // Add the original end time to the available options and sort them
-      const allTimes = [...availableTimes, formData.endTime].sort((a, b) => {
-        const [aHour, aMin] = a.split(':').map(Number);
-        const [bHour, bMin] = b.split(':').map(Number);
-        return (aHour * 60 + aMin) - (bHour * 60 + bMin);
-      });
-      console.log('📝 Final available times with end time added:', allTimes);
-      return allTimes;
+    // For existing bookings, use the legacy logic to ensure original times are preserved
+    if (existingBooking) {
+      if (!formData.startTime) return allTimeSlots;
+      
+      const startIndex = allTimeSlots.findIndex(time => time === formData.startTime);
+      const availableTimes = allTimeSlots.slice(startIndex + 1);
+      
+      // When editing an existing booking, ensure the original end time is always available
+      if (formData.endTime && !availableTimes.includes(formData.endTime)) {
+        const allTimes = [...availableTimes, formData.endTime].sort((a, b) => {
+          const [aHour, aMin] = a.split(':').map(Number);
+          const [bHour, bMin] = b.split(':').map(Number);
+          return (aHour * 60 + aMin) - (bHour * 60 + bMin);
+        });
+        return allTimes;
+      }
+      
+      return availableTimes;
     }
     
-    console.log('📝 Returning standard available times:', availableTimes);
-    return availableTimes;
+    // For new bookings, use the gap-based available end times
+    return availableEndTimes;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -591,35 +639,64 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               </Popover>
             </div>
 
+            {/* Room fully booked banner */}
+            {!isLoadingGaps && !existingBooking && availableStartTimes.length === 0 && (
+              <div className="col-span-full mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <span className="text-destructive font-medium">Room fully booked on this date</span>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="startTime">Start Time *</Label>
               <Select 
                 value={formData.startTime} 
                 onValueChange={(value) => {
                   updateFormData({ startTime: value });
-                  // Clear end time if it's now before the new start time
-                  if (formData.endTime && value >= formData.endTime) {
+                  // Clear end time when start time changes
+                  if (formData.endTime) {
                     updateFormData({ endTime: "" });
                   }
                 }}
+                disabled={isLoadingGaps}
               >
                 <SelectTrigger className={cn(timeConflictError && "border-destructive")}>
-                  <SelectValue placeholder="Start time" />
+                  <SelectValue placeholder={isLoadingGaps ? "Loading..." : "Start time"} />
                 </SelectTrigger>
                 <SelectContent>
                   <TooltipProvider>
-                    {timeSlots.map((time) => {
-                      const isConflicted = isTimeSlotConflicted(time);
+                    {(existingBooking ? allTimeSlots : availableStartTimes).map((time) => {
+                      const isAvailable = existingBooking || availableStartTimes.includes(time);
+                      const isConflicted = existingBooking ? isTimeSlotConflicted(time) : false;
                       const conflictingBooking = getConflictingBooking(time);
                       
-                      if (isConflicted && conflictingBooking) {
+                      if (!existingBooking && !isAvailable) {
                         return (
                           <Tooltip key={time}>
                             <TooltipTrigger asChild>
                               <SelectItem 
                                 value={time} 
                                 disabled
-                                className="text-muted-foreground opacity-50 cursor-not-allowed"
+                                className="text-muted-foreground opacity-40 cursor-not-allowed"
+                              >
+                                {time}
+                              </SelectItem>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Time overlaps an existing booking</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        );
+                      }
+
+                      if (existingBooking && isConflicted && conflictingBooking) {
+                        return (
+                          <Tooltip key={time}>
+                            <TooltipTrigger asChild>
+                              <SelectItem 
+                                value={time} 
+                                disabled
+                                className="text-muted-foreground opacity-40 cursor-not-allowed"
                               >
                                 {time}
                               </SelectItem>
@@ -651,24 +728,31 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               <Select 
                 value={formData.endTime} 
                 onValueChange={(value) => updateFormData({ endTime: value })}
+                disabled={isLoadingGaps || !formData.startTime}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="End time" />
+                  <SelectValue placeholder={
+                    !formData.startTime 
+                      ? "Select start time first" 
+                      : isLoadingGaps 
+                      ? "Loading..." 
+                      : "End time"
+                  } />
                 </SelectTrigger>
                 <SelectContent>
                   <TooltipProvider>
                     {getAvailableEndTimes().map((time) => {
-                      const isConflicted = isTimeSlotConflicted(time, true);
+                      const isConflicted = existingBooking ? isTimeSlotConflicted(time, true) : false;
                       const conflictingBooking = getConflictingBooking(time);
                       
-                      if (isConflicted && conflictingBooking) {
+                      if (existingBooking && isConflicted && conflictingBooking) {
                         return (
                           <Tooltip key={time}>
                             <TooltipTrigger asChild>
                               <SelectItem 
                                 value={time} 
                                 disabled
-                                className="text-muted-foreground opacity-50 cursor-not-allowed"
+                                className="text-muted-foreground opacity-40 cursor-not-allowed"
                               >
                                 {time}
                               </SelectItem>
