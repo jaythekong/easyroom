@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, UserPlus, AlertCircle } from "lucide-react";
 
@@ -14,12 +14,17 @@ interface InviteData {
   organization_id: string;
   expires_at: string;
   accepted_at?: string;
+  organizations: {
+    id: string;
+    name: string;
+    slug: string;
+  };
 }
 
 export default function InviteSignup() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  
   const [inviteData, setInviteData] = useState<InviteData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -40,7 +45,14 @@ export default function InviteSignup() {
     try {
       const { data, error } = await supabase
         .from('invitations')
-        .select('*')
+        .select(`
+          *,
+          organizations!inner(
+            id,
+            name,
+            slug
+          )
+        `)
         .eq('invite_token', token)
         .is('accepted_at', null)
         .single();
@@ -55,7 +67,7 @@ export default function InviteSignup() {
         return;
       }
 
-      setInviteData(data);
+      setInviteData(data as any);
       // Check if it's a link invite (email starts with "link-" or is empty)
       const isLinkInvite = !data.email || data.email.startsWith('link-');
       if (isLinkInvite) {
@@ -73,6 +85,12 @@ export default function InviteSignup() {
   const handleSignup = async () => {
     if (!inviteData || !password || !email) return;
 
+    // Security Check: If invite has specific email, ensure it matches
+    if (inviteData.email && !inviteData.email.startsWith('link-') && inviteData.email !== email) {
+      setError("This invitation is for a different email address.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -87,44 +105,90 @@ export default function InviteSignup() {
     setError("");
 
     try {
-      // Sign up the user
+      // Get organization slug for redirect
+      const orgSlug = inviteData.organizations?.slug;
+      if (!orgSlug) {
+        throw new Error("Organization information not found");
+      }
+
+      // Sign up the user with organization-specific redirect
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/${orgSlug}`
         }
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        if (authError.message.includes("already registered")) {
+          setError("This email is already registered. Please sign in instead.");
+        } else {
+          throw authError;
+        }
+        return;
+      }
 
       if (authData.user) {
-        // Create user profile
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            user_id: authData.user.id,
-            organization_id: inviteData.organization_id,
-            role: inviteData.role as 'admin' | 'member',
-            email: email,
+        try {
+          // Create user_organization_membership (required by your spec)
+          const { error: membershipError } = await supabase
+            .from('user_organization_memberships')
+            .insert({
+              user_id: authData.user.id,
+              organization_id: inviteData.organization_id,
+              role: inviteData.role as 'admin' | 'member'
+            });
+
+          if (membershipError) throw membershipError;
+
+          // Create user profile
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              user_id: authData.user.id,
+              organization_id: inviteData.organization_id,
+              role: inviteData.role as 'admin' | 'member',
+              email: email,
+            });
+
+          if (profileError) throw profileError;
+
+          // Mark invitation as accepted
+          const { error: inviteError } = await supabase
+            .from('invitations')
+            .update({ accepted_at: new Date().toISOString() })
+            .eq('invite_token', token);
+
+          if (inviteError) console.error('Failed to mark invite as accepted:', inviteError);
+
+          // Audit log: invite_accept
+          await supabase
+            .from('platform_audit_log')
+            .insert({
+              user_id: authData.user.id,
+              organization_id: inviteData.organization_id,
+              action: 'invite_accept',
+              metadata: {
+                invite_token: token,
+                role: inviteData.role,
+                invited_email: inviteData.email
+              }
+            });
+
+          toast({
+            title: "Welcome to the team!",
+            description: "Please check your email to confirm your account.",
           });
 
-        if (profileError) throw profileError;
+          // Store org slug for post-confirmation redirect
+          localStorage.setItem('pendingOrgSlug', orgSlug);
 
-        // Mark invitation as accepted
-        const { error: inviteError } = await supabase
-          .from('invitations')
-          .update({ accepted_at: new Date().toISOString() })
-          .eq('invite_token', token);
-
-        if (inviteError) console.error('Failed to mark invite as accepted:', inviteError);
-
-        toast({
-          title: "Welcome!",
-          description: "Your account has been created successfully",
-        });
-
-        navigate("/");
+        } catch (dbError: any) {
+          // Clean up auth user if database operations fail
+          await supabase.auth.signOut();
+          throw new Error(`Account setup failed: ${dbError.message}`);
+        }
       }
     } catch (error: any) {
       setError(error.message || "Failed to create account");
