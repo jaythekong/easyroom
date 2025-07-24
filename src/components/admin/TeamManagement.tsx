@@ -308,45 +308,117 @@ export function TeamManagement() {
   };
 
   const deleteUser = async (userId: string, email: string) => {
-    if (!confirm(`Are you sure you want to delete ${email}? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete ${email}? This will permanently remove ALL data associated with this user including bookings, memberships, and subscriptions. This action cannot be undone.`)) {
       return;
     }
 
     try {
-      // Delete user profile first (this will fail if there are bookings)
+      console.log(`Starting complete deletion for user ${userId} (${email})`);
+
+      // Step 1: Delete all bookings
+      const { error: bookingsError } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (bookingsError) {
+        console.error('Error deleting bookings:', bookingsError);
+        throw new Error(`Failed to delete bookings: ${bookingsError.message}`);
+      }
+      console.log('✅ Deleted user bookings');
+
+      // Step 2: Delete room downtime records
+      const { error: downtimeError } = await supabase
+        .from('room_downtime')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (downtimeError) {
+        console.error('Error deleting room downtime:', downtimeError);
+        throw new Error(`Failed to delete room downtime: ${downtimeError.message}`);
+      }
+      console.log('✅ Deleted room downtime records');
+
+      // Step 3: Delete telegram subscriptions
+      const { error: telegramError } = await supabase
+        .from('telegram_subscriptions')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (telegramError) {
+        console.error('Error deleting telegram subscriptions:', telegramError);
+        throw new Error(`Failed to delete telegram subscriptions: ${telegramError.message}`);
+      }
+      console.log('✅ Deleted telegram subscriptions');
+
+      // Step 4: Delete invitation audit log entries
+      const { error: auditError } = await supabase
+        .from('invitation_audit_log')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (auditError) {
+        console.error('Error deleting invitation audit logs:', auditError);
+        throw new Error(`Failed to delete invitation audit logs: ${auditError.message}`);
+      }
+      console.log('✅ Deleted invitation audit logs');
+
+      // Step 5: Delete unauthorized access attempts
+      const { error: accessError } = await supabase
+        .from('unauthorized_access_attempts')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (accessError) {
+        console.error('Error deleting access attempts:', accessError);
+        throw new Error(`Failed to delete access attempts: ${accessError.message}`);
+      }
+      console.log('✅ Deleted unauthorized access attempts');
+
+      // Step 6: Delete organization memberships
+      const { error: membershipError } = await supabase
+        .from('user_organization_memberships')
+        .delete()
+        .eq('user_id', userId);
+      
+      if (membershipError) {
+        console.error('Error deleting memberships:', membershipError);
+        throw new Error(`Failed to delete organization memberships: ${membershipError.message}`);
+      }
+      console.log('✅ Deleted organization memberships');
+
+      // Step 7: Delete user profiles
       const { error: profileError } = await supabase
         .from('user_profiles')
         .delete()
         .eq('user_id', userId);
 
       if (profileError) {
-        if (profileError.message.includes('violates foreign key constraint')) {
-          toast({
-            title: "Cannot delete user",
-            description: "This user has existing bookings. Cancel their bookings first before deleting the account.",
-            variant: "destructive",
-          });
-        } else {
-          throw profileError;
-        }
-        return;
+        console.error('Error deleting profile:', profileError);
+        throw new Error(`Failed to delete user profile: ${profileError.message}`);
       }
+      console.log('✅ Deleted user profile');
 
-      // Delete from auth.users using admin API
+      // Step 8: Delete from auth.users using admin API
       const { error: authError } = await supabase.auth.admin.deleteUser(userId);
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error('Error deleting auth user:', authError);
+        throw new Error(`Failed to delete auth user: ${authError.message}`);
+      }
+      console.log('✅ Deleted auth user');
 
       toast({
-        title: "User deleted",
-        description: `${email} has been successfully removed`,
+        title: "User completely deleted",
+        description: `${email} and all associated data have been permanently removed`,
       });
       
       fetchTeamData();
     } catch (error: any) {
+      console.error('Complete user deletion failed:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete user",
+        description: error.message || "Failed to completely delete user",
         variant: "destructive",
       });
     }
