@@ -86,20 +86,34 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Fetch existing bookings when modal opens or date/room changes
   useEffect(() => {
     const fetchExistingBookings = async () => {
-      if (!isOpen || !room || !organization?.id) return;
+      if (!isOpen || !room || !organization?.id) {
+        console.log('📝 SKIPPING FETCH - Missing requirements:', { isOpen, room: !!room, org: !!organization?.id });
+        return;
+      }
 
       const dateStr = format(formData.date, 'yyyy-MM-dd');
+      console.log('📝 FETCHING EXISTING BOOKINGS:', { 
+        roomId: room.id, 
+        orgId: organization.id, 
+        date: dateStr,
+        excludeBookingId: existingBooking?.id 
+      });
+
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
         .eq('room_id', room.id)
         .eq('organization_id', organization.id)
-        .gte('start_time', `${dateStr}T00:00:00`)
-        .lt('start_time', `${dateStr}T23:59:59`)
+        .gte('start_time', `${dateStr}T00:00:00.000Z`)
+        .lt('start_time', `${dateStr}T23:59:59.999Z`)
         .neq('id', existingBooking?.id || 'none'); // Exclude current booking if editing
 
-      if (!error && data) {
-        setExistingBookings(data);
+      if (error) {
+        console.error('📝 ERROR FETCHING BOOKINGS:', error);
+        setExistingBookings([]);
+      } else {
+        console.log('📝 FETCHED EXISTING BOOKINGS:', data?.length || 0, 'bookings found', data);
+        setExistingBookings(data || []);
       }
     };
 
@@ -114,13 +128,37 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     const checkStart = new Date(`${dateStr}T${startTime}:00`);
     const checkEnd = new Date(`${dateStr}T${endTime}:00`);
 
-    return existingBookings.some(booking => {
+    console.log('📝 CHECKING CONFLICT:', {
+      checkStart: checkStart.toISOString(),
+      checkEnd: checkEnd.toISOString(),
+      existingBookingsCount: existingBookings.length,
+      existingBookings: existingBookings.map(b => ({
+        title: b.title,
+        start: b.start_time,
+        end: b.end_time
+      }))
+    });
+
+    const hasConflict = existingBookings.some(booking => {
       const bookingStart = new Date(booking.start_time);
       const bookingEnd = new Date(booking.end_time);
       
       // Check if times overlap
-      return (checkStart < bookingEnd && checkEnd > bookingStart);
+      const overlaps = checkStart < bookingEnd && checkEnd > bookingStart;
+      
+      if (overlaps) {
+        console.log('📝 CONFLICT DETECTED:', {
+          newBooking: `${checkStart.toISOString()} - ${checkEnd.toISOString()}`,
+          existingBooking: `${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`,
+          title: booking.title
+        });
+      }
+      
+      return overlaps;
     });
+
+    console.log('📝 CONFLICT RESULT:', hasConflict);
+    return hasConflict;
   };
 
   // Check if a specific time slot has conflicts
@@ -319,6 +357,18 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Check for time conflicts before submitting
+    if (checkTimeConflict(formData.startTime, formData.endTime)) {
+      console.log("📝 SUBMISSION BLOCKED - Time conflict detected");
+      toast({
+        title: "Time Conflict",
+        description: "The selected time overlaps with an existing booking. Please choose a different time.",
         variant: "destructive"
       });
       setIsSubmitting(false);
