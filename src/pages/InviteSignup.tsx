@@ -212,47 +212,29 @@ export default function InviteSignup() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // FIRST: Create organization membership (required for RLS)
-        const { error: membershipError } = await supabase
-          .from('user_organization_memberships')
-          .insert({
-            user_id: authData.user.id,
-            organization_id: inviteData.organization_id,
-            role: inviteData.role as 'admin' | 'member'
-          });
+        // Use our secure function to handle everything atomically
+        const { data: result, error: functionError } = await supabase.rpc(
+          'accept_invitation_and_create_user',
+          {
+            invitation_token: token,
+            user_email: email,
+            auth_user_id: authData.user.id
+          }
+        );
 
-        if (membershipError) {
-          console.error('Membership creation error:', membershipError);
-          throw new Error(`Failed to create organization membership: ${membershipError.message}`);
-        }
-
-        // THEN: Create user profile (now RLS will pass)
-        const { error: profileError } = await supabase
-          .from('user_profiles')
-          .insert({
-            user_id: authData.user.id,
-            organization_id: inviteData.organization_id,
-            role: inviteData.role as 'admin' | 'member',
-            email: email,
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw new Error(`Failed to create user profile: ${profileError.message}`);
-        }
-
-        // FINALLY: Mark invitation as accepted
-        const { error: inviteError } = await supabase
-          .from('invitations')
-          .update({ 
-            accepted_at: new Date().toISOString(),
-            status: 'accepted'
-          })
-          .eq('invite_token', token);
-
-        if (inviteError) {
-          console.error('Failed to mark invite as accepted:', inviteError);
-          // Don't throw here - user is already created successfully
+        if (functionError) {
+          console.error('Function error:', functionError);
+          
+          // Handle specific error codes for better UX
+          if (functionError.message?.includes('INVITE_404')) {
+            throw new Error('This invitation link is invalid, expired, or has already been used.');
+          } else if (functionError.message?.includes('INVITE_EMAIL_MISMATCH')) {
+            throw new Error('This invitation is for a different email address.');
+          } else if (functionError.message?.includes('INVITE_MEMBERSHIP_FAILED')) {
+            throw new Error('Unable to complete signup due to a system conflict. Please try again.');
+          }
+          
+          throw new Error(`Failed to accept invitation: ${functionError.message}`);
         }
 
         toast({
