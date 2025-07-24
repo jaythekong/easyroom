@@ -99,13 +99,8 @@ export default function InviteSignup() {
         applyOrganizationTheme(inviteInfo.organization.primary_color);
       }
       
-      // Check if it's a link invite (email starts with "link-" or is empty)
-      const isLinkInvite = !inviteInfo.email || inviteInfo.email.startsWith('link-');
-      if (isLinkInvite) {
-        setEmail(""); // User will need to enter their email
-      } else {
-        setEmail(inviteInfo.email);
-      }
+      // All invites are now link invites (email is always NULL)
+      setEmail(""); // User will need to enter their email
     } catch (error) {
       setError("Failed to load invitation details");
     } finally {
@@ -213,21 +208,13 @@ export default function InviteSignup() {
 
       if (authData.user) {
         // Wait for session to be fully established (prevents race condition)
-        const { data: sessionData } = await supabase.auth.getSession();
-        console.log('Session after signup:', {
-          hasSession: !!sessionData.session,
-          hasUser: !!sessionData.session?.user,
-          userId: sessionData.session?.user?.id,
-          accessToken: sessionData.session?.access_token ? 'EXISTS' : 'MISSING'
-        });
+        await supabase.auth.getSession();
         
-        // Use our secure function to handle everything atomically
-        // No need to pass auth_user_id - function uses auth.uid() internally
+        // Use simplified link invitation function
         const { data: result, error: functionError } = await supabase.rpc(
-          'accept_invitation_and_create_user',
+          'accept_invitation_link',
           {
-            invitation_token: token,
-            user_email: email
+            invitation_token: token
           }
         );
 
@@ -235,16 +222,10 @@ export default function InviteSignup() {
           console.error('Function error:', functionError);
           
           // Handle specific error codes for better UX
-          if (functionError.message?.includes('INVITE_404')) {
+          if (functionError.message?.includes('INVITE_INVALID')) {
             throw new Error('This invitation link is invalid, expired, or has already been used.');
-          } else if (functionError.message?.includes('INVITE_EMAIL_MISMATCH')) {
-            throw new Error('This invitation is for a different email address.');
           } else if (functionError.message?.includes('AUTH_REQUIRED')) {
             throw new Error('Authentication failed. Please try signing up again.');
-          } else if (functionError.message?.includes('USER_NOT_FOUND')) {
-            throw new Error('Account creation is still processing. Please wait a moment and try again.');
-          } else if (functionError.message?.includes('INVITE_MEMBERSHIP_FAILED')) {
-            throw new Error('Unable to complete signup due to a system conflict. Please try again.');
           }
           
           throw new Error(`Failed to accept invitation: ${functionError.message}`);
@@ -335,7 +316,6 @@ export default function InviteSignup() {
             <CardDescription className="mt-2">
               You've been invited to join{organizationData ? ` ${organizationData.name}` : ""} as a{" "}
               <span className="font-medium capitalize">{inviteData.role}</span>
-              {!inviteData.email?.startsWith('link-') && inviteData.email ? ` for ${inviteData.email}` : ""}
             </CardDescription>
           </div>
         </CardHeader>
@@ -345,11 +325,9 @@ export default function InviteSignup() {
             <Input
               id="email"
               type="email"
-              placeholder={(!inviteData.email?.startsWith('link-') && inviteData.email) ? inviteData.email : "Enter your email"}
+              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={!inviteData.email?.startsWith('link-') && !!inviteData.email}
-              className={(!inviteData.email?.startsWith('link-') && !!inviteData.email) ? "bg-muted" : ""}
             />
           </div>
           

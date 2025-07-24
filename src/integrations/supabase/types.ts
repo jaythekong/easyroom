@@ -592,6 +592,10 @@ export type Database = {
             }
         Returns: Json
       }
+      accept_invitation_link: {
+        Args: { invitation_token: string }
+        Returns: Json
+      }
       end_impersonation: {
         Args: Record<PropertyKey, never>
         Returns: Json
