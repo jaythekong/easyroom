@@ -17,7 +17,7 @@ import NotFound from "./pages/NotFound";
 import InviteSignup from "./pages/InviteSignup";
 import LandingPage from "./pages/LandingPage";
 import { AccessDeniedPage } from "./pages/AccessDeniedPage";
-
+import { SelectOrg } from "./pages/SelectOrg";
 import ThankYouPage from "./pages/ThankYouPage";
 import FirstRoomOnboarding from "./pages/FirstRoomOnboarding";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
@@ -48,7 +48,7 @@ const App = () => (
                 <Route path="/thank-you" element={<ThankYouPage />} />
                 <Route path="/thank-you/:orgSlug" element={<ThankYouPage />} />
                 <Route path="/access-denied" element={<AccessDeniedPage />} />
-                
+                <Route path="/select-org" element={<SelectOrg />} />
                 <Route path="/super-admin" element={<SuperAdminDashboard />} />
                 <Route path="/super-admin/auth" element={<SuperAdminAuth />} />
                 

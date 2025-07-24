@@ -617,30 +617,8 @@ const Auth = () => {
           // If we're in an org-specific auth page, redirect to the org dashboard
           redirectTo = searchParams.get('redirectTo') || `/${orgSlug}`;
         } else {
-          // If it's the main auth page, redirect to user's primary organization
-          const urlRedirectTo = searchParams.get('redirectTo');
-          if (urlRedirectTo && urlRedirectTo !== '/') {
-            redirectTo = urlRedirectTo;
-          } else {
-            // Get user's primary organization
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              const { data: primaryOrgData } = await supabase
-                .from('user_organization_memberships')
-                .select(`
-                  organization_id,
-                  organizations!inner(slug)
-                `)
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: true })
-                .limit(1)
-                .single();
-
-              redirectTo = primaryOrgData ? `/${primaryOrgData.organizations.slug}` : '/';
-            } else {
-              redirectTo = '/';
-            }
-          }
+          // If it's the main auth page, redirect to the default URL or user's first org dashboard
+          redirectTo = searchParams.get('redirectTo') || '/';
         }
         
         logger.debug('Auth: Sign in successful, redirecting to:', redirectTo);
