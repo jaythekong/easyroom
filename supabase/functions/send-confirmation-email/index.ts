@@ -5,41 +5,26 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+// Background task for sending email
+async function sendConfirmationEmail(user: any, emailData: any) {
   try {
-    console.log("Email hook triggered - processing confirmation email");
+    console.log("Starting background email send for:", user.email);
     
-    const body = await req.json();
-    const { user, email_data } = body;
-    
-    console.log("User email:", user.email);
-    
-    // Validate RESEND_API_KEY
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey || resendApiKey.trim() === "") {
-      console.error("RESEND_API_KEY is missing or empty");
-      return new Response(null, { 
-        status: 204,
-        headers: corsHeaders
-      });
+    if (!resendApiKey) {
+      throw new Error("RESEND_API_KEY environment variable is not set");
     }
+
+    // Build confirmation URL
+    const confirmationUrl = `${emailData.site_url}/auth/callback?token_hash=${emailData.token_hash}&type=${emailData.email_action_type}&redirect_to=${encodeURIComponent(emailData.redirect_to || '/')}`;
     
-    console.log("RESEND_API_KEY found, length:", resendApiKey.length);
+    console.log("Sending email to Resend API...");
     
-    // Build the confirmation URL
-    const confirmationUrl = `${email_data.site_url}/auth/callback?token_hash=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to || '/')}`;
-    
-    // Fire-and-forget: send email asynchronously without awaiting
-    fetch("https://api.resend.com/emails", {
+    const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${resendApiKey.trim()}`,
-        "Content-Type": "application/json"
+        "Authorization": `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         from: "Union of Youth Federations <noreply@resend.dev>",
@@ -84,36 +69,73 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
           </body>
           </html>
-        `
-      })
-    }).then(async response => {
-      console.log("Resend API response status:", response.status);
-      const responseText = await response.text();
-      console.log("Resend API response:", responseText);
-      
-      if (!response.ok) {
-        console.error("Resend API error:", response.status, responseText);
-      } else {
-        console.log("Email sent successfully via Resend");
-      }
-    }).catch(error => {
-      console.error("Error sending email:", error);
+        `,
+      }),
     });
 
-    // Return immediately (< 100ms) to prevent timeout
-    return new Response(null, { 
-      status: 204,
-      headers: corsHeaders
-    });
-    
-  } catch (error: any) {
-    console.error("Error in email hook:", error);
-    // Still return quickly even on error
-    return new Response(null, { 
-      status: 204,
-      headers: corsHeaders
-    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Resend API error:", response.status, errorText);
+      throw new Error(`Resend API error: ${response.status} ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log("✅ Email sent successfully via Resend:", result.id);
+    return result;
+
+  } catch (error) {
+    console.error("❌ Failed to send confirmation email:", error);
+    throw error;
   }
-};
+}
 
-serve(handler);
+serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    console.log("🔔 Email confirmation hook triggered");
+    
+    const body = await req.json();
+    const { user, email_data } = body;
+    
+    console.log("📧 Processing email for:", user.email);
+    
+    // Start background email task
+    // @ts-ignore - EdgeRuntime is available in Supabase Edge Functions
+    EdgeRuntime.waitUntil(
+      sendConfirmationEmail(user, email_data)
+    );
+
+    console.log("⚡ Response sent immediately, email processing in background");
+    
+    // Return immediately to prevent timeout
+    return new Response(
+      JSON.stringify({ success: true, message: "Email queued for sending" }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      }
+    );
+
+  } catch (error) {
+    console.error("❌ Hook error:", error);
+    
+    // Still return success to prevent auth failure
+    return new Response(
+      JSON.stringify({ success: true, message: "Hook processed with error" }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+      }
+    );
+  }
+});
