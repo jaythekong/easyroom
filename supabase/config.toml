@@ -1,5 +1,12 @@
 project_id = "yjdrwwelnuyuifjqfebv"
 
+[auth.hooks.send_email]
+enabled = true
+uri = "https://yjdrwwelnuyuifjqfebv.supabase.co/functions/v1/send-confirmation-email"
+
+[functions.send-confirmation-email]
+verify_jwt = false
+
 [functions.send-telegram-notification]
 verify_jwt = false
 
