@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -138,32 +138,30 @@ export function SelectOrg() {
             {organizations.map((membership) => {
               const org = membership.organizations;
               return (
-                <Card 
-                  key={org.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleNavigation(org.slug)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                          {org.logo_url ? (
-                            <img src={org.logo_url} alt={org.name} className="h-8 w-8 rounded" />
-                          ) : (
-                            <Building2 className="h-6 w-6 text-primary" />
-                          )}
+                <Link key={org.id} to={`/${org.slug}`} className="block">
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            {org.logo_url ? (
+                              <img src={org.logo_url} alt={org.name} className="h-8 w-8 rounded" />
+                            ) : (
+                              <Building2 className="h-6 w-6 text-primary" />
+                            )}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold">{org.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {org.tagline || `Role: ${membership.role}`}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold">{org.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {org.tagline || `Role: ${membership.role}`}
-                          </p>
-                        </div>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               );
             })}
           </div>
