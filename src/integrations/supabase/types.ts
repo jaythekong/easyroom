@@ -596,6 +596,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      get_room_gaps: {
+        Args: {
+          p_room_id: string
+          p_date: string
+          p_open?: string
+          p_close?: string
+        }
+        Returns: {
+          gap_start: string
+          gap_end: string
+        }[]
+      }
       get_user_admin_org_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
