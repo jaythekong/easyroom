@@ -26,11 +26,6 @@ import { authRateLimiter, passwordResetRateLimiter } from "@/lib/rateLimiter";
 
 const Auth = () => {
   const { orgSlug } = useParams<{ orgSlug: string }>();
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  
-  // Check if we have an invite token (allows signup on org auth pages)
-  const inviteToken = searchParams.get('inviteToken');
   
   // Only use organization context if we have an orgSlug (organization-specific auth)
   let organization = null;
@@ -59,6 +54,8 @@ const Auth = () => {
   const [orgCreationStep, setOrgCreationStep] = useState(1);
   const [orgType, setOrgType] = useState("");
   const [referralSource, setReferralSource] = useState("");
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Auto-generate slug from organization name
   useEffect(() => {
@@ -415,13 +412,6 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      // Block signup on org auth pages without invite token
-      if (orgSlug && !inviteToken) {
-        toast.error("Only invited users can sign up. Ask an admin for an invite link.");
-        setLoading(false);
-        return;
-      }
-      
       // Input validation and sanitization
       const sanitizedEmail = sanitizeEmail(email);
       
@@ -1236,9 +1226,9 @@ const Auth = () => {
                 ) : (
                   // Existing organization-specific auth tabs
                   <Tabs defaultValue="signin" className="w-full">
-                    <TabsList className={`grid w-full ${orgSlug && !inviteToken ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                    <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="signin">Sign In</TabsTrigger>
-                      {(!orgSlug || inviteToken) && <TabsTrigger value="signup">Sign Up</TabsTrigger>}
+                      <TabsTrigger value="signup">Sign Up</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="signin" className="space-y-4 mt-6">
@@ -1291,15 +1281,6 @@ const Auth = () => {
                               )}
                             </Button>
                           </form>
-                          
-                          {/* Show friendly message for org auth without invite */}
-                          {orgSlug && !inviteToken && (
-                            <div className="mt-6 p-4 bg-muted/50 rounded-lg text-center">
-                              <p className="text-sm text-muted-foreground">
-                                Need access? Ask an admin for an invite link.
-                              </p>
-                            </div>
-                          )}
                         </>
                       ) : (
                         <div className="space-y-4">
@@ -1350,8 +1331,7 @@ const Auth = () => {
                       )}
                     </TabsContent>
                     
-                    {(!orgSlug || inviteToken) && (
-                      <TabsContent value="signup" className="space-y-4 mt-6">
+                    <TabsContent value="signup" className="space-y-4 mt-6">
                       <form onSubmit={!organization ? handleOrganizationSignUp : handleSignUp} className="space-y-4">
                         {!organization && (
                           <>
@@ -1418,11 +1398,10 @@ const Auth = () => {
                           ) : (
                             !organization ? "Create Organization" : "Sign Up"
                           )}
-                         </Button>
-                       </form>
-                     </TabsContent>
-                    )}
-                   </Tabs>
+                        </Button>
+                      </form>
+                    </TabsContent>
+                  </Tabs>
                 )}
               </CardContent>
             </Card>
