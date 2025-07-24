@@ -1,8 +1,12 @@
 project_id = "yjdrwwelnuyuifjqfebv"
 
 [auth]
-external_email_enabled = true
+external_email_enabled = false
 enable_signup = true
+
+[auth.hooks.send_email]
+enabled = true
+uri = "https://yjdrwwelnuyuifjqfebv.supabase.co/functions/v1/send-confirmation-email"
 
 [functions.send-confirmation-email]
 verify_jwt = false

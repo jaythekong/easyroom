@@ -6,47 +6,96 @@ const corsHeaders = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("Email hook triggered!");
+    console.log("Email hook triggered - processing confirmation email");
     
     const body = await req.json();
-    console.log("Received data:", JSON.stringify(body, null, 2));
+    const { user, email_data } = body;
     
-    // For now, just log that we received the request
-    // We'll add Resend back once we confirm the hook is working
+    console.log("User email:", user.email);
     
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Email hook received (Resend disabled for testing)" 
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
-      }
-    );
+    // Build the confirmation URL
+    const confirmationUrl = `${email_data.site_url}/auth/callback?token_hash=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to || '/')}`;
+    
+    // Fire-and-forget: send email asynchronously without awaiting
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${Deno.env.get("RESEND_API_KEY")}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: "Union of Youth Federations <noreply@resend.dev>",
+        to: [user.email],
+        subject: "Confirm your email address",
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirm your email</title>
+          </head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #2563eb; margin-bottom: 10px;">Welcome!</h1>
+              <p style="font-size: 18px; color: #666;">Please confirm your email address to complete your registration</p>
+            </div>
+            
+            <div style="background: #f8fafc; border-radius: 8px; padding: 30px; margin: 30px 0; text-align: center;">
+              <p style="margin-bottom: 25px; font-size: 16px;">Click the button below to verify your email address:</p>
+              
+              <a href="${confirmationUrl}" 
+                 style="display: inline-block; background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Confirm Email Address
+              </a>
+            </div>
+            
+            <div style="margin: 30px 0; padding: 20px; border-left: 4px solid #fbbf24; background: #fffbeb;">
+              <p style="margin: 0; color: #92400e; font-size: 14px;">
+                <strong>Alternative:</strong> If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="word-break: break-all; font-size: 12px; color: #92400e; margin: 10px 0 0 0;">
+                ${confirmationUrl}
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="font-size: 14px; color: #666; margin: 0;">
+                If you didn't create an account, you can safely ignore this email.
+              </p>
+            </div>
+          </body>
+          </html>
+        `
+      })
+    }).then(response => {
+      console.log("Resend API response status:", response.status);
+      return response.json();
+    }).then(data => {
+      console.log("Email sent successfully:", data);
+    }).catch(error => {
+      console.error("Error sending email:", error);
+    });
+
+    // Return immediately (< 100ms) to prevent timeout
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders
+    });
+    
   } catch (error: any) {
     console.error("Error in email hook:", error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        success: false 
-      }),
-      {
-        status: 500,
-        headers: { 
-          "Content-Type": "application/json", 
-          ...corsHeaders 
-        },
-      }
-    );
+    // Still return quickly even on error
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders
+    });
   }
 };
 
