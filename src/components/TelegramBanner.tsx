@@ -30,6 +30,16 @@ export function TelegramBanner({ organization }: TelegramBannerProps) {
     dismissed
   });
 
+  // FORCE-SHOW DEBUG - Remove after testing
+  console.log('FORCE-SHOW DEBUG:', { 
+    isLoading, 
+    hasSub, 
+    dismissed, 
+    cta: organization?.telegram_cta_enabled,
+    has_token: !!organization?.telegram_bot_token,
+    has_username: !!organization?.telegram_bot_username
+  });
+
   // Don't show if CTA disabled, no bot configured, or user dismissed it
   if (
     organization.telegram_cta_enabled === false ||
