@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2 } from "lucide-react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2, Send, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,11 @@ interface Invitation {
   expires_at: string;
   created_at: string;
   accepted_at?: string;
+  short_code?: string;
+  open_count?: number;
+  last_opened_at?: string;
+  resend_count?: number;
+  status?: string;
 }
 
 export function TeamManagement() {
@@ -172,7 +177,7 @@ export function TeamManagement() {
 
       if (error) throw error;
 
-      const inviteUrl = `${window.location.origin}/invite/${data.invite_token}`;
+      const inviteUrl = `${window.location.origin}/invite/${data.short_code || data.invite_token}`;
       await navigator.clipboard.writeText(inviteUrl);
       
       toast({
@@ -194,10 +199,10 @@ export function TeamManagement() {
     }
   };
 
-  const copyInviteLink = async (token: string) => {
-    const inviteUrl = `${window.location.origin}/invite/${token}`;
+  const copyInviteLink = async (invite: Invitation) => {
+    const inviteUrl = `${window.location.origin}/invite/${invite.short_code || invite.invite_token}`;
     await navigator.clipboard.writeText(inviteUrl);
-    setCopiedToken(token);
+    setCopiedToken(invite.invite_token);
     toast({
       title: "Copied!",
       description: "Invite link copied to clipboard",
@@ -205,12 +210,33 @@ export function TeamManagement() {
     setTimeout(() => setCopiedToken(null), 2000);
   };
 
+  const resendInvite = async (inviteId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('resend_invitation', {
+        invitation_id: inviteId
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Invite resent",
+        description: "The invitation has been resent successfully",
+      });
+      fetchTeamData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend invite",
+        variant: "destructive",
+      });
+    }
+  };
+
   const revokeInvite = async (inviteId: string) => {
     try {
-      const { error } = await supabase
-        .from('invitations')
-        .delete()
-        .eq('id', inviteId);
+      const { data, error } = await supabase.rpc('revoke_invitation', {
+        invitation_id: inviteId
+      });
 
       if (error) throw error;
 
@@ -219,10 +245,10 @@ export function TeamManagement() {
         description: "The invitation has been revoked",
       });
       fetchTeamData();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to revoke invite",
+        description: error.message || "Failed to revoke invite",
         variant: "destructive",
       });
     }
@@ -507,6 +533,7 @@ export function TeamManagement() {
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Sent</TableHead>
+                  <TableHead>Opens</TableHead>
                   <TableHead>Expires</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -526,7 +553,25 @@ export function TeamManagement() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {new Date(invite.created_at).toLocaleDateString()}
+                      <div className="space-y-1">
+                        <div>{new Date(invite.created_at).toLocaleDateString()}</div>
+                        {(invite.resend_count || 0) > 0 && (
+                          <div className="text-xs text-muted-foreground">
+                            Resent {invite.resend_count} time{invite.resend_count !== 1 ? 's' : ''}
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Eye className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm">{invite.open_count || 0}</span>
+                        {invite.last_opened_at && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            (last: {new Date(invite.last_opened_at).toLocaleDateString()})
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       {new Date(invite.expires_at).toLocaleDateString()}
@@ -536,8 +581,9 @@ export function TeamManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyInviteLink(invite.invite_token)}
+                          onClick={() => copyInviteLink(invite)}
                           className="flex items-center gap-1"
+                          title="Copy invite link"
                         >
                           {copiedToken === invite.invite_token ? (
                             <Check className="h-4 w-4" />
@@ -548,8 +594,18 @@ export function TeamManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => resendInvite(invite.id)}
+                          className="flex items-center gap-1"
+                          title="Resend invitation"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => revokeInvite(invite.id)}
                           className="text-destructive hover:text-destructive"
+                          title="Revoke invitation"
                         >
                           <UserX className="h-4 w-4" />
                         </Button>
