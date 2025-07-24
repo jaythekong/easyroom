@@ -2,7 +2,7 @@
 import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useOrganizationBySlug, useUserMembership } from "@/hooks/useOrganization";
+import { useOrgAndMembership } from "@/hooks/useOrgAndMembership";
 
 interface Organization {
   id: string;
@@ -46,25 +46,24 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const { orgSlug } = useParams<{ orgSlug: string }>();
   const { loading: authLoading } = useAuth();
   
-  // Use React Query hooks for better caching and error handling
-  const orgQuery = useOrganizationBySlug(orgSlug);
-  const membershipQuery = useUserMembership(orgQuery.data?.id);
+  // Use unified hook for better sequencing
+  const { org, membership, loading, error, role, isMember, isAdmin } = useOrgAndMembership(orgSlug);
 
   // Enhanced context value with multi-org support
   const contextValue = useMemo(() => ({
-    organization: orgQuery.data || null,
-    isLoading: orgQuery.isLoading || membershipQuery.isLoading,
-    error: orgQuery.error?.message || membershipQuery.error?.message || null,
-    isUserInOrganization: membershipQuery.data?.isUserInOrganization || false,
-    userRole: membershipQuery.data?.role || null,
+    organization: org || null,
+    isLoading: loading,
+    error: error?.message || null,
+    isUserInOrganization: isMember,
+    userRole: role,
     orgSlug,
-    hasOrganization: !!orgQuery.data,
-    hasMembership: membershipQuery.data?.isUserInOrganization || false,
+    hasOrganization: !!org,
+    hasMembership: isMember,
     // Multi-org features
-    allUserMemberships: membershipQuery.data?.allMemberships || [],
-    hasAdminAccess: membershipQuery.data?.role === 'admin',
-    canSwitchOrganizations: (membershipQuery.data?.allMemberships?.length || 0) > 1,
-  }), [orgQuery.data, orgQuery.isLoading, orgQuery.error, membershipQuery.data, membershipQuery.isLoading, membershipQuery.error, orgSlug]);
+    allUserMemberships: membership?.allMemberships || [],
+    hasAdminAccess: isAdmin,
+    canSwitchOrganizations: (membership?.allMemberships?.length || 0) > 1,
+  }), [org, loading, error, isMember, role, orgSlug, membership, isAdmin]);
 
   console.log('OrganizationProvider: Context value:', {
     organization: contextValue.organization?.name,

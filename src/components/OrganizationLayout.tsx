@@ -30,27 +30,14 @@ export function OrganizationLayout({
     window.history.back();
   };
 
-  // Show loading only for initial loads
-  if (authLoading) {
+  // Show loading while data is being fetched
+  if (authLoading || orgLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="w-full max-w-md">
           <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
             <Loader2 className="h-8 w-8 animate-spin" />
             <p className="text-muted-foreground">Loading...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (orgLoading && !organization) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center p-8 space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <p className="text-muted-foreground">Loading organization...</p>
           </CardContent>
         </Card>
       </div>
@@ -113,7 +100,7 @@ export function OrganizationLayout({
     }
 
     // If user exists but not in organization, show access denied
-    if (!isUserInOrganization && !orgLoading) {
+    if (!isUserInOrganization) {
       logger.security('Access denied - user not in organization', {
         userId: user.id,
         organizationId: organization.id,
