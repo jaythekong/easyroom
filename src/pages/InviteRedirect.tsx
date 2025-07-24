@@ -9,22 +9,30 @@ export default function InviteRedirect() {
 
   useEffect(() => {
     const handleRedirect = async () => {
+      console.log('[InviteRedirect] Handling redirect for shortCode:', shortCode);
+      
       if (!shortCode) {
+        console.log('[InviteRedirect] No shortCode provided, navigating to home');
         navigate("/");
         return;
       }
 
       try {
+        console.log('[InviteRedirect] Processing shortCode:', shortCode);
+        
         // Check if it's a short code or UUID
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shortCode);
         
         if (isUUID) {
+          console.log('[InviteRedirect] Detected UUID, redirecting directly');
           // Direct token access
           navigate(`/invite?token=${shortCode}`);
           return;
         }
 
         // Short code lookup
+        console.log('[InviteRedirect] Looking up short code in database:', shortCode.toUpperCase());
+        
         const { data, error } = await supabase
           .from('invitations')
           .select('invite_token')
@@ -50,15 +58,16 @@ export default function InviteRedirect() {
         }
 
         if (error || !data) {
-          console.error('Invalid short code:', error);
+          console.error('[InviteRedirect] Invalid short code or error:', error, 'data:', data);
           navigate("/");
           return;
         }
 
         // Redirect to full invite URL
+        console.log('[InviteRedirect] Found invite token, redirecting to:', `/invite?token=${data.invite_token}`);
         navigate(`/invite?token=${data.invite_token}`);
       } catch (error) {
-        console.error('Error handling invite redirect:', error);
+        console.error('[InviteRedirect] Error handling invite redirect:', error);
         navigate("/");
       }
     };
