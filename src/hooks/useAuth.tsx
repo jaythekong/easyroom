@@ -26,6 +26,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // If user just signed in (email confirmed), clear any loading states
+        if (event === 'SIGNED_IN' && session?.user) {
+          logger.debug('User confirmed email and signed in');
+        }
       }
     );
 
@@ -39,10 +44,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
+    // Auto-refresh session when tab becomes visible (for cross-device confirmations)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        logger.debug('Tab became visible, refreshing session...');
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session && (!user || !user.email_confirmed_at)) {
+            logger.debug('Session refreshed on tab focus');
+            setSession(session);
+            setUser(session?.user ?? null);
+          }
+        });
+      }
+    };
+
+    // Check session when tab regains focus (for cross-device confirmations)
+    const handleFocus = () => {
+      logger.debug('Window focused, checking session...');
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session && (!user || !user.email_confirmed_at)) {
+          logger.debug('Session refreshed on window focus');
+          setSession(session);
+          setUser(session?.user ?? null);
+        }
+      });
+    };
+
+    // Add event listeners for better cross-device/tab experience
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
     return () => {
       subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [user]);
 
   const signOut = useCallback(async () => {
     try {

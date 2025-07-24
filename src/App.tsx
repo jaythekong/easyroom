@@ -25,6 +25,7 @@ import ThankYouPage from "./pages/ThankYouPage";
 import FirstRoomOnboarding from "./pages/FirstRoomOnboarding";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminAuth from "./pages/SuperAdminAuth";
+import AuthCallback from "./pages/AuthCallback";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
               <Routes>
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/thank-you" element={<ThankYouPage />} />
                 <Route path="/thank-you/:orgSlug" element={<ThankYouPage />} />
                 <Route path="/access-denied" element={<AccessDeniedPage />} />
