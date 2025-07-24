@@ -212,13 +212,16 @@ export default function InviteSignup() {
       if (authError) throw authError;
 
       if (authData.user) {
+        // Wait for session to be fully established (prevents race condition)
+        await supabase.auth.getSession();
+        
         // Use our secure function to handle everything atomically
+        // No need to pass auth_user_id - function uses auth.uid() internally
         const { data: result, error: functionError } = await supabase.rpc(
           'accept_invitation_and_create_user',
           {
             invitation_token: token,
-            user_email: email,
-            auth_user_id: authData.user.id
+            user_email: email
           }
         );
 
@@ -230,6 +233,10 @@ export default function InviteSignup() {
             throw new Error('This invitation link is invalid, expired, or has already been used.');
           } else if (functionError.message?.includes('INVITE_EMAIL_MISMATCH')) {
             throw new Error('This invitation is for a different email address.');
+          } else if (functionError.message?.includes('AUTH_REQUIRED')) {
+            throw new Error('Authentication failed. Please try signing up again.');
+          } else if (functionError.message?.includes('USER_NOT_FOUND')) {
+            throw new Error('Account creation is still processing. Please wait a moment and try again.');
           } else if (functionError.message?.includes('INVITE_MEMBERSHIP_FAILED')) {
             throw new Error('Unable to complete signup due to a system conflict. Please try again.');
           }

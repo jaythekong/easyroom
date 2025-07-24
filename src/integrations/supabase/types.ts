@@ -583,11 +583,13 @@ export type Database = {
     }
     Functions: {
       accept_invitation_and_create_user: {
-        Args: {
-          invitation_token: string
-          user_email: string
-          auth_user_id: string
-        }
+        Args:
+          | { invitation_token: string; user_email: string }
+          | {
+              invitation_token: string
+              user_email: string
+              auth_user_id: string
+            }
         Returns: Json
       }
       end_impersonation: {
