@@ -244,24 +244,28 @@ const RoomTimelineComponent = memo(function RoomTimeline({
           
           // Find booking that overlaps this time slot - ONLY for this specific date
           const booking = roomBookings.find(b => {
-            const bookingDate = format(new Date(b.start_time), 'yyyy-MM-dd');
-            const isDateMatch = bookingDate === dateStr;
+            const bookingStartDate = format(new Date(b.start_time), 'yyyy-MM-dd');
+            const isDateMatch = bookingStartDate === dateStr;
             const hasOverlap = doesBookingOverlapSlot(b, dateStr, hour);
             
-            if (hasOverlap && !isDateMatch) {
-              console.log('🚫 FILTERING OUT booking from wrong date:', {
+            // Debug logging for July 27th specifically
+            if (dateStr === '2025-07-27' && hasOverlap) {
+              console.log('📅 JULY 27 BOOKING CHECK:', {
                 bookingTitle: b.title,
-                bookingDate,
+                bookingStartTime: b.start_time,
+                bookingStartDate,
                 expectedDate: dateStr,
-                hour
+                hour,
+                isDateMatch,
+                hasOverlap
               });
             }
             
             return isDateMatch && hasOverlap;
           });
           const downtime = roomDowntime.find(d => {
-            const downtimeDate = format(new Date(d.start_time), 'yyyy-MM-dd');
-            const isDateMatch = downtimeDate === dateStr;
+            const downtimeStartDate = format(new Date(d.start_time), 'yyyy-MM-dd');
+            const isDateMatch = downtimeStartDate === dateStr;
             return isDateMatch && doesBookingOverlapSlot(d as any, dateStr, hour);
           });
           
