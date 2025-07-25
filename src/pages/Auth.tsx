@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Loader2, Building, Users, Calendar, ArrowRight, Sparkles, Shield } from "lucide-react";
+import { Loader2, Building, Users, Calendar, ArrowRight, Sparkles, Shield, Heart } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { toast } from "sonner";
@@ -1349,6 +1349,16 @@ const Auth = () => {
                 )}
               </CardContent>
             </Card>
+            
+            {/* Footer */}
+            <div className="mt-6 text-center">
+              <p className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                Built with <Heart className="h-3 w-3 text-red-500 fill-current" /> in Cambodia
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Powered by Easyroom
+              </p>
+            </div>
           </div>
         </div>
       </div>
