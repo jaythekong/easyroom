@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone, MessageCircle, Globe, Lock, Clock, Bell, Eye, UserCheck, Workflow, Database, Palette, Monitor, Coffee, Wifi } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppFooter } from "@/components/AppFooter";
 
 const LandingPage = () => {
   return (
@@ -308,6 +309,7 @@ const LandingPage = () => {
             <span className="text-xl font-bold">Easy Room</span>
           </div>
           <p className="text-muted-foreground">Smart room booking for modern workplaces</p>
+          <AppFooter />
         </div>
       </footer>
     </div>

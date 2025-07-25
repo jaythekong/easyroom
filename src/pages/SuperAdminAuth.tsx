@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Loader2, Shield, AlertCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { AppFooter } from "@/components/AppFooter";
 import { toast } from "sonner";
 
 export default function SuperAdminAuth() {
@@ -133,6 +134,8 @@ export default function SuperAdminAuth() {
               ← Back to Home
             </Button>
           </div>
+          
+          <AppFooter />
         </CardContent>
       </Card>
     </div>

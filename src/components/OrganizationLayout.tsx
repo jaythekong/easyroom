@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/components/AccessDenied";
+import { AppFooter } from "@/components/AppFooter";
 import { logger } from "@/lib/logger";
 
 interface OrganizationLayoutProps {
@@ -154,5 +155,10 @@ export function OrganizationLayout({
   }
 
   // Render children with organization context
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <AppFooter />
+    </>
+  );
 }
