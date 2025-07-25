@@ -242,32 +242,9 @@ const RoomTimelineComponent = memo(function RoomTimeline({
           const timeStr = `${hour.toString().padStart(2, '0')}:00`;
           const endTimeStr = `${(hour + 1).toString().padStart(2, '0')}:00`;
           
-          // Find booking that overlaps this time slot - ONLY for this specific date
-          const booking = roomBookings.find(b => {
-            const bookingStartDate = format(new Date(b.start_time), 'yyyy-MM-dd');
-            const isDateMatch = bookingStartDate === dateStr;
-            const hasOverlap = doesBookingOverlapSlot(b, dateStr, hour);
-            
-            // Debug logging for July 27th specifically
-            if (dateStr === '2025-07-27' && hasOverlap) {
-              console.log('📅 JULY 27 BOOKING CHECK:', {
-                bookingTitle: b.title,
-                bookingStartTime: b.start_time,
-                bookingStartDate,
-                expectedDate: dateStr,
-                hour,
-                isDateMatch,
-                hasOverlap
-              });
-            }
-            
-            return isDateMatch && hasOverlap;
-          });
-          const downtime = roomDowntime.find(d => {
-            const downtimeStartDate = format(new Date(d.start_time), 'yyyy-MM-dd');
-            const isDateMatch = downtimeStartDate === dateStr;
-            return isDateMatch && doesBookingOverlapSlot(d as any, dateStr, hour);
-          });
+          // Find booking that overlaps this time slot
+          const booking = roomBookings.find(b => doesBookingOverlapSlot(b, dateStr, hour));
+          const downtime = roomDowntime.find(d => doesBookingOverlapSlot(d as any, dateStr, hour));
           
           timeSlots.push({
             time: timeStr,
@@ -326,8 +303,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
-    // Move by 1 day on mobile (small screen), 7 days on desktop (showing full week)
-    const daysToSkip = isMobile ? 1 : 7;
+    // Move by 3 days on mobile (shows 3-day window), 7 days on desktop (showing full week)
+    const daysToSkip = isMobile ? 3 : 7;
     const newDate = direction === 'prev' 
       ? subDays(selectedDate, daysToSkip)
       : addDays(selectedDate, daysToSkip);
