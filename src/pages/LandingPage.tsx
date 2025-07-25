@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone, MessageCircle } from "lucide-react";
+import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone, MessageCircle, Globe, Lock, Clock, Bell, Eye, UserCheck, Workflow, Database, Palette, Monitor, Coffee, Wifi } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -15,11 +15,14 @@ const LandingPage = () => {
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
+            <Button variant="ghost" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
+              Explore Features
+            </Button>
             <Link to="/auth">
-              <Button variant="ghost">Demo</Button>
+              <Button variant="outline">View Demo</Button>
             </Link>
             <Link to="/auth">
-              <Button>Get Started</Button>
+              <Button>Get Started Free</Button>
             </Link>
           </div>
         </div>
@@ -37,7 +40,7 @@ const LandingPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth">
               <Button size="lg" className="text-lg px-8 py-6">
-                Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+                Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/auth">
@@ -49,7 +52,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Key Highlights */}
       <section className="py-20 px-4 bg-muted/50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
@@ -57,46 +60,165 @@ const LandingPage = () => {
             <p className="text-xl text-muted-foreground">Each organization gets its own private workspace, with fully isolated data, branding, and permissions</p>
           </div>
           
+          <div className="grid md:grid-cols-3 gap-8 mb-20">
+            <div className="bg-background p-8 rounded-2xl shadow-sm text-center">
+              <Lock className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3">Complete Data Isolation</h3>
+              <p className="text-muted-foreground">Each organization's data is completely separate. No cross-contamination, ever.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm text-center">
+              <Palette className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3">White-Label Ready</h3>
+              <p className="text-muted-foreground">Custom logos, colors, and branding for each organization. Make it yours.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm text-center">
+              <Zap className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3">Lightning Fast</h3>
+              <p className="text-muted-foreground">Real-time updates, instant bookings, and zero lag. Built for speed.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold mb-4">🧩 Core Features</h3>
+      {/* Features Grid */}
+      <section id="features" className="py-20 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">🚀 Powerful Features</h2>
+            <p className="text-xl text-muted-foreground">Everything you need to manage rooms efficiently</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
               <Calendar className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">✅ Room Booking Made Easy</h3>
-              <p className="text-muted-foreground">Real-time availability, recurring meetings, conflict detection — all in a timeline or grid view.</p>
+              <h3 className="text-xl font-semibold mb-2">Smart Booking System</h3>
+              <p className="text-muted-foreground">Real-time availability, recurring meetings, conflict detection — all in timeline or grid view.</p>
             </div>
             
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
-              <Building className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">✅ Custom Branding per Organization</h3>
-              <p className="text-muted-foreground">Logo, color theme, and timezone — give each org their own identity.</p>
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Users className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Team Management</h3>
+              <p className="text-muted-foreground">Invite members, assign roles, and control access levels with granular permissions.</p>
             </div>
             
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
               <Shield className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">✅ Role-Based Access</h3>
-              <p className="text-muted-foreground">Admins manage rooms and bookings. Members just book what they need.</p>
+              <h3 className="text-xl font-semibold mb-2">Advanced Security</h3>
+              <p className="text-muted-foreground">Role-based access control, audit logs, and enterprise-grade security features.</p>
             </div>
             
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Bell className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Smart Notifications</h3>
+              <p className="text-muted-foreground">Email alerts, Telegram integration, and real-time updates keep everyone informed.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <BarChart3 className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Analytics & Insights</h3>
+              <p className="text-muted-foreground">Track room utilization, booking patterns, and optimize your space usage.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
               <Settings className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">✅ Amenities & Maintenance Management</h3>
-              <p className="text-muted-foreground">Attach Wi-Fi, projector, or whiteboard to each room. Block off downtime for cleaning or repairs.</p>
+              <h3 className="text-xl font-semibold mb-2">Room Management</h3>
+              <p className="text-muted-foreground">Add amenities, set capacity, manage maintenance schedules, and configure availability.</p>
             </div>
             
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
-              <Smartphone className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">✅ Fully Responsive Design</h3>
-              <p className="text-muted-foreground">Works beautifully across desktop and mobile — no app download needed.</p>
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Clock className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Flexible Scheduling</h3>
+              <p className="text-muted-foreground">Recurring bookings, time-based rules, and automatic conflict resolution.</p>
             </div>
             
-            <div className="bg-background p-8 rounded-2xl shadow-sm">
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Monitor className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Multi-Device Support</h3>
+              <p className="text-muted-foreground">Works perfectly on desktop, tablet, and mobile. No app downloads required.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
               <MessageCircle className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">✅ Telegram Bot Integration</h3>
-              <p className="text-muted-foreground">Connect your own Telegram bot in minutes through the admin panel. Get instant notifications and allow team members to interact with bookings directly from Telegram.</p>
+              <h3 className="text-xl font-semibold mb-2">Telegram Integration</h3>
+              <p className="text-muted-foreground">Connect your bot for instant notifications and booking management via Telegram.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Advanced Features */}
+      <section className="py-20 px-4 bg-muted/50">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">🎯 Enterprise Ready</h2>
+            <p className="text-xl text-muted-foreground">Advanced features for serious organizations</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                  <Database className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Data Sovereignty</h3>
+                  <p className="text-muted-foreground">Complete control over your data with automatic backups and export capabilities.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                  <Workflow className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Custom Workflows</h3>
+                  <p className="text-muted-foreground">Set up approval processes, booking rules, and automated notifications.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                  <Eye className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Audit Trail</h3>
+                  <p className="text-muted-foreground">Complete visibility into all actions with detailed logging and reporting.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                  <UserCheck className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">SSO Integration</h3>
+                  <p className="text-muted-foreground">Seamless integration with your existing authentication systems.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                  <Globe className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Multi-Timezone Support</h3>
+                  <p className="text-muted-foreground">Perfect for global organizations with teams across different time zones.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-4">
+                <div className="bg-primary/10 p-3 rounded-lg flex-shrink-0">
+                  <Coffee className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">Resource Management</h3>
+                  <p className="text-muted-foreground">Track equipment, catering, and other resources alongside room bookings.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -166,12 +288,12 @@ const LandingPage = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth">
               <Button size="lg" className="text-lg px-8 py-6">
-                Try Demo <ArrowRight className="ml-2 h-5 w-5" />
+                Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link to="/auth">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
-                Get Started Free
+                View Demo
               </Button>
             </Link>
           </div>
