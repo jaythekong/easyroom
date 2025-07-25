@@ -164,11 +164,13 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   const getRoomWeekDays = useCallback((roomId: string) => {
     if (isMobile) {
       // Mobile: show 3 days centered around selected date (previous, current, next)
-      return [
+      const mobileDays = [
         subDays(selectedDate, 1),
         selectedDate,
         addDays(selectedDate, 1)
       ];
+      console.log('📅 Mobile days generated:', mobileDays.map(d => format(d, 'yyyy-MM-dd')));
+      return mobileDays;
     } else {
       // Desktop: show full week starting from Monday
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -176,6 +178,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       for (let i = 0; i < 7; i++) {
         days.push(addDays(weekStart, i));
       }
+      console.log('📅 Desktop week days generated:', days.map(d => format(d, 'yyyy-MM-dd')));
       return days;
     }
   }, [selectedDate, isMobile]);
@@ -239,9 +242,28 @@ const RoomTimelineComponent = memo(function RoomTimeline({
           const timeStr = `${hour.toString().padStart(2, '0')}:00`;
           const endTimeStr = `${(hour + 1).toString().padStart(2, '0')}:00`;
           
-          // Find booking that overlaps this time slot
-          const booking = roomBookings.find(b => doesBookingOverlapSlot(b, dateStr, hour));
-          const downtime = roomDowntime.find(d => doesBookingOverlapSlot(d as any, dateStr, hour));
+          // Find booking that overlaps this time slot - ONLY for this specific date
+          const booking = roomBookings.find(b => {
+            const bookingDate = format(new Date(b.start_time), 'yyyy-MM-dd');
+            const isDateMatch = bookingDate === dateStr;
+            const hasOverlap = doesBookingOverlapSlot(b, dateStr, hour);
+            
+            if (hasOverlap && !isDateMatch) {
+              console.log('🚫 FILTERING OUT booking from wrong date:', {
+                bookingTitle: b.title,
+                bookingDate,
+                expectedDate: dateStr,
+                hour
+              });
+            }
+            
+            return isDateMatch && hasOverlap;
+          });
+          const downtime = roomDowntime.find(d => {
+            const downtimeDate = format(new Date(d.start_time), 'yyyy-MM-dd');
+            const isDateMatch = downtimeDate === dateStr;
+            return isDateMatch && doesBookingOverlapSlot(d as any, dateStr, hour);
+          });
           
           timeSlots.push({
             time: timeStr,
