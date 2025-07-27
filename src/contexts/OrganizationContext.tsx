@@ -67,19 +67,19 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
     allUserMemberships: membershipQuery.data?.allMemberships || [],
     hasAdminAccess: membershipQuery.data?.role === 'admin',
     canSwitchOrganizations: (membershipQuery.data?.allMemberships?.length || 0) > 1,
-  }), [orgQuery.data, orgQuery.isLoading, orgQuery.error, membershipQuery.data, membershipQuery.isLoading, membershipQuery.error, orgSlug]);
-
-  console.log('OrganizationProvider: Context value:', {
-    organization: contextValue.organization?.name,
-    isLoading: contextValue.isLoading,
-    error: contextValue.error,
-    isUserInOrganization: contextValue.isUserInOrganization,
-    userRole: contextValue.userRole,
-    orgSlug: contextValue.orgSlug,
-    hasOrganization: contextValue.hasOrganization,
-    hasMembership: contextValue.hasMembership,
-    membershipCount: contextValue.allUserMemberships?.length || 0
-  });
+  }), [
+    orgQuery.data?.id, 
+    orgQuery.data?.name, 
+    orgQuery.data?.slug,
+    orgQuery.isLoading, 
+    orgQuery.error?.message, 
+    membershipQuery.data?.isUserInOrganization,
+    membershipQuery.data?.role,
+    membershipQuery.data?.allMemberships?.length,
+    membershipQuery.isLoading, 
+    membershipQuery.error?.message, 
+    orgSlug
+  ]);
 
   return (
     <OrganizationContext.Provider value={contextValue}>
