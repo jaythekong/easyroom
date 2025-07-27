@@ -268,73 +268,81 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         existingBooking,
         initialDate,
         initialStartTime,
-        room
+        room,
+        currentTitle: formData.title
       });
 
-      if (existingBooking) {
-        // Pre-fill form with existing booking data
-        // Parse the UTC times and convert to local date but keep the time in the intended timezone
-        const startDate = new Date(existingBooking.start_time);
-        const endDate = new Date(existingBooking.end_time);
-        
-        // Create new date objects for the same calendar date but with corrected times
-        const localStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        const localEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-        
-        console.log('📝 Existing booking data:', {
-          id: existingBooking.id,
-          title: existingBooking.title,
-          description: existingBooking.description,
-          start_time: existingBooking.start_time,
-          end_time: existingBooking.end_time,
-          attendees: existingBooking.attendees,
-          recurring: existingBooking.recurring,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
-        });
+      // Only reset form if it's currently empty or if we have an existing booking to load
+      const shouldResetForm = !formData.title || existingBooking;
+      
+      if (shouldResetForm) {
+        if (existingBooking) {
+          // Pre-fill form with existing booking data
+          // Parse the UTC times and convert to local date but keep the time in the intended timezone
+          const startDate = new Date(existingBooking.start_time);
+          const endDate = new Date(existingBooking.end_time);
+          
+          // Create new date objects for the same calendar date but with corrected times
+          const localStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+          const localEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+          
+          console.log('📝 Existing booking data:', {
+            id: existingBooking.id,
+            title: existingBooking.title,
+            description: existingBooking.description,
+            start_time: existingBooking.start_time,
+            end_time: existingBooking.end_time,
+            attendees: existingBooking.attendees,
+            recurring: existingBooking.recurring,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString()
+          });
 
-        // Extract time components from the original UTC times
-        const startUTC = new Date(existingBooking.start_time);
-        const endUTC = new Date(existingBooking.end_time);
-        const formattedStartTime = startUTC.toISOString().substring(11, 16); // HH:mm format from UTC
-        const formattedEndTime = endUTC.toISOString().substring(11, 16); // HH:mm format from UTC
-        
-        console.log('📝 Time formatting:', {
-          originalStartTime: existingBooking.start_time,
-          originalEndTime: existingBooking.end_time,
-          startUTC: startUTC.toISOString(),
-          endUTC: endUTC.toISOString(),
-          formattedStartTime,
-          formattedEndTime,
-          availableTimeSlots: allTimeSlots,
-          startTimeInSlots: allTimeSlots.includes(formattedStartTime),
-          endTimeInSlots: allTimeSlots.includes(formattedEndTime)
-        });
+          // Extract time components from the original UTC times
+          const startUTC = new Date(existingBooking.start_time);
+          const endUTC = new Date(existingBooking.end_time);
+          const formattedStartTime = startUTC.toISOString().substring(11, 16); // HH:mm format from UTC
+          const formattedEndTime = endUTC.toISOString().substring(11, 16); // HH:mm format from UTC
+          
+          console.log('📝 Time formatting:', {
+            originalStartTime: existingBooking.start_time,
+            originalEndTime: existingBooking.end_time,
+            startUTC: startUTC.toISOString(),
+            endUTC: endUTC.toISOString(),
+            formattedStartTime,
+            formattedEndTime,
+            availableTimeSlots: allTimeSlots,
+            startTimeInSlots: allTimeSlots.includes(formattedStartTime),
+            endTimeInSlots: allTimeSlots.includes(formattedEndTime)
+          });
 
-        const newFormData = {
-          title: existingBooking.title || "",
-          date: localStartDate,
-          startTime: formattedStartTime,
-          endTime: formattedEndTime,
-          attendees: existingBooking.attendees?.toString() || "",
-          description: existingBooking.description || "",
-          recurring: existingBooking.recurring || "none"
-        };
+          const newFormData = {
+            title: existingBooking.title || "",
+            date: localStartDate,
+            startTime: formattedStartTime,
+            endTime: formattedEndTime,
+            attendees: existingBooking.attendees?.toString() || "",
+            description: existingBooking.description || "",
+            recurring: existingBooking.recurring || "none"
+          };
 
-        console.log('📝 Setting form data:', newFormData);
-        setFormData(newFormData);
+          console.log('📝 Setting form data:', newFormData);
+          setFormData(newFormData);
+        } else {
+          const newFormData = {
+            title: "",
+            date: initialDate || new Date(),
+            startTime: initialStartTime || "",
+            endTime: "",
+            attendees: "",
+            description: "",
+            recurring: "none"
+          };
+          console.log('📝 Setting new booking form data:', newFormData);
+          setFormData(newFormData);
+        }
       } else {
-        const newFormData = {
-          title: "",
-          date: initialDate || new Date(),
-          startTime: initialStartTime || "",
-          endTime: "",
-          attendees: "",
-          description: "",
-          recurring: "none"
-        };
-        console.log('📝 Setting new booking form data:', newFormData);
-        setFormData(newFormData);
+        console.log('📝 Skipping form reset - user has already started typing');
       }
       
       // Clear any previous conflict errors
