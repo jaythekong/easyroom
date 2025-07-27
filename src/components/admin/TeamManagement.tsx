@@ -284,13 +284,29 @@ export function TeamManagement() {
   };
 
   const updateUserRole = async (userId: string, newRole: 'admin' | 'member', email: string) => {
+    if (!organization?.id) return;
+    
     try {
-      const { error } = await supabase
+      // Update role in the memberships table
+      const { error: membershipError } = await supabase
+        .from('user_organization_memberships')
+        .update({ role: newRole })
+        .eq('user_id', userId)
+        .eq('organization_id', organization.id);
+
+      if (membershipError) throw membershipError;
+
+      // Also update role in profiles table for consistency
+      const { error: profileError } = await supabase
         .from('user_profiles')
         .update({ role: newRole })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('organization_id', organization.id);
 
-      if (error) throw error;
+      if (profileError) {
+        console.warn('Profile update failed:', profileError);
+        // Don't throw error - membership update is more important
+      }
 
       toast({
         title: "Role updated",
