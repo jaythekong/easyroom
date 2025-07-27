@@ -72,6 +72,7 @@ const generateAllTimeSlots = () => {
 const allTimeSlots = generateAllTimeSlots();
 
 export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime, existingBooking }: BookingModalProps) {
+  console.log('📱 BookingModal render:', { isOpen, room: room?.name, existingBooking: !!existingBooking });
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { toast } = useToast();
