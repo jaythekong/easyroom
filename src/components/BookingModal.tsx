@@ -672,18 +672,23 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               <Select 
                 value={formData.startTime} 
                 onValueChange={(value) => {
+                  console.log('📝 Start time changed:', value);
                   updateFormData({ startTime: value });
                   // Clear end time when start time changes
                   if (formData.endTime) {
+                    console.log('📝 Clearing end time because start time changed');
                     updateFormData({ endTime: "" });
                   }
                 }}
                 disabled={isLoadingGaps}
               >
-                <SelectTrigger className={cn(timeConflictError && "border-destructive")}>
+                <SelectTrigger 
+                  className={cn(timeConflictError && "border-destructive")}
+                  onClick={() => console.log('📝 Start time trigger clicked')}
+                >
                   <SelectValue placeholder={isLoadingGaps ? "Loading..." : "Start time"} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50 bg-popover border shadow-lg pointer-events-auto">
                   <TooltipProvider>
                     {(existingBooking ? allTimeSlots : availableStartTimes).map((time) => {
                       const isAvailable = existingBooking || availableStartTimes.includes(time);
