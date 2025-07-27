@@ -19,6 +19,7 @@ interface TeamMember {
   role: 'admin' | 'member';
   created_at: string;
   email?: string;
+  last_login?: string | null;
 }
 
 interface Invitation {
@@ -85,13 +86,15 @@ export function TeamManagement() {
         .from('user_profiles')
         .select('user_id, email')
         .in('user_id', userIds);
-        
-      // Map emails to members
+
+      // For now, we'll set last_login to null since we need to implement proper auth tracking
+      // This can be enhanced later with auth analytics integration
       const membersWithEmails = members.map(member => {
         const profile = profiles?.find(p => p.user_id === member.user_id);
         return {
           ...member,
-          email: profile?.email || 'no-email@company.com'
+          email: profile?.email || 'no-email@company.com',
+          last_login: null // Placeholder - can be enhanced with actual login tracking
         };
       });
 
@@ -559,6 +562,7 @@ export function TeamManagement() {
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Joined</TableHead>
+                <TableHead>Last Login</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -583,6 +587,12 @@ export function TeamManagement() {
                   </TableCell>
                   <TableCell>
                     {new Date(member.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {member.last_login 
+                      ? new Date(member.last_login).toLocaleString()
+                      : 'Never'
+                    }
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
