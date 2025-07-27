@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Users, MapPin, Edit, Trash2, User } from "lucide-react";
@@ -258,36 +257,15 @@ export function BookingDetailsModal({
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="destructive" 
-                      disabled={loading}
-                      className="flex-1"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the booking "{booking.title}".
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-                      <AlertDialogAction 
-                        onClick={handleCancelBooking}
-                        disabled={loading}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        {loading ? "Deleting..." : "Delete Booking"}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <Button 
+                  variant="destructive" 
+                  onClick={handleCancelBooking}
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {loading ? "Cancelling..." : "Cancel"}
+                </Button>
               </>
             )}
           </div>
