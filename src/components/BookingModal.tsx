@@ -265,10 +265,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   useEffect(() => {
     if (isOpen) {
       console.log('📝 BookingModal opened with data:', {
-        existingBooking,
+        existingBooking: !!existingBooking,
         initialDate,
         initialStartTime,
-        room,
+        room: room?.name,
         currentTitle: formData.title
       });
 
@@ -348,7 +348,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       // Clear any previous conflict errors
       setTimeConflictError("");
     }
-  }, [isOpen, initialDate, initialStartTime, existingBooking]);
+  }, [isOpen, existingBooking?.id, initialDate, initialStartTime]); // More specific dependencies
 
   // Validate start time for conflicts
   useEffect(() => {
