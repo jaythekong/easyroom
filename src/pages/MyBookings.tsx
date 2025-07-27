@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,19 +61,7 @@ export default function MyBookings() {
   const [confirmingBookings, setConfirmingBookings] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>("my-bookings");
 
-  useEffect(() => {
-    console.log('🔄 MyBookings useEffect triggered', { 
-      userId: user?.id, 
-      userRole, 
-      hasUser: !!user,
-      organizationId: organization?.id
-    });
-    if (user && organization?.id) {
-      fetchMyBookings();
-    }
-  }, [user, userRole, organization?.id]);
-
-  const fetchMyBookings = async () => {
+  const fetchMyBookings = useCallback(async () => {
     console.log('📊 fetchMyBookings called', { userId: user?.id, userRole, organizationId: organization?.id });
     
     if (!organization?.id) {
@@ -170,7 +158,20 @@ export default function MyBookings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, userRole, organization?.id, toast]);
+
+  useEffect(() => {
+    console.log('🔄 MyBookings useEffect triggered', { 
+      userId: user?.id, 
+      userRole, 
+      hasUser: !!user,
+      organizationId: organization?.id
+    });
+    if (user && organization?.id) {
+      fetchMyBookings();
+    }
+  }, [fetchMyBookings, user, organization?.id]);
+
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
