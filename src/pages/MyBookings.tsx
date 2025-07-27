@@ -70,6 +70,21 @@ export default function MyBookings() {
   const fetchMyBookings = async () => {
     try {
       setLoading(true);
+      
+      // Get user's organization first
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('organization_id')
+        .eq('user_id', user?.id || '')
+        .maybeSingle();
+
+      if (!userProfile?.organization_id) {
+        console.error('No organization found for user');
+        setBookings([]);
+        setLoading(false);
+        return;
+      }
+
       let query = supabase
         .from('bookings')
         .select(`
@@ -85,7 +100,8 @@ export default function MyBookings() {
               )
             )
           )
-        `);
+        `)
+        .eq('organization_id', userProfile.organization_id);
 
       // Admins can see all bookings, members only see their own
       if (userRole !== 'admin') {
@@ -103,19 +119,6 @@ export default function MyBookings() {
 
       // Get unique user IDs from the bookings
       const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
-      
-      // Get the current user's organization from their profile
-      const { data: userProfile } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', user?.id || '')
-        .maybeSingle();
-
-      if (!userProfile?.organization_id) {
-        console.error('No organization found for user');
-        setBookings([]);
-        return;
-      }
       
       // Fetch user profiles for these users in this organization
       const { data: profilesData, error: profilesError } = await supabase
