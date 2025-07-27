@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Users, MapPin, Trash2, Edit, ArrowLeft, Check, Search } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { useBookings } from "@/hooks/useBookings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -24,28 +25,19 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+// Use the same interface as useBookings hook
 interface Booking {
   id: string;
   title: string;
-  description?: string;
   start_time: string;
   end_time: string;
-  attendees?: number;
-  status: string;
-  recurring: string;
-  created_at: string;
+  room_id: string;
   user_id: string;
-  user_profiles?: {
+  organization_id: string;
+  user_profiles: {
     email: string;
     display_name?: string;
     avatar_url?: string;
-  };
-  room: {
-    id: string;
-    name: string;
-    location?: string;
-    capacity: number;
-    amenities: string[];
   };
 }
 
@@ -53,124 +45,20 @@ export default function MyBookings() {
   const { user } = useAuth();
   const { userRole, organization } = useOrganization();
   const { toast } = useToast();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Use the existing useBookings hook with today's date to get all bookings
+  const { data: allBookings = [], isLoading, error, refetch } = useBookings(new Date());
+  
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [confirmingBookings, setConfirmingBookings] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState<string>("my-bookings");
 
-  const fetchMyBookings = useCallback(async () => {
-    console.log('📊 fetchMyBookings called', { userId: user?.id, userRole, organizationId: organization?.id });
-    
-    if (!organization?.id) {
-      console.error('No organization context available');
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      setLoading(true);
-
-      let query = supabase
-        .from('bookings')
-        .select(`
-          *,
-          rooms (
-            id,
-            name,
-            location,
-            capacity,
-            room_amenities (
-              amenities (
-                name
-              )
-            )
-          )
-        `)
-        .eq('organization_id', organization.id);
-
-      // Admins can see all bookings, members only see their own
-      if (userRole !== 'admin') {
-        query = query.eq('user_id', user?.id);
-      }
-
-      const { data: bookingsData, error: bookingsError } = await query.order('start_time', { ascending: true });
-
-      if (bookingsError) throw bookingsError;
-
-      if (!bookingsData || bookingsData.length === 0) {
-        setBookings([]);
-        return;
-      }
-
-      // Get unique user IDs from the bookings
-      const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
-      
-      // Fetch user profiles for these users in this organization
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('user_id, email, display_name, avatar_url')
-        .eq('organization_id', organization.id)
-        .in('user_id', userIds);
-      
-      if (profilesError) {
-        console.error('Error fetching user profiles:', profilesError);
-        // Don't throw error, just continue without profile data
-      }
-
-      // Create a map of user profiles for quick lookup
-      const profilesMap = new Map();
-      if (profilesData) {
-        profilesData.forEach(profile => {
-          profilesMap.set(profile.user_id, {
-            email: profile.email,
-            display_name: profile.display_name,
-            avatar_url: profile.avatar_url,
-          });
-        });
-      }
-
-      // Transform the data to match our interface
-      const formattedBookings = bookingsData.map(booking => ({
-        ...booking,
-        user_profiles: profilesMap.get(booking.user_id) || {
-          email: 'Unknown user',
-          display_name: null,
-          avatar_url: null,
-        },
-        room: {
-          ...booking.rooms,
-          amenities: booking.rooms?.room_amenities?.map(ra => ra.amenities.name) || []
-        }
-      }));
-
-      console.log('✅ Successfully fetched bookings:', formattedBookings.length);
-      setBookings(formattedBookings);
-    } catch (error) {
-      console.error('❌ Error fetching bookings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch your bookings",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.id, userRole, organization?.id, toast]);
-
-  useEffect(() => {
-    console.log('🔄 MyBookings useEffect triggered', { 
-      userId: user?.id, 
-      userRole, 
-      hasUser: !!user,
-      organizationId: organization?.id
-    });
-    if (user && organization?.id) {
-      fetchMyBookings();
-    }
-  }, [fetchMyBookings, user, organization?.id]);
+  // Filter bookings based on user role
+  const filteredBookings = activeTab === 'my-bookings' 
+    ? allBookings.filter(booking => booking.user_id === user?.id)
+    : allBookings;
 
 
   const handleCancelBooking = async (bookingId: string) => {
@@ -225,7 +113,7 @@ export default function MyBookings() {
       });
 
       // Await the refresh to ensure it completes
-      await fetchMyBookings();
+      await refetch();
       console.log('Bookings list refreshed successfully');
       
     } catch (error) {
@@ -238,24 +126,14 @@ export default function MyBookings() {
     }
   };
 
-  const handleEditBooking = (booking: Booking) => {
-    console.log('📝 MyBookings - Edit booking clicked:', {
-      booking,
-      room: booking.room,
-      fields: {
-        id: booking.id,
-        title: booking.title,
-        description: booking.description,
-        start_time: booking.start_time,
-        end_time: booking.end_time,
-        attendees: booking.attendees,
-        recurring: booking.recurring,
-        status: booking.status
-      }
-    });
+  const handleEditBooking = (booking: any) => {
+    console.log('📝 MyBookings - Edit booking clicked:', booking);
     
     setEditingBooking(booking);
-    setSelectedRoom(booking.room);
+    setSelectedRoom({ 
+      id: booking.room_id,
+      name: 'Room', // We'll need to fetch room details separately if needed
+    });
     setIsBookingModalOpen(true);
   };
 
@@ -285,7 +163,7 @@ export default function MyBookings() {
         description: "Your booking has been confirmed.",
       });
 
-      fetchMyBookings();
+      refetch();
     } catch (error) {
       console.error('Error confirming booking:', error);
       toast({
@@ -303,7 +181,7 @@ export default function MyBookings() {
   };
 
   const handleBookingUpdate = () => {
-    fetchMyBookings(); // Refresh the bookings list
+    refetch(); // Refresh the bookings list
     setIsBookingModalOpen(false);
     setEditingBooking(null);
     setSelectedRoom(null);
@@ -334,15 +212,11 @@ export default function MyBookings() {
     return new Date(startTime) > new Date();
   };
 
-  const canEditBooking = (booking: Booking) => {
+  const canEditBooking = (booking: any) => {
     return userRole === 'admin' || booking.user_id === user?.id;
   };
 
   // Filter bookings based on active tab
-  const filteredBookings = activeTab === 'my-bookings' 
-    ? bookings.filter(booking => booking.user_id === user?.id)
-    : bookings;
-
   const upcomingBookings = filteredBookings.filter(booking => isUpcoming(booking.start_time));
   const pastBookings = filteredBookings.filter(booking => !isUpcoming(booking.start_time));
 
@@ -350,7 +224,7 @@ export default function MyBookings() {
     return activeTab === 'my-bookings' ? 'My Bookings' : 'All Bookings';
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -362,6 +236,20 @@ export default function MyBookings() {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-lg font-semibold mb-2">Error loading bookings</h2>
+            <p className="text-muted-foreground mb-4">Failed to fetch your bookings</p>
+            <Button onClick={() => refetch()}>Try Again</Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -425,14 +313,9 @@ export default function MyBookings() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold text-lg">{booking.title}</h3>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status}
-                        </Badge>
-                        {booking.recurring !== 'none' && (
-                          <Badge variant="outline">
-                            {booking.recurring}
-                          </Badge>
-                        )}
+                         <Badge className="bg-blue-100 text-blue-800">
+                           Active
+                         </Badge>
                         {/* Show creator info if admin or if not own booking */}
                         {(userRole === 'admin' || booking.user_id !== user?.id) && booking.user_profiles && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -457,13 +340,10 @@ export default function MyBookings() {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{booking.room.name}</span>
-                          {booking.room.location && (
-                            <span>• {booking.room.location}</span>
-                          )}
-                        </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>Room {booking.room_id}</span>
+                      </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4" />
                           <span>{format(new Date(booking.start_time), 'PPP')}</span>
@@ -472,19 +352,8 @@ export default function MyBookings() {
                           <Clock className="h-4 w-4" />
                           <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
                         </div>
-                        {booking.attendees && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Users className="h-4 w-4" />
-                            <span>{booking.attendees} attendees</span>
-                          </div>
-                        )}
                       </div>
 
-                      {booking.description && (
-                        <p className="text-sm text-muted-foreground mb-3">
-                          {booking.description}
-                        </p>
-                      )}
                     </div>
 
                     <div className="flex items-center gap-2 ml-4">
@@ -500,25 +369,7 @@ export default function MyBookings() {
                             Edit
                           </Button>
                           
-                          {/* Show confirm button for pending bookings that user can edit */}
-                          {booking.status === 'pending' && canEditBooking(booking) && (
-                            <Button
-                              variant="default" 
-                              size="sm"
-                              onClick={() => handleConfirmBooking(booking.id)}
-                              className={cn(
-                                "bg-green-600 hover:bg-green-700 transition-all duration-200",
-                                confirmingBookings.has(booking.id) && "animate-pulse scale-95"
-                              )}
-                              disabled={confirmingBookings.has(booking.id)}
-                            >
-                              <Check className={cn(
-                                "h-4 w-4 mr-2",
-                                confirmingBookings.has(booking.id) && "animate-spin"
-                              )} />
-                              {confirmingBookings.has(booking.id) ? 'Confirming...' : 'Confirm'}
-                            </Button>
-                          )}
+                           {/* Show confirm button for pending bookings */}
                           
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -534,11 +385,11 @@ export default function MyBookings() {
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to cancel your booking for "{booking.title}" 
-                                  at {booking.room?.name} on {format(new Date(booking.start_time), "PPP")}? 
-                                  This action cannot be undone.
-                                </AlertDialogDescription>
+                                 <AlertDialogDescription>
+                                   Are you sure you want to cancel your booking for "{booking.title}" 
+                                   on {format(new Date(booking.start_time), "PPP")}? 
+                                   This action cannot be undone.
+                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Keep Booking</AlertDialogCancel>
@@ -581,16 +432,16 @@ export default function MyBookings() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold">{booking.title}</h3>
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status}
-                        </Badge>
+                         <Badge className="bg-gray-100 text-gray-800">
+                           Completed
+                         </Badge>
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{booking.room.name}</span>
-                        </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>Room {booking.room_id}</span>
+                      </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4" />
                           <span>{format(new Date(booking.start_time), 'PPP')}</span>
