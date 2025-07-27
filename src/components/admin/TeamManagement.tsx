@@ -87,14 +87,14 @@ export function TeamManagement() {
         .select('user_id, email')
         .in('user_id', userIds);
 
-      // For now, we'll set last_login to null since we need to implement proper auth tracking
-      // This can be enhanced later with auth analytics integration
+      // For now, we'll use a placeholder for last login since accessing auth analytics requires special setup
+      // This would need to be implemented with proper analytics tracking in a real application
       const membersWithEmails = members.map(member => {
         const profile = profiles?.find(p => p.user_id === member.user_id);
         return {
           ...member,
           email: profile?.email || 'no-email@company.com',
-          last_login: null // Placeholder - can be enhanced with actual login tracking
+          last_login: null // Would need auth analytics integration to populate this
         };
       });
 
