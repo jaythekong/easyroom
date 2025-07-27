@@ -51,7 +51,7 @@ interface Booking {
 
 export default function MyBookings() {
   const { user } = useAuth();
-  const { userRole } = useOrganization();
+  const { userRole, organization } = useOrganization();
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,28 +62,28 @@ export default function MyBookings() {
   const [activeTab, setActiveTab] = useState<string>("my-bookings");
 
   useEffect(() => {
-    if (user) {
+    console.log('🔄 MyBookings useEffect triggered', { 
+      userId: user?.id, 
+      userRole, 
+      hasUser: !!user,
+      organizationId: organization?.id
+    });
+    if (user && organization?.id) {
       fetchMyBookings();
     }
-  }, [user]);
+  }, [user, userRole, organization?.id]);
 
   const fetchMyBookings = async () => {
+    console.log('📊 fetchMyBookings called', { userId: user?.id, userRole, organizationId: organization?.id });
+    
+    if (!organization?.id) {
+      console.error('No organization context available');
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
-      
-      // Get user's organization first
-      const { data: userProfile } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', user?.id || '')
-        .maybeSingle();
-
-      if (!userProfile?.organization_id) {
-        console.error('No organization found for user');
-        setBookings([]);
-        setLoading(false);
-        return;
-      }
 
       let query = supabase
         .from('bookings')
@@ -101,7 +101,7 @@ export default function MyBookings() {
             )
           )
         `)
-        .eq('organization_id', userProfile.organization_id);
+        .eq('organization_id', organization.id);
 
       // Admins can see all bookings, members only see their own
       if (userRole !== 'admin') {
@@ -124,7 +124,7 @@ export default function MyBookings() {
       const { data: profilesData, error: profilesError } = await supabase
         .from('user_profiles')
         .select('user_id, email, display_name, avatar_url')
-        .eq('organization_id', userProfile.organization_id)
+        .eq('organization_id', organization.id)
         .in('user_id', userIds);
       
       if (profilesError) {
@@ -158,9 +158,10 @@ export default function MyBookings() {
         }
       }));
 
+      console.log('✅ Successfully fetched bookings:', formattedBookings.length);
       setBookings(formattedBookings);
     } catch (error) {
-      console.error('Error fetching bookings:', error);
+      console.error('❌ Error fetching bookings:', error);
       toast({
         title: "Error",
         description: "Failed to fetch your bookings",
