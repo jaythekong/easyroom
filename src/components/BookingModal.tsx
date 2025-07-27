@@ -139,7 +139,12 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
   // Update form data when initial props change
   const updateFormData = (updates: Partial<typeof formData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
+    console.log('📝 updateFormData called with:', updates);
+    setFormData(prev => {
+      const newData = { ...prev, ...updates };
+      console.log('📝 New form data:', newData);
+      return newData;
+    });
   };
 
   // Fetch existing bookings when modal opens or date/room changes
@@ -605,8 +610,14 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               id="title"
               placeholder="Enter meeting title"
               value={formData.title}
-              onChange={(e) => updateFormData({ title: e.target.value })}
+              onChange={(e) => {
+                console.log('📝 Title input change:', e.target.value);
+                updateFormData({ title: e.target.value });
+              }}
+              onFocus={() => console.log('📝 Title input focused')}
+              onBlur={() => console.log('📝 Title input blurred')}
               required
+              autoComplete="off"
             />
           </div>
 
