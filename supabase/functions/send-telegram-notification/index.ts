@@ -133,6 +133,21 @@ const handler = async (req: Request): Promise<Response> => {
       minute: '2-digit' 
     })}`;
 
+    // Create Google Calendar link (works on both iPhone and Android)
+    const formatDateForCalendar = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+    
+    const calendarParams = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: booking.title,
+      dates: `${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}`,
+      details: `${booking.description || ''}\n\nBooked by: ${userProfile?.display_name || userProfile?.email || 'Unknown user'}`,
+      location: `${booking.rooms.name}${booking.rooms.location ? `, ${booking.rooms.location}` : ''}`,
+    });
+    
+    const calendarLink = `https://calendar.google.com/calendar/render?${calendarParams.toString()}`;
+
     // Create message based on action
     let message = '';
     let emoji = '';
@@ -162,6 +177,7 @@ ${booking.rooms.location ? `🏢 *Location:* ${booking.rooms.location}` : ''}
 🕐 *Time:* ${timeStr}
 ${booking.attendees ? `👥 *Attendees:* ${booking.attendees}` : ''}
 ${booking.description ? `📝 *Notes:* ${booking.description}` : ''}
+${action !== 'cancelled' ? `\n📲 [Add to Calendar](${calendarLink})` : ''}
 
 _${organization.name}_`;
 
