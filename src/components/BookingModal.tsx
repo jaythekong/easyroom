@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -262,87 +262,104 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   };
 
   // Reset form data when modal opens with new initial values
+  // Track the last initialized time slot to prevent unnecessary resets
+  const lastInitializedSlot = useRef<string>("");
+  
   useEffect(() => {
     if (isOpen) {
+      const currentSlotKey = `${initialDate?.toDateString()}-${initialStartTime}-${existingBooking?.id || 'new'}`;
+      const isNewSlot = lastInitializedSlot.current !== currentSlotKey;
+      
       console.log('📝 BookingModal opened with data:', {
         existingBooking: !!existingBooking,
         initialDate,
         initialStartTime,
         room: room?.name,
-        currentTitle: formData.title
+        currentTitle: formData.title,
+        isNewSlot,
+        currentSlotKey,
+        lastSlotKey: lastInitializedSlot.current
       });
 
-      // Always reset form when modal opens to ensure fresh state
-      // This prevents old data from persisting when switching between time slots
-      if (existingBooking) {
-        // Pre-fill form with existing booking data
-        // Parse the UTC times and convert to local date but keep the time in the intended timezone
-        const startDate = new Date(existingBooking.start_time);
-        const endDate = new Date(existingBooking.end_time);
+      // Only reset form when opening a truly different slot or booking
+      if (isNewSlot) {
+        lastInitializedSlot.current = currentSlotKey;
         
-        // Create new date objects for the same calendar date but with corrected times
-        const localStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        const localEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        if (existingBooking) {
+          // Pre-fill form with existing booking data
+          // Parse the UTC times and convert to local date but keep the time in the intended timezone
+          const startDate = new Date(existingBooking.start_time);
+          const endDate = new Date(existingBooking.end_time);
+          
+          // Create new date objects for the same calendar date but with corrected times
+          const localStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+          const localEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+          
+          console.log('📝 Existing booking data:', {
+            id: existingBooking.id,
+            title: existingBooking.title,
+            description: existingBooking.description,
+            start_time: existingBooking.start_time,
+            end_time: existingBooking.end_time,
+            attendees: existingBooking.attendees,
+            recurring: existingBooking.recurring,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString()
+          });
+
+          // Extract time components from the original UTC times
+          const startUTC = new Date(existingBooking.start_time);
+          const endUTC = new Date(existingBooking.end_time);
+          const formattedStartTime = startUTC.toISOString().substring(11, 16); // HH:mm format from UTC
+          const formattedEndTime = endUTC.toISOString().substring(11, 16); // HH:mm format from UTC
+          
+          console.log('📝 Time formatting:', {
+            originalStartTime: existingBooking.start_time,
+            originalEndTime: existingBooking.end_time,
+            startUTC: startUTC.toISOString(),
+            endUTC: endUTC.toISOString(),
+            formattedStartTime,
+            formattedEndTime,
+            availableTimeSlots: allTimeSlots,
+            startTimeInSlots: allTimeSlots.includes(formattedStartTime),
+            endTimeInSlots: allTimeSlots.includes(formattedEndTime)
+          });
+
+          const newFormData = {
+            title: existingBooking.title || "",
+            date: localStartDate,
+            startTime: formattedStartTime,
+            endTime: formattedEndTime,
+            attendees: existingBooking.attendees?.toString() || "",
+            description: existingBooking.description || "",
+            recurring: existingBooking.recurring || "none"
+          };
+
+          console.log('📝 Setting form data:', newFormData);
+          setFormData(newFormData);
+        } else {
+          // Reset to fresh state for new bookings
+          const newFormData = {
+            title: "",
+            date: initialDate || new Date(),
+            startTime: initialStartTime || "",
+            endTime: "",
+            attendees: "",
+            description: "",
+            recurring: "none"
+          };
+          console.log('📝 Setting new booking form data:', newFormData);
+          setFormData(newFormData);
+        }
         
-        console.log('📝 Existing booking data:', {
-          id: existingBooking.id,
-          title: existingBooking.title,
-          description: existingBooking.description,
-          start_time: existingBooking.start_time,
-          end_time: existingBooking.end_time,
-          attendees: existingBooking.attendees,
-          recurring: existingBooking.recurring,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString()
-        });
-
-        // Extract time components from the original UTC times
-        const startUTC = new Date(existingBooking.start_time);
-        const endUTC = new Date(existingBooking.end_time);
-        const formattedStartTime = startUTC.toISOString().substring(11, 16); // HH:mm format from UTC
-        const formattedEndTime = endUTC.toISOString().substring(11, 16); // HH:mm format from UTC
-        
-        console.log('📝 Time formatting:', {
-          originalStartTime: existingBooking.start_time,
-          originalEndTime: existingBooking.end_time,
-          startUTC: startUTC.toISOString(),
-          endUTC: endUTC.toISOString(),
-          formattedStartTime,
-          formattedEndTime,
-          availableTimeSlots: allTimeSlots,
-          startTimeInSlots: allTimeSlots.includes(formattedStartTime),
-          endTimeInSlots: allTimeSlots.includes(formattedEndTime)
-        });
-
-        const newFormData = {
-          title: existingBooking.title || "",
-          date: localStartDate,
-          startTime: formattedStartTime,
-          endTime: formattedEndTime,
-          attendees: existingBooking.attendees?.toString() || "",
-          description: existingBooking.description || "",
-          recurring: existingBooking.recurring || "none"
-        };
-
-        console.log('📝 Setting form data:', newFormData);
-        setFormData(newFormData);
+        // Clear any previous conflict errors
+        setTimeConflictError("");
       } else {
-        // Always reset to fresh state for new bookings
-        const newFormData = {
-          title: "",
-          date: initialDate || new Date(),
-          startTime: initialStartTime || "",
-          endTime: "",
-          attendees: "",
-          description: "",
-          recurring: "none"
-        };
-        console.log('📝 Setting new booking form data:', newFormData);
-        setFormData(newFormData);
+        console.log('📝 Skipping form reset - same slot or user is editing');
       }
-      
-      // Clear any previous conflict errors
-      setTimeConflictError("");
+    } else {
+      // Reset tracking when modal closes
+      lastInitializedSlot.current = "";
     }
   }, [isOpen, existingBooking?.id, initialDate, initialStartTime]); // More specific dependencies
 
