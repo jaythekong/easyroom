@@ -116,26 +116,59 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
   // Get available end times (only times within the same gap as start time)
   const availableEndTimes = useMemo(() => {
-    if (!formData.startTime || !roomGaps.length) return [];
+    console.log('🕐 Computing availableEndTimes:', {
+      startTime: formData.startTime,
+      roomGapsLength: roomGaps.length,
+      roomGaps: roomGaps.slice(0, 2), // First 2 for debugging
+      date: formData.date
+    });
+    
+    if (!formData.startTime || !roomGaps.length) {
+      console.log('🕐 Returning empty array - missing startTime or roomGaps');
+      return [];
+    }
     
     const dateStr = format(formData.date, 'yyyy-MM-dd');
     const startTime = new Date(`${dateStr}T${formData.startTime}:00.000Z`);
+    
+    console.log('🕐 Looking for gap containing:', {
+      dateStr,
+      startTime: startTime.toISOString(),
+      formattedStartTime: formData.startTime
+    });
     
     // Find the gap that contains the start time
     const currentGap = roomGaps.find(gap => {
       const gapStart = new Date(gap.gap_start);
       const gapEnd = new Date(gap.gap_end);
-      return startTime >= gapStart && startTime < gapEnd;
+      const isInGap = startTime >= gapStart && startTime < gapEnd;
+      
+      console.log('🕐 Checking gap:', {
+        gapStart: gapStart.toISOString(),
+        gapEnd: gapEnd.toISOString(),
+        startTime: startTime.toISOString(),
+        isInGap
+      });
+      
+      return isInGap;
     });
     
-    if (!currentGap) return [];
+    if (!currentGap) {
+      console.log('🕐 No matching gap found for start time');
+      return [];
+    }
+    
+    console.log('🕐 Found matching gap:', currentGap);
     
     // Return all times after start time but within the same gap
-    return allTimeSlots.filter(timeStr => {
+    const endTimes = allTimeSlots.filter(timeStr => {
       const time = new Date(`${dateStr}T${timeStr}:00.000Z`);
       const gapEnd = new Date(currentGap.gap_end);
       return time > startTime && time <= gapEnd;
     });
+    
+    console.log('🕐 Available end times:', endTimes);
+    return endTimes;
   }, [formData.startTime, roomGaps, formData.date]);
 
   // Update form data when initial props change
@@ -378,6 +411,13 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
   // Legacy function for backward compatibility with existing booking edits
   const getAvailableEndTimes = () => {
+    console.log('🕐 getAvailableEndTimes called:', {
+      hasExistingBooking: !!existingBooking,
+      startTime: formData.startTime,
+      availableEndTimesLength: availableEndTimes.length,
+      availableEndTimes: availableEndTimes.slice(0, 5), // First 5 for debugging
+    });
+    
     // For existing bookings, use the legacy logic to ensure original times are preserved
     if (existingBooking) {
       if (!formData.startTime) return allTimeSlots;
@@ -399,6 +439,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
     
     // For new bookings, use the gap-based available end times
+    console.log('🕐 Returning availableEndTimes for new booking:', availableEndTimes);
     return availableEndTimes;
   };
 
