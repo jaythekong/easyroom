@@ -232,8 +232,12 @@ export default function Dashboard() {
     const room = rooms.find(r => r.id === roomId);
     if (room) {
       setSelectedRoom(room);
-      setSelectedTimeSlot(timeSlot);
-      setCurrentTimeSlot(timeSlot); // Set this immediately for the modal
+      // timeSlot is in format "2025-07-29T15:30:00.000Z"
+      const timeSlotDate = new Date(timeSlot);
+      const timeString = timeSlot.split('T')[1]?.slice(0, 5); // Extract "HH:mm"
+      
+      setSelectedTimeSlot(timeString || "");
+      setCurrentTimeSlot(timeSlot);
       setIsBookingModalOpen(true);
     }
   };
@@ -518,7 +522,7 @@ export default function Dashboard() {
         room={selectedRoom}
         onBookingConfirm={handleBookingConfirm}
         initialDate={currentTimeSlot ? new Date(currentTimeSlot) : undefined}
-        initialStartTime={currentTimeSlot ? currentTimeSlot.split('T')[1]?.slice(0, 5) : undefined}
+        initialStartTime={selectedTimeSlot || undefined}
         existingBooking={editingBooking}
       />
     </div>
