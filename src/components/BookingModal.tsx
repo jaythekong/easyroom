@@ -72,7 +72,7 @@ const generateAllTimeSlots = () => {
 const allTimeSlots = generateAllTimeSlots();
 
 export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime, existingBooking }: BookingModalProps) {
-  console.log('📱 BookingModal render:', { isOpen, room: room?.name, existingBooking: !!existingBooking });
+  console.log('📱 BookingModal render:', { isOpen, room: room?.name, existingBooking: !!existingBooking, initialStartTime });
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { toast } = useToast();
@@ -299,6 +299,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   const lastInitializedSlot = useRef<string>("");
   
   useEffect(() => {
+    console.log('📝 BookingModal useEffect triggered:', { isOpen, initialStartTime, existingBooking: !!existingBooking });
     if (isOpen) {
       const currentSlotKey = `${initialDate?.toDateString()}-${initialStartTime}-${existingBooking?.id || 'new'}`;
       const isNewSlot = lastInitializedSlot.current !== currentSlotKey;
@@ -381,7 +382,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             description: "",
             recurring: "none"
           };
-          console.log('📝 Setting new booking form data:', newFormData);
+          console.log('📝 Setting new booking form data with initialStartTime:', { initialStartTime, newFormData });
           setFormData(newFormData);
         }
         
