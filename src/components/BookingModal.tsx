@@ -298,16 +298,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Track the last initialized time slot to prevent unnecessary resets
   const lastInitializedSlot = useRef<string>("");
   
-  // Watch for modal open and initialStartTime changes
+  // Fix: Always update form state when modal opens with new props
   useEffect(() => {
-    console.log("InitialStartTime changed:", { isOpen, initialStartTime, currentFormDataStartTime: formData.startTime });
-    if (isOpen && initialStartTime) {
+    if (isOpen) {
       setFormData((prev) => ({
         ...prev,
-        startTime: initialStartTime,
+        startTime: initialStartTime || '',
+        roomId: room?.id || '',
       }));
     }
-  }, [isOpen, initialStartTime]);
+  }, [isOpen, initialStartTime, room]);
 
   useEffect(() => {
     console.log('📝 BookingModal useEffect triggered:', { isOpen, initialStartTime, existingBooking: !!existingBooking });
