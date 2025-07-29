@@ -56,6 +56,7 @@ export default function Dashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string>("");
+  const [currentTimeSlot, setCurrentTimeSlot] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -232,6 +233,7 @@ export default function Dashboard() {
     if (room) {
       setSelectedRoom(room);
       setSelectedTimeSlot(timeSlot);
+      setCurrentTimeSlot(timeSlot); // Set this immediately for the modal
       setIsBookingModalOpen(true);
     }
   };
@@ -510,12 +512,13 @@ export default function Dashboard() {
         onClose={() => {
           setIsBookingModalOpen(false);
           setSelectedTimeSlot("");
+          setCurrentTimeSlot("");
           setEditingBooking(null);
         }}
         room={selectedRoom}
         onBookingConfirm={handleBookingConfirm}
-        initialDate={selectedTimeSlot ? new Date(selectedTimeSlot) : undefined}
-        initialStartTime={selectedTimeSlot ? selectedTimeSlot.split('T')[1]?.slice(0, 5) : undefined}
+        initialDate={currentTimeSlot ? new Date(currentTimeSlot) : undefined}
+        initialStartTime={currentTimeSlot ? currentTimeSlot.split('T')[1]?.slice(0, 5) : undefined}
         existingBooking={editingBooking}
       />
     </div>
