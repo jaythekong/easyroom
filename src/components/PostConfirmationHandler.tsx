@@ -14,7 +14,10 @@ export const PostConfirmationHandler = () => {
     if (hasHandledConfirmation) return;
     
     if (user?.email_confirmed_at && session) {
-      logger.debug('Email confirmed, checking for pending redirects...');
+      // Only log once to prevent spam
+      if (!hasHandledConfirmation) {
+        logger.debug('Email confirmed, checking for pending redirects...');
+      }
       
       const pendingOrgSlug = localStorage.getItem('pendingOrgSlug');
       
@@ -44,7 +47,7 @@ export const PostConfirmationHandler = () => {
         }
       }
     }
-  }, [user?.email_confirmed_at, session, navigate, location.pathname, hasHandledConfirmation]);
+  }, [user?.email_confirmed_at, session, navigate, location.pathname]);
 
   // Reset the handler when user signs out
   useEffect(() => {

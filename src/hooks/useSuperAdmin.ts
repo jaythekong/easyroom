@@ -113,7 +113,7 @@ export function usePlatformStats() {
       if (error) throw error;
       return data as any as PlatformStats;
     },
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 300000, // Refresh every 5 minutes
   });
 }
 
