@@ -126,15 +126,47 @@ export default function MyBookings() {
     }
   };
 
-  const handleEditBooking = (booking: any) => {
+  const handleEditBooking = async (booking: any) => {
     console.log('📝 MyBookings - Edit booking clicked:', booking);
     
-    setEditingBooking(booking);
-    setSelectedRoom({ 
-      id: booking.room_id,
-      name: 'Room', // We'll need to fetch room details separately if needed
-    });
-    setIsBookingModalOpen(true);
+    // Fetch room details for the booking
+    try {
+      const { data: room, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', booking.room_id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching room:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load room details",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!room) {
+        toast({
+          title: "Error", 
+          description: "Room not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setEditingBooking(booking);
+      setSelectedRoom(room);
+      setIsBookingModalOpen(true);
+    } catch (error) {
+      console.error('Error in handleEditBooking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open booking editor",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleConfirmBooking = async (bookingId: string) => {

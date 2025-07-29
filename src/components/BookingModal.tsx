@@ -197,14 +197,20 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         excludeBookingId: existingBooking?.id 
       });
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select('*')
         .eq('room_id', room.id)
         .eq('organization_id', organization.id)
         .gte('start_time', `${dateStr}T00:00:00.000Z`)
-        .lt('start_time', `${dateStr}T23:59:59.999Z`)
-        .neq('id', existingBooking?.id || 'none'); // Exclude current booking if editing
+        .lt('start_time', `${dateStr}T23:59:59.999Z`);
+
+      // Only exclude existing booking if we have a valid ID
+      if (existingBooking?.id) {
+        query = query.neq('id', existingBooking.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('📝 ERROR FETCHING BOOKINGS:', error);
