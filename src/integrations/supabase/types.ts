@@ -617,14 +617,7 @@ export type Database = {
         Returns: Json
       }
       get_room_gaps: {
-        Args:
-          | { p_room_id: string; p_date: string }
-          | {
-              p_room_id: string
-              p_date: string
-              p_open?: string
-              p_close?: string
-            }
+        Args: { p_room_id: string; p_date: string }
         Returns: {
           gap_start: string
           gap_end: string

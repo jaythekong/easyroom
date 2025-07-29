@@ -1,0 +1,2 @@
+-- Drop the old 4-parameter version of get_room_gaps to resolve function conflict
+DROP FUNCTION IF EXISTS public.get_room_gaps(p_room_id uuid, p_date date, p_open time without time zone, p_close time without time zone);
