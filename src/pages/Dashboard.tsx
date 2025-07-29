@@ -515,7 +515,7 @@ export default function Dashboard() {
         room={selectedRoom}
         onBookingConfirm={handleBookingConfirm}
         initialDate={selectedTimeSlot ? new Date(selectedTimeSlot) : undefined}
-        initialStartTime={selectedTimeSlot ? new Date(selectedTimeSlot).toTimeString().slice(0, 5) : undefined}
+        initialStartTime={selectedTimeSlot ? selectedTimeSlot.split('T')[1]?.slice(0, 5) : undefined}
         existingBooking={editingBooking}
       />
     </div>
