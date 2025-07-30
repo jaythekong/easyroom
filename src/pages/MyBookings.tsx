@@ -97,10 +97,10 @@ function BookingCard({
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleCardClick}>
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className="flex-1 cursor-pointer" onClick={handleCardClick}>
+          <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
               <h3 className="font-semibold text-lg">{booking.title}</h3>
               <Badge className="bg-blue-100 text-blue-800">
@@ -145,12 +145,19 @@ function BookingCard({
           </div>
 
           {showActions && (
-            <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+            <div 
+              className="flex items-center gap-2 ml-4 flex-shrink-0 relative z-10" 
+              onClick={(e) => e.stopPropagation()}
+            >
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={handleEditClick}
-                className="relative z-10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('Edit button clicked for booking:', booking.id);
+                  handleEditClick(e);
+                }}
+                className="hover:bg-accent"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
@@ -161,8 +168,11 @@ function BookingCard({
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="text-destructive hover:text-destructive relative z-10"
-                    onClick={handleCancelClick}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log('Cancel button clicked for booking:', booking.id);
+                    }}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Cancel
