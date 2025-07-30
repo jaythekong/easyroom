@@ -398,62 +398,75 @@ export default function MyBookings() {
                       {(() => {
                         const isBookingUpcoming = isUpcoming(booking.start_time);
                         const canUserEdit = canEditBooking(booking);
+                        const shouldShow = isBookingUpcoming && canUserEdit;
                         console.log('🔍 Button visibility check:', {
                           bookingId: booking.id,
                           isBookingUpcoming,
                           canUserEdit,
-                          showButtons: isBookingUpcoming && canUserEdit,
+                          showButtons: shouldShow,
                           userRole,
                           userId: user?.id,
                           bookingUserId: booking.user_id
                         });
-                        return isBookingUpcoming && canUserEdit;
-                      })() && (
-                        <>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleEditBooking(booking)}
-                          >
-                            <Edit className="h-4 w-4 mr-2" />
-                            Edit
-                          </Button>
-                          
-                           {/* Show confirm button for pending bookings */}
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
+                        
+                        if (shouldShow) {
+                          console.log('✅ RENDERING BUTTONS for booking:', booking.id);
+                          return (
+                            <>
                               <Button 
                                 variant="outline" 
                                 size="sm"
-                                className="text-destructive hover:text-destructive"
+                                onClick={() => {
+                                  console.log('🔥 EDIT BUTTON CLICKED!', booking);
+                                  handleEditBooking(booking);
+                                }}
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Cancel
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
-                                 <AlertDialogDescription>
-                                   Are you sure you want to cancel your booking for "{booking.title}" 
-                                   on {format(new Date(booking.start_time), "PPP")}? 
-                                   This action cannot be undone.
-                                 </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleCancelBooking(booking.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
-                                >
-                                  Yes, Cancel Booking
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </>
-                      )}
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    onClick={() => console.log('🔥 CANCEL TRIGGER CLICKED!', booking.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Cancel
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to cancel your booking for "{booking.title}" 
+                                      on {format(new Date(booking.start_time), "PPP")}? 
+                                      This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => {
+                                        console.log('🔥 CANCEL CONFIRMATION CLICKED!', booking.id);
+                                        handleCancelBooking(booking.id);
+                                      }}
+                                      className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                      Yes, Cancel Booking
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
+                          );
+                        } else {
+                          console.log('❌ NOT RENDERING BUTTONS for booking:', booking.id, { shouldShow, isBookingUpcoming, canUserEdit });
+                          return null;
+                        }
+                      })()}
                       
                       {/* For past bookings, show read-only status */}
                       {!isUpcoming(booking.start_time) && (
