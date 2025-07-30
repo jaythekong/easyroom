@@ -139,54 +139,6 @@ function BookingCard({
             </div>
           </div>
 
-          {showActions && (
-            <div className="flex items-center gap-2 ml-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleEditClick}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="text-destructive hover:text-destructive"
-                    onClick={handleCancelClick}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to cancel your booking for "{booking.title}" 
-                      on {format(new Date(booking.start_time), "PPP")}? 
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCancel(booking.id);
-                      }}
-                      className="bg-destructive hover:bg-destructive/90"
-                    >
-                      Yes, Cancel Booking
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
