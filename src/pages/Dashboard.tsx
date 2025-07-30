@@ -69,11 +69,33 @@ export default function Dashboard() {
     setFilteredRooms(rooms);
   }, [rooms]);
 
+  const fetchUserProfile = useCallback(async () => {
+    if (!userId || !organization?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('display_name, avatar_url, bio, email')
+        .eq('user_id', userId)
+        .eq('organization_id', organization.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  }, [userId, organization?.id]);
+
   useEffect(() => {
-    if (userId) {
+    if (userId && organization?.id) {
       fetchUserProfile();
     }
-  }, [userId]);
+  }, [userId, organization?.id, fetchUserProfile]);
 
   // Show error toast if rooms fail to load
   useEffect(() => {
@@ -104,27 +126,6 @@ export default function Dashboard() {
       new Date(booking.start_time) > now
     ).length;
   }, [userBookings]);
-
-  const fetchUserProfile = useCallback(async () => {
-    if (!userId) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('display_name, avatar_url, bio, email')
-        .eq('user_id', userId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return;
-      }
-
-      setUserProfile(data);
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-    }
-  }, [userId]);
 
   const getTimeBasedGreeting = () => {
     const timezone = organization?.timezone || 'America/New_York';
