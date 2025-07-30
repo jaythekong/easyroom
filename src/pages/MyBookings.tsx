@@ -440,7 +440,14 @@ export default function MyBookings() {
             setSelectedBooking(null);
             setSelectedBookingRoom(null);
           }}
-          onEdit={handleEditBooking}
+          onEdit={(booking) => {
+            // Close details modal first
+            setIsBookingDetailsOpen(false);
+            setSelectedBooking(null);
+            setSelectedBookingRoom(null);
+            // Then open edit modal
+            handleEditBooking(booking);
+          }}
           onBookingUpdate={handleBookingUpdate}
         />
       </div>
