@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { BookingModal } from "@/components/BookingModal";
+import { BookingDetailsModal } from "@/components/BookingDetailsModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,11 @@ export default function MyBookings() {
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>("my-bookings");
+  
+  // BookingDetailsModal state
+  const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [selectedBookingRoom, setSelectedBookingRoom] = useState<any>(null);
 
   // Filter bookings based on user role
   const filteredBookings = activeTab === 'my-bookings' 
@@ -168,6 +174,46 @@ export default function MyBookings() {
     setSelectedRoom(null);
   };
 
+  const handleViewBooking = async (booking: any) => {
+    try {
+      const { data: room, error } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('id', booking.room_id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching room:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load room details",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!room) {
+        toast({
+          title: "Error", 
+          description: "Room not found",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSelectedBooking(booking);
+      setSelectedBookingRoom(room);
+      setIsBookingDetailsOpen(true);
+    } catch (error) {
+      console.error('Error in handleViewBooking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open booking details",
+        variant: "destructive",
+      });
+    }
+  };
+
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
     return format(date, 'PPP p');
@@ -229,7 +275,7 @@ export default function MyBookings() {
     const showActions = bookingIsUpcoming && canEdit;
 
     return (
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleViewBooking(booking)}>
         <CardContent className="p-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -277,11 +323,14 @@ export default function MyBookings() {
             </div>
 
             {showActions && (
-              <div className="flex items-center gap-2 ml-4">
+              <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => handleEditBooking(booking)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditBooking(booking);
+                  }}
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
@@ -293,6 +342,7 @@ export default function MyBookings() {
                       variant="outline" 
                       size="sm"
                       className="text-destructive hover:text-destructive"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Cancel
@@ -379,6 +429,20 @@ export default function MyBookings() {
             existingBooking={editingBooking}
           />
         )}
+
+        {/* Booking Details Modal */}
+        <BookingDetailsModal
+          booking={selectedBooking}
+          room={selectedBookingRoom}
+          isOpen={isBookingDetailsOpen}
+          onClose={() => {
+            setIsBookingDetailsOpen(false);
+            setSelectedBooking(null);
+            setSelectedBookingRoom(null);
+          }}
+          onEdit={handleEditBooking}
+          onBookingUpdate={handleBookingUpdate}
+        />
       </div>
     </div>
   );
