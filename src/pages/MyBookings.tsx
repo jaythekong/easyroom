@@ -39,6 +39,11 @@ interface Booking {
     display_name?: string;
     avatar_url?: string;
   };
+  room?: {
+    id: string;
+    name: string;
+    location?: string;
+  };
 }
 
 export default function MyBookings() {
@@ -372,10 +377,10 @@ export default function MyBookings() {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>Room {booking.room_id}</span>
-                      </div>
+                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                         <MapPin className="h-4 w-4" />
+                         <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
+                       </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4" />
                           <span>{format(new Date(booking.start_time), 'PPP')}</span>
@@ -470,10 +475,10 @@ export default function MyBookings() {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>Room {booking.room_id}</span>
-                      </div>
+                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                         <MapPin className="h-4 w-4" />
+                         <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
+                       </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4" />
                           <span>{format(new Date(booking.start_time), 'PPP')}</span>

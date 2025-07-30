@@ -16,6 +16,11 @@ interface Booking {
     display_name?: string;
     avatar_url?: string;
   };
+  room?: {
+    id: string;
+    name: string;
+    location?: string;
+  };
 }
 
 export function useBookings(selectedDate: Date) {
@@ -59,6 +64,7 @@ export function useBookings(selectedDate: Date) {
 
       // Get unique user IDs from the bookings
       const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
+      const roomIds = [...new Set(bookingsData.map(booking => booking.room_id))];
       
       // Fetch user profiles for these users in this organization
       const { data: profilesData, error: profilesError } = await supabase
@@ -70,6 +76,18 @@ export function useBookings(selectedDate: Date) {
       if (profilesError) {
         console.error('Error fetching user profiles:', profilesError);
         // Don't throw error, just continue without profile data
+      }
+
+      // Fetch room details for these bookings
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('rooms')
+        .select('id, name, location')
+        .eq('organization_id', organization.id)
+        .in('id', roomIds);
+      
+      if (roomsError) {
+        console.error('Error fetching rooms:', roomsError);
+        // Don't throw error, just continue without room data
       }
 
       // Create a map of user profiles for quick lookup
@@ -84,13 +102,30 @@ export function useBookings(selectedDate: Date) {
         });
       }
 
-      // Combine bookings with user profile data
+      // Create a map of rooms for quick lookup
+      const roomsMap = new Map();
+      if (roomsData) {
+        roomsData.forEach(room => {
+          roomsMap.set(room.id, {
+            id: room.id,
+            name: room.name,
+            location: room.location,
+          });
+        });
+      }
+
+      // Combine bookings with user profile and room data
       const bookingsWithProfiles = bookingsData.map(booking => ({
         ...booking,
         user_profiles: profilesMap.get(booking.user_id) || {
           email: 'Unknown user',
           display_name: null,
           avatar_url: null,
+        },
+        room: roomsMap.get(booking.room_id) || {
+          id: booking.room_id,
+          name: `Room ${booking.room_id}`,
+          location: null,
         }
       }));
       
