@@ -78,7 +78,7 @@ export default function Dashboard() {
         .select('display_name, avatar_url, bio, email')
         .eq('user_id', userId)
         .eq('organization_id', organization.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching user profile:', error);

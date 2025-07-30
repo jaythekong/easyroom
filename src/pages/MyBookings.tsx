@@ -68,7 +68,7 @@ export default function MyBookings() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      console.log('Cancelling booking:', bookingId);
+      console.log('🔥 CANCEL BUTTON CLICKED!', bookingId);
       
       // Get user's organization ID for notification
       const { data: profile } = await supabase
@@ -132,7 +132,7 @@ export default function MyBookings() {
   };
 
   const handleEditBooking = async (booking: any) => {
-    console.log('📝 MyBookings - Edit booking clicked:', booking);
+    console.log('🔥 EDIT BUTTON CLICKED!', booking);
     
     // Fetch room details for the booking
     try {
@@ -395,7 +395,20 @@ export default function MyBookings() {
 
                     <div className="flex items-center gap-2 ml-4">
                       {/* Show edit/cancel for future bookings that user can edit */}
-                      {isUpcoming(booking.start_time) && canEditBooking(booking) && (
+                      {(() => {
+                        const isBookingUpcoming = isUpcoming(booking.start_time);
+                        const canUserEdit = canEditBooking(booking);
+                        console.log('🔍 Button visibility check:', {
+                          bookingId: booking.id,
+                          isBookingUpcoming,
+                          canUserEdit,
+                          showButtons: isBookingUpcoming && canUserEdit,
+                          userRole,
+                          userId: user?.id,
+                          bookingUserId: booking.user_id
+                        });
+                        return isBookingUpcoming && canUserEdit;
+                      })() && (
                         <>
                           <Button 
                             variant="outline" 
