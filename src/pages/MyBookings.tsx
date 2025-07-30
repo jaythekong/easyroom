@@ -86,16 +86,21 @@ function BookingCard({
     console.log('Cancel button clicked for booking:', booking.id);
   };
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only handle card click if not clicking on buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('[role="dialog"]')) {
+      return;
+    }
     console.log('Card clicked for booking:', booking.id);
     onView(booking);
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleCardClick}>
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
-          <div className="flex-1">
+          <div className="flex-1 cursor-pointer" onClick={handleCardClick}>
             <div className="flex items-center gap-3 mb-2">
               <h3 className="font-semibold text-lg">{booking.title}</h3>
               <Badge className="bg-blue-100 text-blue-800">
@@ -140,11 +145,12 @@ function BookingCard({
           </div>
 
           {showActions && (
-            <div className="flex items-center gap-2 ml-4">
+            <div className="flex items-center gap-2 ml-4 flex-shrink-0">
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={handleEditClick}
+                className="relative z-10"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
@@ -155,14 +161,14 @@ function BookingCard({
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="text-destructive hover:text-destructive"
+                    className="text-destructive hover:text-destructive relative z-10"
                     onClick={handleCancelClick}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Cancel
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -174,10 +180,7 @@ function BookingCard({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Keep Booking</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCancel(booking.id);
-                      }}
+                      onClick={() => onCancel(booking.id)}
                       className="bg-destructive hover:bg-destructive/90"
                     >
                       Yes, Cancel Booking
