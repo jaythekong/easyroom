@@ -45,6 +45,154 @@ interface Booking {
   };
 }
 
+interface BookingCardProps {
+  booking: Booking;
+  isUpcoming: boolean;
+  currentUserId?: string;
+  userRole?: string;
+  onEdit: (booking: Booking) => void;
+  onCancel: (bookingId: string) => void;
+  onView: (booking: Booking) => void;
+}
+
+// Extract BookingCard as a separate component to avoid re-renders
+function BookingCard({ 
+  booking, 
+  isUpcoming, 
+  currentUserId, 
+  userRole, 
+  onEdit, 
+  onCancel, 
+  onView 
+}: BookingCardProps) {
+  const canEdit = userRole === 'admin' || booking.user_id === currentUserId;
+  const showActions = isUpcoming && canEdit;
+
+  const formatTime = (dateTime: string) => {
+    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
+    return format(date, 'p');
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Edit button clicked for booking:', booking.id);
+    onEdit(booking);
+  };
+
+  const handleCancelClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Cancel button clicked for booking:', booking.id);
+  };
+
+  const handleCardClick = () => {
+    console.log('Card clicked for booking:', booking.id);
+    onView(booking);
+  };
+
+  return (
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleCardClick}>
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className="font-semibold text-lg">{booking.title}</h3>
+              <Badge className="bg-blue-100 text-blue-800">
+                {isUpcoming ? 'Upcoming' : 'Past'}
+              </Badge>
+              {(userRole === 'admin' || booking.user_id !== currentUserId) && booking.user_profiles && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {booking.user_profiles.avatar_url ? (
+                    <img 
+                      src={booking.user_profiles.avatar_url} 
+                      alt="Creator avatar" 
+                      className="w-5 h-5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-xs font-medium text-primary">
+                        {(booking.user_profiles.display_name || booking.user_profiles.email)?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <span className="text-xs">
+                    {booking.user_profiles.display_name || booking.user_profiles.email}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MapPin className="h-4 w-4" />
+                <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>{format(new Date(booking.start_time), 'PPP')}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+              </div>
+            </div>
+          </div>
+
+          {showActions && (
+            <div className="flex items-center gap-2 ml-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleEditClick}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-destructive hover:text-destructive"
+                    onClick={handleCancelClick}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to cancel your booking for "{booking.title}" 
+                      on {format(new Date(booking.start_time), "PPP")}? 
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCancel(booking.id);
+                      }}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Yes, Cancel Booking
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function MyBookings() {
   const { user } = useAuth();
   const { userRole, organization } = useOrganization();
@@ -52,15 +200,16 @@ export default function MyBookings() {
   
   const { data: allBookings = [], isLoading, error, refetch } = useBookings(new Date());
   
+  // Modal states
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [editingBooking, setEditingBooking] = useState<any>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<string>("my-bookings");
   
-  // BookingDetailsModal state
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [selectedBookingRoom, setSelectedBookingRoom] = useState<any>(null);
+  
+  const [activeTab, setActiveTab] = useState<string>("my-bookings");
 
   // Filter bookings based on user role
   const filteredBookings = activeTab === 'my-bookings' 
@@ -69,16 +218,16 @@ export default function MyBookings() {
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
-      console.log('Cancelling booking:', bookingId);
+      console.log('🗑️ Cancelling booking:', bookingId);
       
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('organization_id')
-        .eq('user_id', user?.id || '')
-        .maybeSingle();
-
-      // Send notification
+      // Send Telegram notification
       try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('organization_id')
+          .eq('user_id', user?.id || '')
+          .maybeSingle();
+
         if (profile?.organization_id) {
           await supabase.functions.invoke('send-telegram-notification', {
             body: {
@@ -89,7 +238,7 @@ export default function MyBookings() {
           });
         }
       } catch (notificationError) {
-        console.error('Failed to send notification:', notificationError);
+        console.error('❌ Failed to send notification:', notificationError);
       }
 
       // Delete booking
@@ -113,10 +262,11 @@ export default function MyBookings() {
         description: "Your booking has been successfully cancelled.",
       });
 
+      // Refresh data
       await refetch();
       
     } catch (error) {
-      console.error('Error cancelling booking:', error);
+      console.error('❌ Error cancelling booking:', error);
       toast({
         title: "Error",
         description: "Failed to cancel booking",
@@ -125,9 +275,9 @@ export default function MyBookings() {
     }
   };
 
-  const handleEditBooking = async (booking: any) => {
+  const handleEditBooking = async (booking: Booking) => {
     try {
-      console.log('Editing booking:', booking);
+      console.log('✏️ Editing booking:', booking.id);
       
       const { data: room, error } = await supabase
         .from('rooms')
@@ -136,7 +286,7 @@ export default function MyBookings() {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching room:', error);
+        console.error('❌ Error fetching room:', error);
         toast({
           title: "Error",
           description: "Failed to load room details",
@@ -154,11 +304,12 @@ export default function MyBookings() {
         return;
       }
 
+      console.log('✅ Opening edit modal for booking:', booking.id);
       setEditingBooking(booking);
       setSelectedRoom(room);
       setIsBookingModalOpen(true);
     } catch (error) {
-      console.error('Error in handleEditBooking:', error);
+      console.error('❌ Error in handleEditBooking:', error);
       toast({
         title: "Error",
         description: "Failed to open booking editor",
@@ -167,15 +318,10 @@ export default function MyBookings() {
     }
   };
 
-  const handleBookingUpdate = () => {
-    refetch();
-    setIsBookingModalOpen(false);
-    setEditingBooking(null);
-    setSelectedRoom(null);
-  };
-
-  const handleViewBooking = async (booking: any) => {
+  const handleViewBooking = async (booking: Booking) => {
     try {
+      console.log('👁️ Viewing booking details:', booking.id);
+      
       const { data: room, error } = await supabase
         .from('rooms')
         .select('*')
@@ -183,7 +329,7 @@ export default function MyBookings() {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching room:', error);
+        console.error('❌ Error fetching room:', error);
         toast({
           title: "Error",
           description: "Failed to load room details",
@@ -201,11 +347,12 @@ export default function MyBookings() {
         return;
       }
 
+      console.log('✅ Opening details modal for booking:', booking.id);
       setSelectedBooking(booking);
       setSelectedBookingRoom(room);
       setIsBookingDetailsOpen(true);
     } catch (error) {
-      console.error('Error in handleViewBooking:', error);
+      console.error('❌ Error in handleViewBooking:', error);
       toast({
         title: "Error",
         description: "Failed to open booking details",
@@ -214,22 +361,26 @@ export default function MyBookings() {
     }
   };
 
-  const formatDateTime = (dateTime: string) => {
-    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
-    return format(date, 'PPP p');
+  const handleBookingUpdate = () => {
+    console.log('🔄 Refreshing bookings after update');
+    refetch();
+    setIsBookingModalOpen(false);
+    setEditingBooking(null);
+    setSelectedRoom(null);
   };
 
-  const formatTime = (dateTime: string) => {
-    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
-    return format(date, 'p');
+  const handleDetailsModalEdit = (booking: any) => {
+    console.log('✏️ Edit requested from details modal:', booking.id);
+    // Close details modal
+    setIsBookingDetailsOpen(false);
+    setSelectedBooking(null);
+    setSelectedBookingRoom(null);
+    // Open edit modal
+    handleEditBooking(booking);
   };
 
   const isUpcoming = (startTime: string) => {
     return new Date(startTime) > new Date();
-  };
-
-  const canEditBooking = (booking: any) => {
-    return userRole === 'admin' || booking.user_id === user?.id;
   };
 
   // Filter bookings
@@ -270,112 +421,6 @@ export default function MyBookings() {
     );
   }
 
-  const BookingCard = ({ booking, isUpcoming: bookingIsUpcoming }: { booking: Booking; isUpcoming: boolean }) => {
-    const canEdit = canEditBooking(booking);
-    const showActions = bookingIsUpcoming && canEdit;
-
-    return (
-      <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleViewBooking(booking)}>
-        <CardContent className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="font-semibold text-lg">{booking.title}</h3>
-                <Badge className="bg-blue-100 text-blue-800">
-                  {bookingIsUpcoming ? 'Upcoming' : 'Past'}
-                </Badge>
-                {(userRole === 'admin' || booking.user_id !== user?.id) && booking.user_profiles && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {booking.user_profiles.avatar_url ? (
-                      <img 
-                        src={booking.user_profiles.avatar_url} 
-                        alt="Creator avatar" 
-                        className="w-5 h-5 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                        <span className="text-xs font-medium text-primary">
-                          {(booking.user_profiles.display_name || booking.user_profiles.email)?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <span className="text-xs">
-                      {booking.user_profiles.display_name || booking.user_profiles.email}
-                    </span>
-                  </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>{format(new Date(booking.start_time), 'PPP')}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="h-4 w-4" />
-                  <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
-                </div>
-              </div>
-            </div>
-
-            {showActions && (
-              <div className="flex items-center gap-2 ml-4" onClick={(e) => e.stopPropagation()}>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditBooking(booking);
-                  }}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-                
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to cancel your booking for "{booking.title}" 
-                        on {format(new Date(booking.start_time), "PPP")}? 
-                        This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleCancelBooking(booking.id)}
-                        className="bg-destructive hover:bg-destructive/90"
-                      >
-                        Yes, Cancel Booking
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -415,12 +460,13 @@ export default function MyBookings() {
           )}
         </Tabs>
 
-        {/* Booking Modal */}
+        {/* Modals */}
         {isBookingModalOpen && selectedRoom && (
           <BookingModal
             room={selectedRoom}
             isOpen={isBookingModalOpen}
             onClose={() => {
+              console.log('🔒 Closing booking modal');
               setIsBookingModalOpen(false);
               setEditingBooking(null);
               setSelectedRoom(null);
@@ -430,24 +476,17 @@ export default function MyBookings() {
           />
         )}
 
-        {/* Booking Details Modal */}
         <BookingDetailsModal
           booking={selectedBooking}
           room={selectedBookingRoom}
           isOpen={isBookingDetailsOpen}
           onClose={() => {
+            console.log('🔒 Closing details modal');
             setIsBookingDetailsOpen(false);
             setSelectedBooking(null);
             setSelectedBookingRoom(null);
           }}
-          onEdit={(booking) => {
-            // Close details modal first
-            setIsBookingDetailsOpen(false);
-            setSelectedBooking(null);
-            setSelectedBookingRoom(null);
-            // Then open edit modal
-            handleEditBooking(booking);
-          }}
+          onEdit={handleDetailsModalEdit}
           onBookingUpdate={handleBookingUpdate}
         />
       </div>
@@ -508,7 +547,16 @@ export default function MyBookings() {
             <h2 className="text-lg font-semibold mb-4">Upcoming Bookings</h2>
             <div className="space-y-4">
               {upcomingBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} isUpcoming={true} />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  isUpcoming={true}
+                  currentUserId={user?.id}
+                  userRole={userRole}
+                  onEdit={handleEditBooking}
+                  onCancel={handleCancelBooking}
+                  onView={handleViewBooking}
+                />
               ))}
             </div>
           </div>
@@ -520,7 +568,16 @@ export default function MyBookings() {
             <h2 className="text-lg font-semibold mb-4">Past Bookings</h2>
             <div className="space-y-4">
               {pastBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} isUpcoming={false} />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  isUpcoming={false}
+                  currentUserId={user?.id}
+                  userRole={userRole}
+                  onEdit={handleEditBooking}
+                  onCancel={handleCancelBooking}
+                  onView={handleViewBooking}
+                />
               ))}
             </div>
           </div>
