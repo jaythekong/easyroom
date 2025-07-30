@@ -331,6 +331,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   };
 
   const handleBookingClick = (booking: any, room: any) => {
+    console.log('🔍 BOOKING CLICKED:', { booking, room });
+    
     if (booking.bookingId) {
       const fullBooking = bookings.find(b => b.id === booking.bookingId);
       if (fullBooking) {
@@ -363,11 +365,18 @@ const RoomTimelineComponent = memo(function RoomTimeline({
         } else {
           // Otherwise, show details modal (for view-only or when onEditBooking is not available)
           console.log('📅 SHOWING DETAILS for booking:', fullBooking.title);
+          console.log('📅 Setting selectedBooking:', fullBooking);
+          console.log('📅 Setting selectedBookingRoom:', room);
           setSelectedBooking(fullBooking);
           setSelectedBookingRoom(room);
           setIsBookingDetailsOpen(true);
+          console.log('📅 Modal should be open now');
         }
+      } else {
+        console.error('❌ Full booking not found for ID:', booking.bookingId);
       }
+    } else {
+      console.error('❌ No bookingId in slot:', booking);
     }
   };
 
