@@ -29,8 +29,8 @@ interface Room {
   id: string;
   name: string;
   capacity: number;
-  location: string;
-  amenities: string[];
+  location?: string;
+  amenities?: string[];
 }
 
 interface BookingModalProps {
@@ -914,7 +914,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           </div>
 
           {/* Room Amenities */}
-          {room.amenities.length > 0 && (
+          {room.amenities && room.amenities.length > 0 && (
             <div className="space-y-2">
               <Label>Available Amenities</Label>
               <div className="flex flex-wrap gap-2">
