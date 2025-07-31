@@ -65,152 +65,63 @@ function BookingCard({
   onCancel, 
   onView 
 }: BookingCardProps) {
-  const canEdit = userRole === 'admin' || booking.user_id === currentUserId;
-  const showActions = isUpcoming && canEdit;
-
   const formatTime = (dateTime: string) => {
     const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
     return format(date, 'p');
   };
 
-  const handleEditClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Edit button clicked for booking:', booking.id);
-    onEdit(booking);
-  };
-
-  const handleCancelClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Cancel button clicked for booking:', booking.id);
-  };
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Only handle card click if not clicking on buttons
-    const target = e.target as HTMLElement;
-    if (target.closest('button') || target.closest('[role="dialog"]')) {
-      return;
-    }
-    console.log('Card clicked for booking:', booking.id);
-    onView(booking);
-  };
-
   return (
-    <Card className="hover:shadow-md transition-shadow mb-4">
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          {/* Main content area - clickable */}
-          <div 
-            className="flex-1 cursor-pointer" 
-            onClick={() => {
-              console.log('👁️ Card clicked - viewing booking:', booking.id);
-              onView(booking);
-            }}
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <h3 className="font-semibold text-lg">{booking.title}</h3>
-              <Badge className="bg-blue-100 text-blue-800">
-                {isUpcoming ? 'Upcoming' : 'Past'}
-              </Badge>
-              {(userRole === 'admin' || booking.user_id !== currentUserId) && booking.user_profiles && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {booking.user_profiles.avatar_url ? (
-                    <img 
-                      src={booking.user_profiles.avatar_url} 
-                      alt="Creator avatar" 
-                      className="w-5 h-5 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-xs font-medium text-primary">
-                        {(booking.user_profiles.display_name || booking.user_profiles.email)?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  <span className="text-xs">
-                    {booking.user_profiles.display_name || booking.user_profiles.email}
+    <Card 
+      className="hover:shadow-md transition-shadow cursor-pointer" 
+      onClick={() => {
+        console.log('👁️ Card clicked - viewing booking:', booking.id);
+        onView(booking);
+      }}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-base">{booking.title}</h3>
+          <Badge variant={isUpcoming ? "default" : "secondary"}>
+            {isUpcoming ? 'Upcoming' : 'Past'}
+          </Badge>
+        </div>
+        
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+            </div>
+          </div>
+          
+          {(userRole === 'admin' || booking.user_id !== currentUserId) && booking.user_profiles && (
+            <div className="flex items-center gap-2">
+              {booking.user_profiles.avatar_url ? (
+                <img 
+                  src={booking.user_profiles.avatar_url} 
+                  alt="Creator avatar" 
+                  className="w-4 h-4 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
+                  <span className="text-xs font-medium text-primary">
+                    {(booking.user_profiles.display_name || booking.user_profiles.email)?.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>{format(new Date(booking.start_time), 'PPP')}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action buttons - isolated from card click */}
-          {showActions && (
-            <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  console.log('🟢 Edit button clicked for booking:', booking.id);
-                  onEdit(booking);
-                }}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      console.log('🔴 Cancel button clicked for booking:', booking.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Cancel Booking?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Are you sure you want to cancel your booking for "{booking.title}" 
-                      on {format(new Date(booking.start_time), "PPP")}? 
-                      This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => {
-                        console.log('✅ Confirmed cancellation for booking:', booking.id);
-                        onCancel(booking.id);
-                      }}
-                      className="bg-destructive hover:bg-destructive/90"
-                    >
-                      Yes, Cancel Booking
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <span className="text-xs">
+                {booking.user_profiles.display_name || booking.user_profiles.email}
+              </span>
             </div>
           )}
+        </div>
+        
+        <div className="text-xs text-muted-foreground mt-2">
+          {format(new Date(booking.start_time), 'PPP')}
         </div>
       </CardContent>
     </Card>
