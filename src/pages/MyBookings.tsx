@@ -70,62 +70,53 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
     return format(date, 'p');
   };
 
+  // PHASE 4: Fallback solution - Completely simplified structure
   return (
-    <Card className="w-full">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-center">
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground">{booking.title}</h3>
-            <p className="text-sm text-muted-foreground">
-              {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-            </p>
-          </div>
-          
-          {/* PHASE 2: Using shadcn Button components like EnhancedRoomCard */}
-          <div className="flex gap-2 ml-4">
-            <Button
-              variant="outline"
-              size="sm"
+    <div className="flex justify-between items-center p-4 border bg-white rounded-lg shadow-sm">
+      <div className="flex-1">
+        <h3 className="font-semibold text-foreground">{booking.title}</h3>
+        <p className="text-sm text-muted-foreground">
+          {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+        </p>
+      </div>
+      
+      {/* Ultra-simple buttons outside any complex wrappers */}
+      <div className="flex gap-2 ml-4">
+        <button
+          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+          onClick={() => {
+            console.log('✅ SIMPLE VIEW BUTTON CLICKED');
+            onView();
+          }}
+        >
+          View
+        </button>
+        
+        {canEdit && (
+          <>
+            <button
+              className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
               onClick={() => {
-                console.log('👀 View button clicked with proper handler');
-                onView();
+                console.log('✅ SIMPLE EDIT BUTTON CLICKED');
+                onEdit();
               }}
             >
-              <Eye className="h-4 w-4 mr-1" />
-              View
-            </Button>
+              Edit
+            </button>
             
-            {canEdit && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    console.log('✏️ Edit button clicked with proper handler');
-                    onEdit();
-                  }}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    console.log('🗑️ Delete button clicked with proper handler');
-                    onDelete();
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+            <button
+              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+              onClick={() => {
+                console.log('✅ SIMPLE DELETE BUTTON CLICKED');
+                onDelete();
+              }}
+            >
+              Delete
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
