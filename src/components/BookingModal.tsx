@@ -229,8 +229,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (!startTime || !endTime || !formData.date) return false;
 
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const checkStart = new Date(`${dateStr}T${startTime}:00`);
-    const checkEnd = new Date(`${dateStr}T${endTime}:00`);
+    const checkStart = new Date(`${dateStr}T${startTime}:00.000Z`); // Fixed: Add .000Z for UTC
+    const checkEnd = new Date(`${dateStr}T${endTime}:00.000Z`); // Fixed: Add .000Z for UTC
 
     console.log('📝 CHECKING CONFLICT:', {
       checkStart: checkStart.toISOString(),
@@ -270,20 +270,42 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (!time || !formData.date) return false;
 
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const slotTime = new Date(`${dateStr}T${time}:00`);
+    const slotTime = new Date(`${dateStr}T${time}:00.000Z`); // Fixed: Add .000Z for UTC
 
-    return existingBookings.some(booking => {
+    console.log('🔍 Checking time slot conflict:', {
+      time,
+      dateStr,
+      slotTime: slotTime.toISOString(),
+      existingBookingsCount: existingBookings.length,
+      isEndTime
+    });
+
+    const hasConflict = existingBookings.some(booking => {
       const bookingStart = new Date(booking.start_time);
       const bookingEnd = new Date(booking.end_time);
       
+      console.log('🔍 Comparing with booking:', {
+        bookingTitle: booking.title,
+        bookingStart: bookingStart.toISOString(),
+        bookingEnd: bookingEnd.toISOString(),
+        slotTime: slotTime.toISOString()
+      });
+      
       if (isEndTime) {
         // For end time, check if the slot falls within an existing booking
-        return slotTime > bookingStart && slotTime <= bookingEnd;
+        const conflict = slotTime > bookingStart && slotTime <= bookingEnd;
+        console.log('🔍 End time conflict check:', { conflict });
+        return conflict;
       } else {
         // For start time, check if the slot falls within an existing booking
-        return slotTime >= bookingStart && slotTime < bookingEnd;
+        const conflict = slotTime >= bookingStart && slotTime < bookingEnd;
+        console.log('🔍 Start time conflict check:', { conflict });
+        return conflict;
       }
     });
+
+    console.log('🔍 Final conflict result:', hasConflict);
+    return hasConflict;
   };
 
   // Get conflicting booking details for tooltip
@@ -291,7 +313,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (!time || !formData.date) return null;
 
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const slotTime = new Date(`${dateStr}T${time}:00`);
+    const slotTime = new Date(`${dateStr}T${time}:00.000Z`); // Fixed: Add .000Z for UTC
 
     return existingBookings.find(booking => {
       const bookingStart = new Date(booking.start_time);
