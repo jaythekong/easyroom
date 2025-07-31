@@ -202,7 +202,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         .select('*')
         .eq('room_id', room.id)
         .eq('organization_id', organization.id)
-        .gte('start_time', `${dateStr}T00:00:00.000Z`)
+        .gte('end_time', `${dateStr}T00:00:00.000Z`)
         .lt('start_time', `${dateStr}T23:59:59.999Z`);
 
       // Only exclude existing booking if we have a valid ID
