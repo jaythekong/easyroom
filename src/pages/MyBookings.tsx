@@ -148,33 +148,39 @@ function BookingCard({
           </div>
 
           {showActions && (
-            <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-              <button
+            <div 
+              className="flex items-center gap-2 ml-4 flex-shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   console.log('🟢 Edit button clicked for booking:', booking.id);
                   onEdit(booking);
                 }}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 py-2"
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
-              </button>
+              </Button>
               
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
                       console.log('🔴 Cancel button clicked for booking:', booking.id);
                     }}
-                    className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3 py-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Cancel
-                  </button>
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
