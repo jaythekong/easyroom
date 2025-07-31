@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,51 +70,97 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
     return format(date, 'p');
   };
 
-  // PHASE 4: Fallback solution - Completely simplified structure
-  return (
-    <div className="flex justify-between items-center p-4 border bg-white rounded-lg shadow-sm">
-      <div className="flex-1">
-        <h3 className="font-semibold text-foreground">{booking.title}</h3>
-        <p className="text-sm text-muted-foreground">
-          {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-        </p>
-      </div>
+  console.log('🔍 BookingCard rendering for booking:', booking.id);
+
+  // DEBUGGING: Add mouse event listeners to the entire card
+  const cardRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const card = cardRef.current;
+    if (card) {
+      const handleCardClick = (e: MouseEvent) => {
+        console.log('🎯 CARD CLICKED:', e.target, e.currentTarget);
+      };
+      const handleCardMouseEnter = () => {
+        console.log('🎯 CARD MOUSE ENTER');
+      };
       
-      {/* Ultra-simple buttons outside any complex wrappers */}
-      <div className="flex gap-2 ml-4">
-        <button
-          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-          onClick={() => {
-            console.log('✅ SIMPLE VIEW BUTTON CLICKED');
-            onView();
-          }}
-        >
-          View
-        </button>
+      card.addEventListener('click', handleCardClick);
+      card.addEventListener('mouseenter', handleCardMouseEnter);
+      
+      return () => {
+        card.removeEventListener('click', handleCardClick);
+        card.removeEventListener('mouseenter', handleCardMouseEnter);
+      };
+    }
+  }, []);
+
+  // ABSOLUTE SIMPLEST possible structure
+  return (
+    <div 
+      ref={cardRef}
+      className="border border-gray-300 bg-white p-4 rounded"
+      style={{ 
+        position: 'relative',
+        zIndex: 1,
+        pointerEvents: 'auto'
+      }}
+    >
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="font-semibold">{booking.title}</h3>
+          <p className="text-sm text-gray-600">
+            {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+          </p>
+        </div>
         
-        {canEdit && (
-          <>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            style={{ 
+              background: 'blue', 
+              color: 'white', 
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '4px',
+              pointerEvents: 'auto',
+              zIndex: 10
+            }}
+            onClick={(e) => {
+              console.log('🔵 VIEW BUTTON CLICKED!', e);
+              e.stopPropagation();
+              onView();
+            }}
+            onMouseDown={(e) => console.log('🔵 VIEW MOUSEDOWN', e)}
+            onMouseEnter={() => console.log('🔵 VIEW MOUSE ENTER')}
+          >
+            View
+          </button>
+          
+          {canEdit && (
             <button
-              className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-              onClick={() => {
-                console.log('✅ SIMPLE EDIT BUTTON CLICKED');
+              type="button"
+              style={{ 
+                background: 'green', 
+                color: 'white', 
+                padding: '8px 16px',
+                border: 'none',
+                borderRadius: '4px',
+                pointerEvents: 'auto',
+                zIndex: 10
+              }}
+              onClick={(e) => {
+                console.log('🟢 EDIT BUTTON CLICKED!', e);
+                e.stopPropagation();
                 onEdit();
               }}
+              onMouseDown={(e) => console.log('🟢 EDIT MOUSEDOWN', e)}
+              onMouseEnter={() => console.log('🟢 EDIT MOUSE ENTER')}
             >
               Edit
             </button>
-            
-            <button
-              className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-              onClick={() => {
-                console.log('✅ SIMPLE DELETE BUTTON CLICKED');
-                onDelete();
-              }}
-            >
-              Delete
-            </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
@@ -483,17 +529,55 @@ export default function MyBookings() {
         {upcomingBookings.length > 0 && (
           <div className="mb-8">
             <h2 className="text-lg font-semibold mb-4">Upcoming Bookings</h2>
+            
+            {/* DEBUGGING: Test button in the EXACT same area as BookingCard */}
+            <div className="mb-4 p-4 border border-red-500 bg-yellow-100">
+              <p>DEBUG: Button in same container as BookingCard:</p>
+              <button
+                className="bg-purple-600 text-white px-4 py-2 rounded"
+                onClick={() => {
+                  console.log('🟣 DEBUG BUTTON IN CARD AREA CLICKED!');
+                  alert('Debug button in card area works!');
+                }}
+              >
+                DEBUG BUTTON IN CARD AREA
+              </button>
+            </div>
+            
             <div className="space-y-4">
               {upcomingBookings.map((booking) => (
-                <BookingCard 
-                  key={booking.id} 
-                  booking={booking} 
-                  isUpcoming={true}
-                  onView={() => handleView(booking)}
-                  onEdit={() => handleEdit(booking)}
-                  onDelete={() => handleDelete(booking)}
-                  canEdit={userRole === 'admin' || booking.user_id === user?.id}
-                />
+                <div key={booking.id}>
+                  {/* DEBUGGING: Simple test button right before BookingCard */}
+                  <button
+                    className="bg-orange-500 text-white px-2 py-1 rounded text-xs mb-2"
+                    onClick={() => {
+                      console.log('🟠 BUTTON RIGHT BEFORE BOOKINGCARD CLICKED!');
+                      alert('Button before BookingCard works!');
+                    }}
+                  >
+                    TEST BEFORE CARD
+                  </button>
+                  
+                  <BookingCard 
+                    booking={booking} 
+                    isUpcoming={true}
+                    onView={() => handleView(booking)}
+                    onEdit={() => handleEdit(booking)}
+                    onDelete={() => handleDelete(booking)}
+                    canEdit={userRole === 'admin' || booking.user_id === user?.id}
+                  />
+                  
+                  {/* DEBUGGING: Simple test button right after BookingCard */}
+                  <button
+                    className="bg-pink-500 text-white px-2 py-1 rounded text-xs mt-2"
+                    onClick={() => {
+                      console.log('🟡 BUTTON RIGHT AFTER BOOKINGCARD CLICKED!');
+                      alert('Button after BookingCard works!');
+                    }}
+                  >
+                    TEST AFTER CARD
+                  </button>
+                </div>
               ))}
             </div>
           </div>
