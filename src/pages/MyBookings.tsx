@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, Users, MapPin, Trash2, Edit, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, MapPin, ArrowLeft, Edit, Trash2, Eye } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useBookings } from "@/hooks/useBookings";
@@ -12,7 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { BookingModal } from "@/components/BookingModal";
-import { BookingDetailsModal } from "@/components/BookingDetailsModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,10 +28,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-interface Booking {
+// Enhanced interface to match what we need, extending the basic booking type
+interface BookingWithDetails {
   id: string;
   title: string;
   start_time: string;
@@ -33,6 +39,10 @@ interface Booking {
   room_id: string;
   user_id: string;
   organization_id: string;
+  description?: string;
+  attendees?: number;
+  status?: string;
+  recurring?: string;
   user_profiles: {
     email: string;
     display_name?: string;
@@ -46,84 +56,91 @@ interface Booking {
 }
 
 interface BookingCardProps {
-  booking: Booking;
+  booking: BookingWithDetails;
   isUpcoming: boolean;
-  currentUserId?: string;
-  userRole?: string;
-  onEdit: (booking: Booking) => void;
-  onCancel: (bookingId: string) => void;
-  onView: (booking: Booking) => void;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  canEdit: boolean;
 }
 
-// Extract BookingCard as a separate component to avoid re-renders
-function BookingCard({ 
-  booking, 
-  isUpcoming, 
-  currentUserId, 
-  userRole, 
-  onEdit, 
-  onCancel, 
-  onView 
-}: BookingCardProps) {
+function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }: BookingCardProps) {
   const formatTime = (dateTime: string) => {
     const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
     return format(date, 'p');
   };
 
   return (
-    <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer relative" 
-      onClick={(e) => {
-        console.log('👁️ Card clicked - viewing booking:', booking.id);
-        console.log('👁️ Click event target:', e.target);
-        console.log('👁️ Click event currentTarget:', e.currentTarget);
-        onView(booking);
-      }}
-    >
+    <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
       <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-base">{booking.title}</h3>
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-1">{booking.title}</h3>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {format(new Date(booking.start_time), 'PPP')}
+            </div>
+          </div>
           <Badge variant={isUpcoming ? "default" : "secondary"}>
             {isUpcoming ? 'Upcoming' : 'Past'}
           </Badge>
         </div>
         
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
-            </div>
-          </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log('👁️ View button clicked for booking:', booking.id);
+              onView();
+            }}
+            className="flex items-center gap-1"
+          >
+            <Eye className="h-3 w-3" />
+            View
+          </Button>
           
-          {(userRole === 'admin' || booking.user_id !== currentUserId) && booking.user_profiles && (
-            <div className="flex items-center gap-2">
-              {booking.user_profiles.avatar_url ? (
-                <img 
-                  src={booking.user_profiles.avatar_url} 
-                  alt="Creator avatar" 
-                  className="w-4 h-4 rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-xs font-medium text-primary">
-                    {(booking.user_profiles.display_name || booking.user_profiles.email)?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <span className="text-xs">
-                {booking.user_profiles.display_name || booking.user_profiles.email}
-              </span>
-            </div>
+          {canEdit && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('✏️ Edit button clicked for booking:', booking.id);
+                  onEdit();
+                }}
+                className="flex items-center gap-1"
+              >
+                <Edit className="h-3 w-3" />
+                Edit
+              </Button>
+              
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  console.log('🗑️ Delete button clicked for booking:', booking.id);
+                  onDelete();
+                }}
+                className="flex items-center gap-1"
+              >
+                <Trash2 className="h-3 w-3" />
+                Delete
+              </Button>
+            </>
           )}
-        </div>
-        
-        <div className="text-xs text-muted-foreground mt-2">
-          {format(new Date(booking.start_time), 'PPP')}
         </div>
       </CardContent>
     </Card>
@@ -138,14 +155,11 @@ export default function MyBookings() {
   const { data: allBookings = [], isLoading, error, refetch } = useBookings(new Date());
   
   // Modal states
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<any>(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<BookingWithDetails | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<any>(null);
-  
-  const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<any>(null);
-  const [selectedBookingRoom, setSelectedBookingRoom] = useState<any>(null);
-  
   const [activeTab, setActiveTab] = useState<string>("my-bookings");
 
   // Filter bookings based on user role
@@ -153,10 +167,62 @@ export default function MyBookings() {
     ? allBookings.filter(booking => booking.user_id === user?.id)
     : allBookings;
 
-  const handleCancelBooking = async (bookingId: string) => {
+  const upcomingBookings = filteredBookings.filter(booking => new Date(booking.start_time) > new Date());
+  const pastBookings = filteredBookings.filter(booking => new Date(booking.start_time) <= new Date());
+
+  const handleView = async (booking: BookingWithDetails) => {
+    console.log('📋 Opening view modal for booking:', booking.id);
+    
+    const { data: room } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', booking.room_id)
+      .maybeSingle();
+
+    setSelectedBooking(booking);
+    setSelectedRoom(room);
+    setViewModalOpen(true);
+  };
+
+  const handleEdit = async (booking: BookingWithDetails) => {
+    console.log('✏️ Opening edit modal for booking:', booking.id);
+    
+    const { data: room } = await supabase
+      .from('rooms')
+      .select('*')
+      .eq('id', booking.room_id)
+      .maybeSingle();
+
+    setSelectedBooking(booking);
+    setSelectedRoom(room);
+    setEditModalOpen(true);
+  };
+
+  const handleDelete = (booking: BookingWithDetails) => {
+    console.log('🗑️ Opening delete dialog for booking:', booking.id);
+    setSelectedBooking(booking);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedBooking) return;
+    
     try {
-      console.log('🗑️ Cancelling booking:', bookingId);
+      console.log('🗑️ Deleting booking:', selectedBooking.id);
       
+      const deleteQuery = supabase
+        .from('bookings')
+        .delete()
+        .eq('id', selectedBooking.id);
+
+      if (userRole !== 'admin') {
+        deleteQuery.eq('user_id', user?.id);
+      }
+
+      const { error } = await deleteQuery;
+
+      if (error) throw error;
+
       // Send Telegram notification
       try {
         const { data: profile } = await supabase
@@ -168,7 +234,7 @@ export default function MyBookings() {
         if (profile?.organization_id) {
           await supabase.functions.invoke('send-telegram-notification', {
             body: {
-              bookingId: bookingId,
+              bookingId: selectedBooking.id,
               organizationId: profile.organization_id,
               action: 'cancelled'
             }
@@ -178,154 +244,31 @@ export default function MyBookings() {
         console.error('❌ Failed to send notification:', notificationError);
       }
 
-      // Delete booking
-      const deleteQuery = supabase
-        .from('bookings')
-        .delete()
-        .eq('id', bookingId);
-
-      if (userRole !== 'admin') {
-        deleteQuery.eq('user_id', user?.id);
-      }
-
-      const { error } = await deleteQuery;
-
-      if (error) {
-        throw error;
-      }
-
       toast({
-        title: "Booking Cancelled",
-        description: "Your booking has been successfully cancelled.",
+        title: "Booking Deleted",
+        description: "The booking has been successfully deleted.",
       });
 
-      // Refresh data
-      await refetch();
+      setDeleteDialogOpen(false);
+      setSelectedBooking(null);
+      refetch();
       
     } catch (error) {
-      console.error('❌ Error cancelling booking:', error);
+      console.error('❌ Error deleting booking:', error);
       toast({
         title: "Error",
-        description: "Failed to cancel booking",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleEditBooking = async (booking: Booking) => {
-    try {
-      console.log('✏️ Editing booking:', booking.id);
-      
-      const { data: room, error } = await supabase
-        .from('rooms')
-        .select('*')
-        .eq('id', booking.room_id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('❌ Error fetching room:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load room details",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!room) {
-        toast({
-          title: "Error", 
-          description: "Room not found",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('✅ Opening edit modal for booking:', booking.id);
-      setEditingBooking(booking);
-      setSelectedRoom(room);
-      setIsBookingModalOpen(true);
-    } catch (error) {
-      console.error('❌ Error in handleEditBooking:', error);
-      toast({
-        title: "Error",
-        description: "Failed to open booking editor",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleViewBooking = async (booking: Booking) => {
-    try {
-      console.log('👁️ Viewing booking details:', booking.id);
-      
-      const { data: room, error } = await supabase
-        .from('rooms')
-        .select('*')
-        .eq('id', booking.room_id)
-        .maybeSingle();
-
-      if (error) {
-        console.error('❌ Error fetching room:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load room details",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!room) {
-        toast({
-          title: "Error", 
-          description: "Room not found",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log('✅ Opening details modal for booking:', booking.id);
-      setSelectedBooking(booking);
-      setSelectedBookingRoom(room);
-      setIsBookingDetailsOpen(true);
-    } catch (error) {
-      console.error('❌ Error in handleViewBooking:', error);
-      toast({
-        title: "Error",
-        description: "Failed to open booking details",
+        description: "Failed to delete booking",
         variant: "destructive",
       });
     }
   };
 
   const handleBookingUpdate = () => {
-    console.log('🔄 Refreshing bookings after update');
+    console.log('🔄 Booking updated, refreshing data');
     refetch();
-    setIsBookingModalOpen(false);
-    setEditingBooking(null);
-    setSelectedRoom(null);
-  };
-
-  const handleDetailsModalEdit = (booking: any) => {
-    console.log('✏️ Edit requested from details modal:', booking.id);
-    // Close details modal
-    setIsBookingDetailsOpen(false);
+    setEditModalOpen(false);
     setSelectedBooking(null);
-    setSelectedBookingRoom(null);
-    // Open edit modal
-    handleEditBooking(booking);
-  };
-
-  const isUpcoming = (startTime: string) => {
-    return new Date(startTime) > new Date();
-  };
-
-  // Filter bookings
-  const upcomingBookings = filteredBookings.filter(booking => isUpcoming(booking.start_time));
-  const pastBookings = filteredBookings.filter(booking => !isUpcoming(booking.start_time));
-
-  const getTabTitle = () => {
-    return activeTab === 'my-bookings' ? 'My Bookings' : 'All Bookings';
+    setSelectedRoom(null);
   };
 
   if (isLoading) {
@@ -371,7 +314,7 @@ export default function MyBookings() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">Bookings</h1>
+              <h1 className="text-2xl font-bold">My Bookings</h1>
               <p className="text-muted-foreground">Manage your meeting room reservations</p>
             </div>
           </div>
@@ -397,35 +340,88 @@ export default function MyBookings() {
           )}
         </Tabs>
 
-        {/* Modals */}
-        {isBookingModalOpen && selectedRoom && (
+        {/* View Modal */}
+        <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Booking Details</DialogTitle>
+            </DialogHeader>
+            {selectedBooking && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedBooking.title}</h3>
+                  {selectedBooking.description && (
+                    <p className="text-muted-foreground">{selectedBooking.description}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{selectedRoom?.name || 'Room not found'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(new Date(selectedBooking.start_time), 'PPP')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>
+                      {format(new Date(selectedBooking.start_time), 'p')} - {format(new Date(selectedBooking.end_time), 'p')}
+                    </span>
+                  </div>
+                  {selectedBooking.attendees && (
+                    <div>
+                      <span>Attendees: {selectedBooking.attendees}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setViewModalOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Modal */}
+        {editModalOpen && selectedRoom && selectedBooking && (
           <BookingModal
             room={selectedRoom}
-            isOpen={isBookingModalOpen}
-            onClose={() => {
-              console.log('🔒 Closing booking modal');
-              setIsBookingModalOpen(false);
-              setEditingBooking(null);
-              setSelectedRoom(null);
-            }}
+            isOpen={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
             onBookingConfirm={handleBookingUpdate}
-            existingBooking={editingBooking}
+            existingBooking={{
+              id: selectedBooking.id,
+              title: selectedBooking.title,
+              description: selectedBooking.description,
+              start_time: selectedBooking.start_time,
+              end_time: selectedBooking.end_time,
+              attendees: selectedBooking.attendees,
+              recurring: selectedBooking.recurring || 'none',
+              user_profiles: selectedBooking.user_profiles
+            }}
           />
         )}
 
-        <BookingDetailsModal
-          booking={selectedBooking}
-          room={selectedBookingRoom}
-          isOpen={isBookingDetailsOpen}
-          onClose={() => {
-            console.log('🔒 Closing details modal');
-            setIsBookingDetailsOpen(false);
-            setSelectedBooking(null);
-            setSelectedBookingRoom(null);
-          }}
-          onEdit={handleDetailsModalEdit}
-          onBookingUpdate={handleBookingUpdate}
-        />
+        {/* Delete Confirmation */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Booking</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this booking? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
@@ -467,7 +463,7 @@ export default function MyBookings() {
             <CardContent className="p-6">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600" />
+                  <Calendar className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{pastBookings.length}</p>
@@ -488,11 +484,10 @@ export default function MyBookings() {
                   key={booking.id} 
                   booking={booking} 
                   isUpcoming={true}
-                  currentUserId={user?.id}
-                  userRole={userRole}
-                  onEdit={handleEditBooking}
-                  onCancel={handleCancelBooking}
-                  onView={handleViewBooking}
+                  onView={() => handleView(booking)}
+                  onEdit={() => handleEdit(booking)}
+                  onDelete={() => handleDelete(booking)}
+                  canEdit={userRole === 'admin' || booking.user_id === user?.id}
                 />
               ))}
             </div>
@@ -509,11 +504,10 @@ export default function MyBookings() {
                   key={booking.id} 
                   booking={booking} 
                   isUpcoming={false}
-                  currentUserId={user?.id}
-                  userRole={userRole}
-                  onEdit={handleEditBooking}
-                  onCancel={handleCancelBooking}
-                  onView={handleViewBooking}
+                  onView={() => handleView(booking)}
+                  onEdit={() => handleEdit(booking)}
+                  onDelete={() => handleDelete(booking)}
+                  canEdit={userRole === 'admin' || booking.user_id === user?.id}
                 />
               ))}
             </div>
@@ -527,7 +521,7 @@ export default function MyBookings() {
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No bookings found</h3>
               <p className="text-muted-foreground mb-4">
-                {getTabTitle() === 'My Bookings' 
+                {activeTab === 'my-bookings' 
                   ? "You haven't made any bookings yet."
                   : "No bookings have been made in this organization yet."
                 }
