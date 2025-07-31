@@ -372,25 +372,38 @@ export default function MyBookings() {
           </Card>
         </div>
 
-        {/* Tab navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="my-bookings">My Bookings</TabsTrigger>
+        {/* Tab navigation - Simple div structure */}
+        <div className="w-full mb-8">
+          <div className="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground mb-8">
+            <button 
+              className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all ${
+                activeTab === 'my-bookings' 
+                  ? 'bg-background text-foreground shadow-sm' 
+                  : 'hover:bg-background/50'
+              }`}
+              onClick={() => setActiveTab('my-bookings')}
+            >
+              My Bookings
+            </button>
             {userRole === 'admin' && (
-              <TabsTrigger value="all-bookings">All Organization Bookings</TabsTrigger>
+              <button 
+                className={`inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all ${
+                  activeTab === 'all-bookings' 
+                    ? 'bg-background text-foreground shadow-sm' 
+                    : 'hover:bg-background/50'
+                }`}
+                onClick={() => setActiveTab('all-bookings')}
+              >
+                All Organization Bookings
+              </button>
             )}
-          </TabsList>
+          </div>
 
-          <TabsContent value="my-bookings">
-            <BookingContent />
-          </TabsContent>
-          
-          {userRole === 'admin' && (
-            <TabsContent value="all-bookings">
-              <BookingContent />
-            </TabsContent>
-          )}
-        </Tabs>
+          <div>
+            {activeTab === 'my-bookings' && <BookingContent />}
+            {userRole === 'admin' && activeTab === 'all-bookings' && <BookingContent />}
+          </div>
+        </div>
 
         {/* View Modal */}
         <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
