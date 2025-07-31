@@ -269,7 +269,10 @@ export default function MyBookings() {
   const handleBookingUpdate = () => {
     console.log('🔄 Booking updated, refreshing data');
     refetch();
+    // Reset all modal states completely
     setEditModalOpen(false);
+    setViewModalOpen(false);
+    setDeleteDialogOpen(false);
     setSelectedBooking(null);
     setSelectedRoom(null);
   };
@@ -344,7 +347,14 @@ export default function MyBookings() {
         </Tabs>
 
         {/* View Modal */}
-        <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
+        <Dialog open={viewModalOpen} onOpenChange={(open) => {
+          console.log('📋 View modal state changing:', open);
+          setViewModalOpen(open);
+          if (!open) {
+            setSelectedBooking(null);
+            setSelectedRoom(null);
+          }
+        }}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Booking Details</DialogTitle>
@@ -381,7 +391,12 @@ export default function MyBookings() {
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setViewModalOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                console.log('📋 Closing view modal via button');
+                setViewModalOpen(false);
+                setSelectedBooking(null);
+                setSelectedRoom(null);
+              }}>
                 Close
               </Button>
             </DialogFooter>
