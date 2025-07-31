@@ -202,7 +202,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         .select('*')
         .eq('room_id', room.id)
         .eq('organization_id', organization.id)
-        .gte('end_time', `${dateStr}T00:00:00.000Z`)
+        .gte('start_time', `${dateStr}T00:00:00.000Z`)
         .lt('start_time', `${dateStr}T23:59:59.999Z`);
 
       // Only exclude existing booking if we have a valid ID
@@ -304,16 +304,6 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Track the last initialized time slot to prevent unnecessary resets
   const lastInitializedSlot = useRef<string>("");
   
-  // Fix: Always update form state when modal opens with new props
-  useEffect(() => {
-    if (isOpen) {
-      setFormData((prev) => ({
-        ...prev,
-        startTime: initialStartTime || '',
-        roomId: room?.id || '',
-      }));
-    }
-  }, [isOpen, initialStartTime, room]);
 
   useEffect(() => {
     console.log('📝 BookingModal useEffect triggered:', { isOpen, initialStartTime, existingBooking: !!existingBooking });
@@ -405,6 +395,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         
         // Clear any previous conflict errors
         setTimeConflictError("");
+      } else if (initialStartTime && formData.startTime !== initialStartTime) {
+        // Handle case where initial start time is different but we're not treating as new slot
+        console.log('📝 Updating start time from initial prop:', { initialStartTime, currentStartTime: formData.startTime });
+        updateFormData({ startTime: initialStartTime });
       } else {
         console.log('📝 Skipping form reset - same slot or user is editing');
       }
@@ -427,23 +421,18 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
   }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
 
-  // Legacy function for backward compatibility with existing booking edits
+  // Simple function to get available end times
   const getAvailableEndTimes = () => {
-    console.log('🕐 getAvailableEndTimes called:', {
-      hasExistingBooking: !!existingBooking,
-      startTime: formData.startTime,
-      availableEndTimesLength: availableEndTimes.length,
-      availableEndTimes: availableEndTimes.slice(0, 5), // First 5 for debugging
-    });
+    if (!formData.startTime) return [];
     
-    // For existing bookings, use the legacy logic to ensure original times are preserved
+    const startIndex = allTimeSlots.findIndex(time => time === formData.startTime);
+    if (startIndex === -1) return [];
+    
+    // For existing bookings, allow all times after start time
     if (existingBooking) {
-      if (!formData.startTime) return allTimeSlots;
-      
-      const startIndex = allTimeSlots.findIndex(time => time === formData.startTime);
       const availableTimes = allTimeSlots.slice(startIndex + 1);
       
-      // When editing an existing booking, ensure the original end time is always available
+      // Ensure the original end time is always available when editing
       if (formData.endTime && !availableTimes.includes(formData.endTime)) {
         const allTimes = [...availableTimes, formData.endTime].sort((a, b) => {
           const [aHour, aMin] = a.split(':').map(Number);
@@ -456,9 +445,13 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       return availableTimes;
     }
     
-    // For new bookings, use the gap-based available end times
-    console.log('🕐 Returning availableEndTimes for new booking:', availableEndTimes);
-    return availableEndTimes;
+    // For new bookings, use gap-based logic but fall back to simple logic if gaps not available
+    if (availableEndTimes.length > 0) {
+      return availableEndTimes;
+    }
+    
+    // Fallback: simple logic - just return times after start time
+    return allTimeSlots.slice(startIndex + 1);
   };
 
   const handleDeleteBooking = async () => {
