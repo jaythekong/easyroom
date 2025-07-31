@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, MapPin, ArrowLeft, Edit, Trash2, Eye } from "lucide-react";
+import { Calendar, Clock, MapPin, ArrowLeft, Edit, Trash2, Eye, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useBookings } from "@/hooks/useBookings";
@@ -30,7 +30,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Enhanced interface to match what we need, extending the basic booking type
 interface BookingWithDetails {
   id: string;
   title: string;
@@ -66,48 +65,113 @@ interface BookingCardProps {
 
 function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }: BookingCardProps) {
   const formatTime = (dateTime: string) => {
-    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
+    const date = new Date(dateTime);
     return format(date, 'p');
   };
 
-  // SIMPLEST POSSIBLE STRUCTURE - NO React refs, NO event listeners, NO fancy styling
+  const formatDate = (dateTime: string) => {
+    const date = new Date(dateTime);
+    return format(date, 'MMM dd, yyyy');
+  };
+
+  const getStatusBadge = () => {
+    if (!isUpcoming) return <Badge variant="secondary">Past</Badge>;
+    
+    const now = new Date();
+    const startTime = new Date(booking.start_time);
+    const endTime = new Date(booking.end_time);
+    
+    if (now >= startTime && now <= endTime) {
+      return <Badge className="bg-success text-success-foreground">In Progress</Badge>;
+    }
+    
+    return <Badge className="bg-warning text-warning-foreground">Upcoming</Badge>;
+  };
+
   return (
-    <div style={{ border: '1px solid black', padding: '10px', margin: '10px 0', background: 'white' }}>
-      <h3>{booking.title}</h3>
-      <p>{booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}</p>
-      
-      <button
-        onClick={() => {
-          console.log('🟦 SIMPLE VIEW CLICKED!');
-          onView();
-        }}
-        style={{ background: 'blue', color: 'white', padding: '5px 10px', margin: '5px' }}
-      >
-        View
-      </button>
-      
-      {canEdit && (
-        <button
-          onClick={() => {
-            console.log('🟩 SIMPLE EDIT CLICKED!');
-            onEdit();
-          }}
-          style={{ background: 'green', color: 'white', padding: '5px 10px', margin: '5px' }}
-        >
-          Edit
-        </button>
-      )}
-      
-      <button
-        onClick={() => {
-          console.log('🟥 SIMPLE DELETE CLICKED!');
-          onDelete();
-        }}
-        style={{ background: 'red', color: 'white', padding: '5px 10px', margin: '5px' }}
-      >
-        Delete
-      </button>
-    </div>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="font-semibold text-lg">{booking.title}</h3>
+              {getStatusBadge()}
+            </div>
+            
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span>{booking.room?.name}</span>
+                {booking.room?.location && <span>• {booking.room.location}</span>}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{formatDate(booking.start_time)}</span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+              </div>
+              
+              {booking.attendees && (
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span>{booking.attendees} attendees</span>
+                </div>
+              )}
+              
+              <div>
+                <span className="font-medium">Organizer:</span> {booking.user_profiles.display_name || booking.user_profiles.email}
+              </div>
+            </div>
+            
+            {booking.description && (
+              <p className="text-sm text-muted-foreground mt-3 line-clamp-2">
+                {booking.description}
+              </p>
+            )}
+          </div>
+          
+          <div className="flex gap-2 ml-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onView}
+              className="flex items-center gap-1"
+            >
+              <Eye className="h-4 w-4" />
+              View
+            </Button>
+            
+            {canEdit && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onEdit}
+                  className="flex items-center gap-1"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onDelete}
+                  className="flex items-center gap-1 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -115,12 +179,6 @@ export default function MyBookings() {
   const { user } = useAuth();
   const { userRole, organization } = useOrganization();
   const { toast } = useToast();
-
-  // Phase 1: ISOLATED TEST BUTTON - This tests if React events work at all on this page
-  const testButtonClick = () => {
-    console.log('🎯 ISOLATED TEST BUTTON CLICKED - React events work!');
-    alert('Test button works!');
-  };
   
   const { data: allBookings = [], isLoading, error, refetch } = useBookings(new Date());
   
@@ -141,8 +199,6 @@ export default function MyBookings() {
   const pastBookings = filteredBookings.filter(booking => new Date(booking.start_time) <= new Date());
 
   const handleView = async (booking: BookingWithDetails) => {
-    console.log('📋 Opening view modal for booking:', booking.id);
-    
     const { data: room } = await supabase
       .from('rooms')
       .select('*')
@@ -155,8 +211,6 @@ export default function MyBookings() {
   };
 
   const handleEdit = async (booking: BookingWithDetails) => {
-    console.log('✏️ Opening edit modal for booking:', booking.id);
-    
     const { data: room } = await supabase
       .from('rooms')
       .select('*')
@@ -169,7 +223,6 @@ export default function MyBookings() {
   };
 
   const handleDelete = (booking: BookingWithDetails) => {
-    console.log('🗑️ Opening delete dialog for booking:', booking.id);
     setSelectedBooking(booking);
     setDeleteDialogOpen(true);
   };
@@ -178,8 +231,6 @@ export default function MyBookings() {
     if (!selectedBooking) return;
     
     try {
-      console.log('🗑️ Deleting booking:', selectedBooking.id);
-      
       const deleteQuery = supabase
         .from('bookings')
         .delete()
@@ -211,7 +262,7 @@ export default function MyBookings() {
           });
         }
       } catch (notificationError) {
-        console.error('❌ Failed to send notification:', notificationError);
+        console.error('Failed to send notification:', notificationError);
       }
 
       toast({
@@ -224,7 +275,7 @@ export default function MyBookings() {
       refetch();
       
     } catch (error) {
-      console.error('❌ Error deleting booking:', error);
+      console.error('Error deleting booking:', error);
       toast({
         title: "Error",
         description: "Failed to delete booking",
@@ -234,9 +285,7 @@ export default function MyBookings() {
   };
 
   const handleBookingUpdate = () => {
-    console.log('🔄 Booking updated, refreshing data');
     refetch();
-    // Reset all modal states completely
     setEditModalOpen(false);
     setViewModalOpen(false);
     setDeleteDialogOpen(false);
@@ -287,46 +336,64 @@ export default function MyBookings() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">My Bookings</h1>
-              <p className="text-muted-foreground">Manage your meeting room reservations</p>
+              <h1 className="text-2xl font-bold">Booking Management</h1>
+              <p className="text-muted-foreground">Track and manage your meeting room reservations</p>
             </div>
           </div>
         </div>
 
-        {/* TEMPORARY: Replace Tabs with simple div to test */}
-        <div className="w-full" style={{ pointerEvents: 'auto' }}>
-          <div className="grid w-full grid-cols-2 mb-8 bg-muted p-1 rounded-md">
-            <button 
-              className={`px-3 py-1.5 text-sm rounded-sm ${activeTab === 'my-bookings' ? 'bg-background shadow-sm' : ''}`}
-              onClick={() => setActiveTab('my-bookings')}
-            >
-              My Bookings
-            </button>
-            {userRole === 'admin' && (
-              <button 
-                className={`px-3 py-1.5 text-sm rounded-sm ${activeTab === 'all-bookings' ? 'bg-background shadow-sm' : ''}`}
-                onClick={() => setActiveTab('all-bookings')}
-              >
-                All Bookings
-              </button>
-            )}
-          </div>
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{filteredBookings.length}</div>
+            </CardContent>
+          </Card>
 
-          <div style={{ pointerEvents: 'auto' }}>
-            {activeTab === 'my-bookings' && <BookingContent />}
-            {userRole === 'admin' && activeTab === 'all-bookings' && <BookingContent />}
-          </div>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-warning">{upcomingBookings.length}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">Past Meetings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-muted-foreground">{pastBookings.length}</div>
+            </CardContent>
+          </Card>
         </div>
 
+        {/* Tab navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-8">
+            <TabsTrigger value="my-bookings">My Bookings</TabsTrigger>
+            {userRole === 'admin' && (
+              <TabsTrigger value="all-bookings">All Organization Bookings</TabsTrigger>
+            )}
+          </TabsList>
+
+          <TabsContent value="my-bookings">
+            <BookingContent />
+          </TabsContent>
+          
+          {userRole === 'admin' && (
+            <TabsContent value="all-bookings">
+              <BookingContent />
+            </TabsContent>
+          )}
+        </Tabs>
+
         {/* View Modal */}
-        <Dialog open={viewModalOpen} onOpenChange={(open) => {
-          console.log('📋 View modal state changing:', open);
-          setViewModalOpen(open);
-          if (!open) {
-            setSelectedBooking(null);
-            setSelectedRoom(null);
-          }
-        }}>
+        <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Booking Details</DialogTitle>
@@ -336,39 +403,44 @@ export default function MyBookings() {
                 <div>
                   <h3 className="font-semibold text-lg">{selectedBooking.title}</h3>
                   {selectedBooking.description && (
-                    <p className="text-muted-foreground">{selectedBooking.description}</p>
+                    <p className="text-muted-foreground mt-2">{selectedBooking.description}</p>
                   )}
                 </div>
+                
                 <div className="grid grid-cols-1 gap-3">
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
                     <span>{selectedRoom?.name || 'Room not found'}</span>
+                    {selectedRoom?.location && <span>• {selectedRoom.location}</span>}
                   </div>
+                  
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>{format(new Date(selectedBooking.start_time), 'PPP')}</span>
                   </div>
+                  
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     <span>
                       {format(new Date(selectedBooking.start_time), 'p')} - {format(new Date(selectedBooking.end_time), 'p')}
                     </span>
                   </div>
+                  
                   {selectedBooking.attendees && (
-                    <div>
-                      <span>Attendees: {selectedBooking.attendees}</span>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      <span>{selectedBooking.attendees} attendees</span>
                     </div>
                   )}
+                  
+                  <div>
+                    <span className="font-medium">Organizer:</span> {selectedBooking.user_profiles.display_name || selectedBooking.user_profiles.email}
+                  </div>
                 </div>
               </div>
             )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => {
-                console.log('📋 Closing view modal via button');
-                setViewModalOpen(false);
-                setSelectedBooking(null);
-                setSelectedRoom(null);
-              }}>
+              <Button variant="outline" onClick={() => setViewModalOpen(false)}>
                 Close
               </Button>
             </DialogFooter>
@@ -419,116 +491,24 @@ export default function MyBookings() {
   function BookingContent() {
     return (
       <>
-        {/* CRITICAL TEST: Button directly in BookingContent */}
-        <div style={{ background: 'red', padding: '20px', margin: '20px 0' }}>
-          <button
-            style={{ background: 'white', color: 'black', padding: '15px', border: '2px solid black', fontSize: '16px' }}
-            onClick={() => {
-              console.log('🔴 BUTTON IN BOOKINGCONTENT CLICKED!');
-              alert('BookingContent button works!');
-            }}
-          >
-            TEST IN BOOKINGCONTENT
-          </button>
-        </div>
-        {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Calendar className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{filteredBookings.length}</p>
-                  <p className="text-sm text-muted-foreground">Total Bookings</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Clock className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{upcomingBookings.length}</p>
-                  <p className="text-sm text-muted-foreground">Upcoming</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Calendar className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{pastBookings.length}</p>
-                  <p className="text-sm text-muted-foreground">Past Meetings</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Upcoming Bookings */}
         {upcomingBookings.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Upcoming Bookings</h2>
-            
-            {/* DEBUGGING: Test button in the EXACT same area as BookingCard */}
-            <div className="mb-4 p-4 border border-red-500 bg-yellow-100">
-              <p>DEBUG: Button in same container as BookingCard:</p>
-              <button
-                className="bg-purple-600 text-white px-4 py-2 rounded"
-                onClick={() => {
-                  console.log('🟣 DEBUG BUTTON IN CARD AREA CLICKED!');
-                  alert('Debug button in card area works!');
-                }}
-              >
-                DEBUG BUTTON IN CARD AREA
-              </button>
-            </div>
-            
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Upcoming Bookings
+            </h2>
             <div className="space-y-4">
               {upcomingBookings.map((booking) => (
-                <div key={booking.id}>
-                  {/* DEBUGGING: Simple test button right before BookingCard */}
-                  <button
-                    className="bg-orange-500 text-white px-2 py-1 rounded text-xs mb-2"
-                    onClick={() => {
-                      console.log('🟠 BUTTON RIGHT BEFORE BOOKINGCARD CLICKED!');
-                      alert('Button before BookingCard works!');
-                    }}
-                  >
-                    TEST BEFORE CARD
-                  </button>
-                  
-                  <BookingCard 
-                    booking={booking} 
-                    isUpcoming={true}
-                    onView={() => handleView(booking)}
-                    onEdit={() => handleEdit(booking)}
-                    onDelete={() => handleDelete(booking)}
-                    canEdit={userRole === 'admin' || booking.user_id === user?.id}
-                  />
-                  
-                  {/* DEBUGGING: Simple test button right after BookingCard */}
-                  <button
-                    className="bg-pink-500 text-white px-2 py-1 rounded text-xs mt-2"
-                    onClick={() => {
-                      console.log('🟡 BUTTON RIGHT AFTER BOOKINGCARD CLICKED!');
-                      alert('Button after BookingCard works!');
-                    }}
-                  >
-                    TEST AFTER CARD
-                  </button>
-                </div>
+                <BookingCard 
+                  key={booking.id}
+                  booking={booking} 
+                  isUpcoming={true}
+                  onView={() => handleView(booking)}
+                  onEdit={() => handleEdit(booking)}
+                  onDelete={() => handleDelete(booking)}
+                  canEdit={userRole === 'admin' || booking.user_id === user?.id}
+                />
               ))}
             </div>
           </div>
@@ -537,11 +517,14 @@ export default function MyBookings() {
         {/* Past Bookings */}
         {pastBookings.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-4">Past Bookings</h2>
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Past Bookings
+            </h2>
             <div className="space-y-4">
               {pastBookings.map((booking) => (
                 <BookingCard 
-                  key={booking.id} 
+                  key={booking.id}
                   booking={booking} 
                   isUpcoming={false}
                   onView={() => handleView(booking)}
