@@ -461,6 +461,50 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     return availableEndTimes;
   };
 
+  const handleDeleteBooking = async () => {
+    if (!existingBooking?.id || !user || !organization?.id) return;
+    
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', existingBooking.id);
+
+      if (error) throw error;
+
+      // Send telegram notification
+      try {
+        await supabase.functions.invoke('send-telegram-notification', {
+          body: {
+            organization_id: organization.id,
+            message: `🗑️ Booking deleted:\n\n📅 ${existingBooking.title}\n🏢 ${room?.name}\n👤 ${user.email}`
+          }
+        });
+      } catch (notificationError) {
+        console.warn('Failed to send telegram notification:', notificationError);
+      }
+
+      toast({
+        title: "Booking Deleted",
+        description: "The booking has been successfully deleted.",
+      });
+
+      onBookingConfirm(existingBooking);
+      onClose();
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete booking. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -935,6 +979,17 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={isSubmitting}>
               Cancel
             </Button>
+            {existingBooking && (
+              <Button 
+                type="button" 
+                variant="destructive"
+                onClick={handleDeleteBooking}
+                disabled={isSubmitting}
+                className="flex-1"
+              >
+                {isSubmitting ? 'Deleting...' : 'Delete'}
+              </Button>
+            )}
             <Button 
               type="submit" 
               className={cn(
