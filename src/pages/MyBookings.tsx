@@ -343,6 +343,29 @@ export default function MyBookings() {
       </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* CRITICAL DEBUGGING: Test if main content area blocks events */}
+        <div 
+          style={{ 
+            position: 'absolute', 
+            top: 80, 
+            left: 200, 
+            zIndex: 999999,
+            background: 'magenta',
+            padding: '20px',
+            pointerEvents: 'auto'
+          }}
+        >
+          <button
+            style={{ background: 'cyan', color: 'black', padding: '10px', border: 'none' }}
+            onClick={() => {
+              console.log('🟣 ABSOLUTE POSITIONED BUTTON IN MAIN CONTENT CLICKED!');
+              alert('Absolute button in main content works!');
+            }}
+          >
+            ABSOLUTE TEST IN MAIN CONTENT
+          </button>
+        </div>
+        
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
