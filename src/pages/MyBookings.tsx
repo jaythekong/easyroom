@@ -72,9 +72,11 @@ function BookingCard({
 
   return (
     <Card 
-      className="hover:shadow-md transition-shadow cursor-pointer" 
-      onClick={() => {
+      className="hover:shadow-md transition-shadow cursor-pointer relative" 
+      onClick={(e) => {
         console.log('👁️ Card clicked - viewing booking:', booking.id);
+        console.log('👁️ Click event target:', e.target);
+        console.log('👁️ Click event currentTarget:', e.currentTarget);
         onView(booking);
       }}
     >
