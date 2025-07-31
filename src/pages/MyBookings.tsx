@@ -366,6 +366,19 @@ export default function MyBookings() {
           </button>
         </div>
         
+        {/* CRITICAL: Test if it's the container or document flow */}
+        <div style={{ background: 'lime', padding: '10px', margin: '10px 0' }}>
+          <button
+            style={{ background: 'red', color: 'white', padding: '10px', border: 'none' }}
+            onClick={() => {
+              console.log('🟢 NORMAL FLOW BUTTON IN MAIN CONTAINER CLICKED!');
+              alert('Normal flow button works!');
+            }}
+          >
+            NORMAL FLOW TEST IN CONTAINER
+          </button>
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
