@@ -71,80 +71,54 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
   };
 
   return (
-    <div className="flex items-center gap-4">
-      <Card className="flex-1 hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg mb-1">{booking.title}</h3>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {format(new Date(booking.start_time), 'PPP')}
-              </div>
-            </div>
-            <Badge variant={isUpcoming ? "default" : "secondary"}>
-              {isUpcoming ? 'Upcoming' : 'Past'}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Buttons moved outside the card */}
-      <div className="flex flex-col gap-2 min-w-[120px]">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={(e) => {
-            e.stopPropagation();
-            console.log('👁️ View button clicked for booking:', booking.id);
-            onView();
-          }}
-          className="flex items-center gap-1 w-full"
-        >
-          <Eye className="h-3 w-3" />
-          View
-        </Button>
+    <div className="bg-white p-4 border rounded-lg shadow-sm">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="font-semibold">{booking.title}</h3>
+          <p className="text-sm text-gray-600">
+            {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+          </p>
+        </div>
         
-        {canEdit && (
-          <>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('✏️ Edit button clicked for booking:', booking.id);
-                onEdit();
-              }}
-              className="flex items-center gap-1 w-full"
-            >
-              <Edit className="h-3 w-3" />
-              Edit
-            </Button>
-            
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log('🗑️ Delete button clicked for booking:', booking.id);
-                onDelete();
-              }}
-              className="flex items-center gap-1 w-full"
-            >
-              <Trash2 className="h-3 w-3" />
-              Delete
-            </Button>
-          </>
-        )}
+        {/* Simple test buttons */}
+        <div className="flex gap-2">
+          <button 
+            type="button"
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+            onClick={() => {
+              alert('View clicked for ' + booking.title);
+              console.log('🔥 SIMPLE VIEW BUTTON CLICKED!', booking.id);
+            }}
+          >
+            View
+          </button>
+          
+          {canEdit && (
+            <>
+              <button 
+                type="button"
+                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                onClick={() => {
+                  alert('Edit clicked for ' + booking.title);
+                  console.log('🔥 SIMPLE EDIT BUTTON CLICKED!', booking.id);
+                }}
+              >
+                Edit
+              </button>
+              
+              <button 
+                type="button"
+                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                onClick={() => {
+                  alert('Delete clicked for ' + booking.title);
+                  console.log('🔥 SIMPLE DELETE BUTTON CLICKED!', booking.id);
+                }}
+              >
+                Delete
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
