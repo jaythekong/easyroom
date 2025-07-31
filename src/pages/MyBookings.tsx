@@ -71,7 +71,7 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
   };
 
   return (
-    <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
+    <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
