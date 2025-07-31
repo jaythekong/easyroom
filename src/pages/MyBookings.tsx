@@ -100,9 +100,13 @@ function BookingCard({
     <Card className="hover:shadow-md transition-shadow mb-4">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
+          {/* Main content area - clickable */}
           <div 
             className="flex-1 cursor-pointer" 
-            onClick={handleCardClick}
+            onClick={() => {
+              console.log('👁️ Card clicked - viewing booking:', booking.id);
+              onView(booking);
+            }}
           >
             <div className="flex items-center gap-3 mb-2">
               <h3 className="font-semibold text-lg">{booking.title}</h3>
@@ -147,17 +151,16 @@ function BookingCard({
             </div>
           </div>
 
+          {/* Action buttons - isolated from card click */}
           {showActions && (
-            <div 
-              className="flex items-center gap-2 ml-4 flex-shrink-0"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <div className="flex items-center gap-2 ml-4 flex-shrink-0">
               <Button
                 variant="outline"
                 size="sm"
+                onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
-                  e.preventDefault();
                   e.stopPropagation();
+                  e.preventDefault();
                   console.log('🟢 Edit button clicked for booking:', booking.id);
                   onEdit(booking);
                 }}
@@ -171,12 +174,13 @@ function BookingCard({
                   <Button
                     variant="outline"
                     size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
-                      e.preventDefault();
                       e.stopPropagation();
+                      e.preventDefault();
                       console.log('🔴 Cancel button clicked for booking:', booking.id);
                     }}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Cancel
@@ -194,14 +198,17 @@ function BookingCard({
                   <AlertDialogFooter>
                     <AlertDialogCancel>Keep Booking</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => onCancel(booking.id)}
+                      onClick={() => {
+                        console.log('✅ Confirmed cancellation for booking:', booking.id);
+                        onCancel(booking.id);
+                      }}
                       className="bg-destructive hover:bg-destructive/90"
                     >
                       Yes, Cancel Booking
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
-                </AlertDialog>
+              </AlertDialog>
             </div>
           )}
         </div>
