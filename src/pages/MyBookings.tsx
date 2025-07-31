@@ -80,44 +80,37 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
           </p>
         </div>
         
-        {/* Simple test buttons */}
+        {/* Ultra simple test buttons */}
         <div className="flex gap-2">
           <button 
             type="button"
             className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={() => {
-              alert('View clicked for ' + booking.title);
-              console.log('🔥 SIMPLE VIEW BUTTON CLICKED!', booking.id);
-            }}
+            onClick={() => alert('View clicked!')}
+            onMouseDown={() => console.log('🔥 MOUSE DOWN on View button')}
+            onMouseUp={() => console.log('🔥 MOUSE UP on View button')}
           >
             View
           </button>
           
-          {canEdit && (
-            <>
-              <button 
-                type="button"
-                className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                onClick={() => {
-                  alert('Edit clicked for ' + booking.title);
-                  console.log('🔥 SIMPLE EDIT BUTTON CLICKED!', booking.id);
-                }}
-              >
-                Edit
-              </button>
-              
-              <button 
-                type="button"
-                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                onClick={() => {
-                  alert('Delete clicked for ' + booking.title);
-                  console.log('🔥 SIMPLE DELETE BUTTON CLICKED!', booking.id);
-                }}
-              >
-                Delete
-              </button>
-            </>
-          )}
+          <button 
+            type="button"
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+            onClick={() => alert('Edit clicked!')}
+            onMouseDown={() => console.log('🔥 MOUSE DOWN on Edit button')}
+            onMouseUp={() => console.log('🔥 MOUSE UP on Edit button')}
+          >
+            Edit
+          </button>
+          
+          <button 
+            type="button"
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            onClick={() => alert('Delete clicked!')}
+            onMouseDown={() => console.log('🔥 MOUSE DOWN on Delete button')}
+            onMouseUp={() => console.log('🔥 MOUSE UP on Delete button')}
+          >
+            Delete
+          </button>
         </div>
       </div>
     </div>
