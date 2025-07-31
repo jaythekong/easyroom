@@ -474,6 +474,18 @@ export default function MyBookings() {
   function BookingContent() {
     return (
       <>
+        {/* CRITICAL TEST: Button directly in BookingContent */}
+        <div style={{ background: 'red', padding: '20px', margin: '20px 0' }}>
+          <button
+            style={{ background: 'white', color: 'black', padding: '15px', border: '2px solid black', fontSize: '16px' }}
+            onClick={() => {
+              console.log('🔴 BUTTON IN BOOKINGCONTENT CLICKED!');
+              alert('BookingContent button works!');
+            }}
+          >
+            TEST IN BOOKINGCONTENT
+          </button>
+        </div>
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
