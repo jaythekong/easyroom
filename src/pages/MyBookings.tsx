@@ -418,6 +418,18 @@ export default function MyBookings() {
           </TabsList>
 
           <TabsContent value="my-bookings">
+            {/* Test inside TabsContent */}
+            <div style={{ background: 'orange', padding: '10px', margin: '10px 0' }}>
+              <button
+                style={{ background: 'purple', color: 'white', padding: '10px', border: 'none' }}
+                onClick={() => {
+                  console.log('🟠 BUTTON INSIDE TABSCONTENT CLICKED!');
+                  alert('Button inside TabsContent works!');
+                }}
+              >
+                INSIDE TABSCONTENT TEST
+              </button>
+            </div>
             <BookingContent />
           </TabsContent>
           
