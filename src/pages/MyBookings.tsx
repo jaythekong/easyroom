@@ -70,98 +70,43 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
     return format(date, 'p');
   };
 
-  console.log('🔍 BookingCard rendering for booking:', booking.id);
-
-  // DEBUGGING: Add mouse event listeners to the entire card
-  const cardRef = useRef<HTMLDivElement>(null);
-  
-  useEffect(() => {
-    const card = cardRef.current;
-    if (card) {
-      const handleCardClick = (e: MouseEvent) => {
-        console.log('🎯 CARD CLICKED:', e.target, e.currentTarget);
-      };
-      const handleCardMouseEnter = () => {
-        console.log('🎯 CARD MOUSE ENTER');
-      };
-      
-      card.addEventListener('click', handleCardClick);
-      card.addEventListener('mouseenter', handleCardMouseEnter);
-      
-      return () => {
-        card.removeEventListener('click', handleCardClick);
-        card.removeEventListener('mouseenter', handleCardMouseEnter);
-      };
-    }
-  }, []);
-
-  // ABSOLUTE SIMPLEST possible structure
+  // SIMPLEST POSSIBLE STRUCTURE - NO React refs, NO event listeners, NO fancy styling
   return (
-    <div 
-      ref={cardRef}
-      className="border border-gray-300 bg-white p-4 rounded"
-      style={{ 
-        position: 'relative',
-        zIndex: 1,
-        pointerEvents: 'auto'
-      }}
-    >
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="font-semibold">{booking.title}</h3>
-          <p className="text-sm text-gray-600">
-            {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <button
-            type="button"
-            style={{ 
-              background: 'blue', 
-              color: 'white', 
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '4px',
-              pointerEvents: 'auto',
-              zIndex: 10
-            }}
-            onClick={(e) => {
-              console.log('🔵 VIEW BUTTON CLICKED!', e);
-              e.stopPropagation();
-              onView();
-            }}
-            onMouseDown={(e) => console.log('🔵 VIEW MOUSEDOWN', e)}
-            onMouseEnter={() => console.log('🔵 VIEW MOUSE ENTER')}
-          >
-            View
-          </button>
-          
-          {canEdit && (
-            <button
-              type="button"
-              style={{ 
-                background: 'green', 
-                color: 'white', 
-                padding: '8px 16px',
-                border: 'none',
-                borderRadius: '4px',
-                pointerEvents: 'auto',
-                zIndex: 10
-              }}
-              onClick={(e) => {
-                console.log('🟢 EDIT BUTTON CLICKED!', e);
-                e.stopPropagation();
-                onEdit();
-              }}
-              onMouseDown={(e) => console.log('🟢 EDIT MOUSEDOWN', e)}
-              onMouseEnter={() => console.log('🟢 EDIT MOUSE ENTER')}
-            >
-              Edit
-            </button>
-          )}
-        </div>
-      </div>
+    <div style={{ border: '1px solid black', padding: '10px', margin: '10px 0', background: 'white' }}>
+      <h3>{booking.title}</h3>
+      <p>{booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}</p>
+      
+      <button
+        onClick={() => {
+          console.log('🟦 SIMPLE VIEW CLICKED!');
+          onView();
+        }}
+        style={{ background: 'blue', color: 'white', padding: '5px 10px', margin: '5px' }}
+      >
+        View
+      </button>
+      
+      {canEdit && (
+        <button
+          onClick={() => {
+            console.log('🟩 SIMPLE EDIT CLICKED!');
+            onEdit();
+          }}
+          style={{ background: 'green', color: 'white', padding: '5px 10px', margin: '5px' }}
+        >
+          Edit
+        </button>
+      )}
+      
+      <button
+        onClick={() => {
+          console.log('🟥 SIMPLE DELETE CLICKED!');
+          onDelete();
+        }}
+        style={{ background: 'red', color: 'white', padding: '5px 10px', margin: '5px' }}
+      >
+        Delete
+      </button>
     </div>
   );
 }
