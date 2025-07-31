@@ -71,67 +71,61 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
   };
 
   return (
-    <div className="bg-white p-4 border rounded-lg shadow-sm">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="font-semibold">{booking.title}</h3>
-          <p className="text-sm text-gray-600">
-            {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-          </p>
-        </div>
-        
-        {/* DEBUGGING: Adding more event handlers and positioning */}
-        <div className="flex gap-2 relative z-50">
-          <button 
-            type="button"
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 relative z-50"
-            style={{ pointerEvents: 'all', position: 'relative', zIndex: 9999 }}
-            onClick={(e) => {
-              console.log('🔥 CLICK EVENT FIRED!', e);
-              alert('View clicked!');
-            }}
-            onMouseDown={(e) => {
-              console.log('🔥 MOUSE DOWN on View button', e);
-            }}
-            onMouseUp={(e) => {
-              console.log('🔥 MOUSE UP on View button', e);
-            }}
-            onMouseEnter={() => console.log('🔥 MOUSE ENTER on View button')}
-            onMouseLeave={() => console.log('🔥 MOUSE LEAVE on View button')}
-          >
-            View
-          </button>
+    <Card className="w-full">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-center">
+          <div className="flex-1">
+            <h3 className="font-semibold text-foreground">{booking.title}</h3>
+            <p className="text-sm text-muted-foreground">
+              {booking.room?.name} • {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+            </p>
+          </div>
           
-          <button 
-            type="button"
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 relative z-50"
-            style={{ pointerEvents: 'all', position: 'relative', zIndex: 9999 }}
-            onClick={(e) => {
-              console.log('🔥 EDIT CLICK EVENT FIRED!', e);
-              alert('Edit clicked!');
-            }}
-            onMouseDown={(e) => console.log('🔥 MOUSE DOWN on Edit button', e)}
-            onMouseUp={(e) => console.log('🔥 MOUSE UP on Edit button', e)}
-          >
-            Edit
-          </button>
-          
-          <button 
-            type="button"
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 relative z-50"
-            style={{ pointerEvents: 'all', position: 'relative', zIndex: 9999 }}
-            onClick={(e) => {
-              console.log('🔥 DELETE CLICK EVENT FIRED!', e);
-              alert('Delete clicked!');
-            }}
-            onMouseDown={(e) => console.log('🔥 MOUSE DOWN on Delete button', e)}
-            onMouseUp={(e) => console.log('🔥 MOUSE UP on Delete button', e)}
-          >
-            Delete
-          </button>
+          {/* PHASE 2: Using shadcn Button components like EnhancedRoomCard */}
+          <div className="flex gap-2 ml-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                console.log('👀 View button clicked with proper handler');
+                onView();
+              }}
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              View
+            </Button>
+            
+            {canEdit && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    console.log('✏️ Edit button clicked with proper handler');
+                    onEdit();
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-1" />
+                  Edit
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    console.log('🗑️ Delete button clicked with proper handler');
+                    onDelete();
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete
+                </Button>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -139,6 +133,12 @@ export default function MyBookings() {
   const { user } = useAuth();
   const { userRole, organization } = useOrganization();
   const { toast } = useToast();
+
+  // Phase 1: ISOLATED TEST BUTTON - This tests if React events work at all on this page
+  const testButtonClick = () => {
+    console.log('🎯 ISOLATED TEST BUTTON CLICKED - React events work!');
+    alert('Test button works!');
+  };
   
   const { data: allBookings = [], isLoading, error, refetch } = useBookings(new Date());
   
@@ -294,6 +294,17 @@ export default function MyBookings() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* PHASE 1: ISOLATED TEST BUTTON - Outside all containers */}
+      <div style={{ position: 'fixed', top: 20, left: 20, zIndex: 9999, background: 'red', padding: '10px' }}>
+        <button
+          onClick={testButtonClick}
+          onMouseEnter={() => console.log('🎯 Test button hover works')}
+          style={{ padding: '10px', background: 'blue', color: 'white', border: 'none' }}
+        >
+          ISOLATED TEST
+        </button>
+      </div>
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
