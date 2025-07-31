@@ -433,8 +433,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Validate start time for conflicts
   useEffect(() => {
     if (formData.startTime && formData.date) {
-      if (isTimeSlotConflicted(formData.startTime)) {
-        setTimeConflictError("Start overlaps an existing booking.");
+      const conflictingBooking = getConflictingBooking(formData.startTime);
+      if (conflictingBooking) {
+        const startTime = new Date(conflictingBooking.start_time).toISOString().substring(11, 16);
+        const endTime = new Date(conflictingBooking.end_time).toISOString().substring(11, 16);
+        setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime}-${endTime})`);
       } else if (formData.endTime && checkTimeConflict(formData.startTime, formData.endTime)) {
         setTimeConflictError("Time range conflicts with existing booking.");
       } else {
