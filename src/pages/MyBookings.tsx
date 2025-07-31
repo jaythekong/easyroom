@@ -71,79 +71,82 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
   };
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg mb-1">{booking.title}</h3>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
-              <div className="flex items-center gap-1">
-                <MapPin className="h-3 w-3" />
-                <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
+    <div className="flex items-center gap-4">
+      <Card className="flex-1 hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary/30">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg mb-1">{booking.title}</h3>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground mb-2">
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  <span>{booking.room?.name || `Room ${booking.room_id}`}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+              <div className="text-xs text-muted-foreground">
+                {format(new Date(booking.start_time), 'PPP')}
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">
-              {format(new Date(booking.start_time), 'PPP')}
-            </div>
+            <Badge variant={isUpcoming ? "default" : "secondary"}>
+              {isUpcoming ? 'Upcoming' : 'Past'}
+            </Badge>
           </div>
-          <Badge variant={isUpcoming ? "default" : "secondary"}>
-            {isUpcoming ? 'Upcoming' : 'Past'}
-          </Badge>
-        </div>
+        </CardContent>
+      </Card>
+      
+      {/* Buttons moved outside the card */}
+      <div className="flex flex-col gap-2 min-w-[120px]">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log('👁️ View button clicked for booking:', booking.id);
+            onView();
+          }}
+          className="flex items-center gap-1 w-full"
+        >
+          <Eye className="h-3 w-3" />
+          View
+        </Button>
         
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log('👁️ View button clicked for booking:', booking.id);
-              onView();
-            }}
-            className="flex items-center gap-1"
-          >
-            <Eye className="h-3 w-3" />
-            View
-          </Button>
-          
-          {canEdit && (
-            <>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  console.log('✏️ Edit button clicked for booking:', booking.id);
-                  onEdit();
-                }}
-                className="flex items-center gap-1"
-              >
-                <Edit className="h-3 w-3" />
-                Edit
-              </Button>
-              
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  console.log('🗑️ Delete button clicked for booking:', booking.id);
-                  onDelete();
-                }}
-                className="flex items-center gap-1"
-              >
-                <Trash2 className="h-3 w-3" />
-                Delete
-              </Button>
-            </>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        {canEdit && (
+          <>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('✏️ Edit button clicked for booking:', booking.id);
+                onEdit();
+              }}
+              className="flex items-center gap-1 w-full"
+            >
+              <Edit className="h-3 w-3" />
+              Edit
+            </Button>
+            
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={(e) => {
+                e.stopPropagation();
+                console.log('🗑️ Delete button clicked for booking:', booking.id);
+                onDelete();
+              }}
+              className="flex items-center gap-1 w-full"
+            >
+              <Trash2 className="h-3 w-3" />
+              Delete
+            </Button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
