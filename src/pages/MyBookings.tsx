@@ -331,54 +331,7 @@ export default function MyBookings() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* PHASE 1: ISOLATED TEST BUTTON - Outside all containers */}
-      <div style={{ position: 'fixed', top: 20, left: 20, zIndex: 9999, background: 'red', padding: '10px' }}>
-        <button
-          onClick={testButtonClick}
-          onMouseEnter={() => console.log('🎯 Test button hover works')}
-          style={{ padding: '10px', background: 'blue', color: 'white', border: 'none' }}
-        >
-          ISOLATED TEST
-        </button>
-      </div>
-      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* CRITICAL DEBUGGING: Test if main content area blocks events */}
-        <div 
-          style={{ 
-            position: 'absolute', 
-            top: 80, 
-            left: 200, 
-            zIndex: 999999,
-            background: 'magenta',
-            padding: '20px',
-            pointerEvents: 'auto'
-          }}
-        >
-          <button
-            style={{ background: 'cyan', color: 'black', padding: '10px', border: 'none' }}
-            onClick={() => {
-              console.log('🟣 ABSOLUTE POSITIONED BUTTON IN MAIN CONTENT CLICKED!');
-              alert('Absolute button in main content works!');
-            }}
-          >
-            ABSOLUTE TEST IN MAIN CONTENT
-          </button>
-        </div>
-        
-        {/* CRITICAL: Test if it's the container or document flow */}
-        <div style={{ background: 'lime', padding: '10px', margin: '10px 0' }}>
-          <button
-            style={{ background: 'red', color: 'white', padding: '10px', border: 'none' }}
-            onClick={() => {
-              console.log('🟢 NORMAL FLOW BUTTON IN MAIN CONTAINER CLICKED!');
-              alert('Normal flow button works!');
-            }}
-          >
-            NORMAL FLOW TEST IN CONTAINER
-          </button>
-        </div>
-
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -395,21 +348,8 @@ export default function MyBookings() {
           </div>
         </div>
 
-        {/* Test right before Tabs - does Tabs component block events? */}
-        <div style={{ background: 'yellow', padding: '10px', margin: '10px 0' }}>
-          <button
-            style={{ background: 'black', color: 'white', padding: '10px', border: 'none' }}
-            onClick={() => {
-              console.log('🟡 BUTTON BEFORE TABS CLICKED!');
-              alert('Button before Tabs works!');
-            }}
-          >
-            BEFORE TABS TEST
-          </button>
-        </div>
-
         {/* Tab navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" style={{ pointerEvents: 'auto' }}>
           <TabsList className="grid w-full grid-cols-2 mb-8">
             <TabsTrigger value="my-bookings">My Bookings</TabsTrigger>
             {userRole === 'admin' && (
@@ -417,24 +357,12 @@ export default function MyBookings() {
             )}
           </TabsList>
 
-          <TabsContent value="my-bookings">
-            {/* Test inside TabsContent */}
-            <div style={{ background: 'orange', padding: '10px', margin: '10px 0' }}>
-              <button
-                style={{ background: 'purple', color: 'white', padding: '10px', border: 'none' }}
-                onClick={() => {
-                  console.log('🟠 BUTTON INSIDE TABSCONTENT CLICKED!');
-                  alert('Button inside TabsContent works!');
-                }}
-              >
-                INSIDE TABSCONTENT TEST
-              </button>
-            </div>
+          <TabsContent value="my-bookings" style={{ pointerEvents: 'auto' }}>
             <BookingContent />
           </TabsContent>
           
           {userRole === 'admin' && (
-            <TabsContent value="all-bookings">
+            <TabsContent value="all-bookings" style={{ pointerEvents: 'auto' }}>
               <BookingContent />
             </TabsContent>
           )}
