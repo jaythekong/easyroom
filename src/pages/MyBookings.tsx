@@ -395,6 +395,19 @@ export default function MyBookings() {
           </div>
         </div>
 
+        {/* Test right before Tabs - does Tabs component block events? */}
+        <div style={{ background: 'yellow', padding: '10px', margin: '10px 0' }}>
+          <button
+            style={{ background: 'black', color: 'white', padding: '10px', border: 'none' }}
+            onClick={() => {
+              console.log('🟡 BUTTON BEFORE TABS CLICKED!');
+              alert('Button before Tabs works!');
+            }}
+          >
+            BEFORE TABS TEST
+          </button>
+        </div>
+
         {/* Tab navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-8">
