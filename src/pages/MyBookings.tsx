@@ -80,34 +80,52 @@ function BookingCard({ booking, isUpcoming, onView, onEdit, onDelete, canEdit }:
           </p>
         </div>
         
-        {/* Ultra simple test buttons */}
-        <div className="flex gap-2">
+        {/* DEBUGGING: Adding more event handlers and positioning */}
+        <div className="flex gap-2 relative z-50">
           <button 
             type="button"
-            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-            onClick={() => alert('View clicked!')}
-            onMouseDown={() => console.log('🔥 MOUSE DOWN on View button')}
-            onMouseUp={() => console.log('🔥 MOUSE UP on View button')}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 relative z-50"
+            style={{ pointerEvents: 'all', position: 'relative', zIndex: 9999 }}
+            onClick={(e) => {
+              console.log('🔥 CLICK EVENT FIRED!', e);
+              alert('View clicked!');
+            }}
+            onMouseDown={(e) => {
+              console.log('🔥 MOUSE DOWN on View button', e);
+            }}
+            onMouseUp={(e) => {
+              console.log('🔥 MOUSE UP on View button', e);
+            }}
+            onMouseEnter={() => console.log('🔥 MOUSE ENTER on View button')}
+            onMouseLeave={() => console.log('🔥 MOUSE LEAVE on View button')}
           >
             View
           </button>
           
           <button 
             type="button"
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-            onClick={() => alert('Edit clicked!')}
-            onMouseDown={() => console.log('🔥 MOUSE DOWN on Edit button')}
-            onMouseUp={() => console.log('🔥 MOUSE UP on Edit button')}
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 relative z-50"
+            style={{ pointerEvents: 'all', position: 'relative', zIndex: 9999 }}
+            onClick={(e) => {
+              console.log('🔥 EDIT CLICK EVENT FIRED!', e);
+              alert('Edit clicked!');
+            }}
+            onMouseDown={(e) => console.log('🔥 MOUSE DOWN on Edit button', e)}
+            onMouseUp={(e) => console.log('🔥 MOUSE UP on Edit button', e)}
           >
             Edit
           </button>
           
           <button 
             type="button"
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-            onClick={() => alert('Delete clicked!')}
-            onMouseDown={() => console.log('🔥 MOUSE DOWN on Delete button')}
-            onMouseUp={() => console.log('🔥 MOUSE UP on Delete button')}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 relative z-50"
+            style={{ pointerEvents: 'all', position: 'relative', zIndex: 9999 }}
+            onClick={(e) => {
+              console.log('🔥 DELETE CLICK EVENT FIRED!', e);
+              alert('Delete clicked!');
+            }}
+            onMouseDown={(e) => console.log('🔥 MOUSE DOWN on Delete button', e)}
+            onMouseUp={(e) => console.log('🔥 MOUSE UP on Delete button', e)}
           >
             Delete
           </button>
