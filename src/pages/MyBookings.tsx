@@ -348,25 +348,30 @@ export default function MyBookings() {
           </div>
         </div>
 
-        {/* Tab navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" style={{ pointerEvents: 'auto' }}>
-          <TabsList className="grid w-full grid-cols-2 mb-8">
-            <TabsTrigger value="my-bookings">My Bookings</TabsTrigger>
+        {/* TEMPORARY: Replace Tabs with simple div to test */}
+        <div className="w-full" style={{ pointerEvents: 'auto' }}>
+          <div className="grid w-full grid-cols-2 mb-8 bg-muted p-1 rounded-md">
+            <button 
+              className={`px-3 py-1.5 text-sm rounded-sm ${activeTab === 'my-bookings' ? 'bg-background shadow-sm' : ''}`}
+              onClick={() => setActiveTab('my-bookings')}
+            >
+              My Bookings
+            </button>
             {userRole === 'admin' && (
-              <TabsTrigger value="all-bookings">All Bookings</TabsTrigger>
+              <button 
+                className={`px-3 py-1.5 text-sm rounded-sm ${activeTab === 'all-bookings' ? 'bg-background shadow-sm' : ''}`}
+                onClick={() => setActiveTab('all-bookings')}
+              >
+                All Bookings
+              </button>
             )}
-          </TabsList>
+          </div>
 
-          <TabsContent value="my-bookings" style={{ pointerEvents: 'auto' }}>
-            <BookingContent />
-          </TabsContent>
-          
-          {userRole === 'admin' && (
-            <TabsContent value="all-bookings" style={{ pointerEvents: 'auto' }}>
-              <BookingContent />
-            </TabsContent>
-          )}
-        </Tabs>
+          <div style={{ pointerEvents: 'auto' }}>
+            {activeTab === 'my-bookings' && <BookingContent />}
+            {userRole === 'admin' && activeTab === 'all-bookings' && <BookingContent />}
+          </div>
+        </div>
 
         {/* View Modal */}
         <Dialog open={viewModalOpen} onOpenChange={(open) => {
