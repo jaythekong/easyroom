@@ -472,24 +472,28 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     // Start with all times after start time
     let availableTimes = allTimeSlots.slice(startIndex + 1);
     
-    // ✅ CRITICAL FIX: Include original end time from EITHER form data OR existing booking
-    let originalEndTime = formData.endTime;
-    if (!originalEndTime && existingBooking) {
-      // Extract end time directly from existing booking if form not populated yet
+    // ✅ CRITICAL FIX: Always include original end time when editing existing booking
+    if (existingBooking) {
+      // Extract end time directly from existing booking
       const endLocal = new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
-      originalEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
+      const originalEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
+      
+      // Always ensure the original end time is included, regardless of start time
+      if (!availableTimes.includes(originalEndTime)) {
+        availableTimes.push(originalEndTime);
+        // Sort properly
+        availableTimes.sort((a, b) => {
+          const [aHour, aMin] = a.split(':').map(Number);
+          const [bHour, bMin] = b.split(':').map(Number);
+          return (aHour * 60 + aMin) - (bHour * 60 + bMin);
+        });
+      }
     }
     
-    if (existingBooking && originalEndTime && !availableTimes.includes(originalEndTime)) {
-      availableTimes.unshift(originalEndTime);
-      // Sort properly
-      availableTimes.sort((a, b) => {
-        const [aHour, aMin] = a.split(':').map(Number);
-        const [bHour, bMin] = b.split(':').map(Number);
-        return (aHour * 60 + aMin) - (bHour * 60 + bMin);
-      });
-    }
-    
+    const originalEndTime = existingBooking ? 
+      `${new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '')).getHours().toString().padStart(2, '0')}:${new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '')).getMinutes().toString().padStart(2, '0')}` : 
+      null;
+      
     console.log('✅ END TIME OPTIONS:', {
       startTime: formData.startTime,
       formEndTime: formData.endTime,
