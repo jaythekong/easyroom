@@ -808,9 +808,9 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                 onValueChange={(value) => {
                   console.log('📝 Start time changed:', value);
                   updateFormData({ startTime: value });
-                  // Clear end time when start time changes
-                  if (formData.endTime) {
-                    console.log('📝 Clearing end time because start time changed');
+                  // Clear end time when start time changes (only for new bookings, not when editing)
+                  if (formData.endTime && !existingBooking) {
+                    console.log('📝 Clearing end time because start time changed (new booking)');
                     updateFormData({ endTime: "" });
                   }
                 }}
