@@ -574,11 +574,47 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     console.log("Form data before submission:", formData);
 
     try {
-      // Create datetime strings
-      const startDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
-      const endDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
+      // Create datetime strings in organization timezone and convert to UTC for storage
+      const orgTimezone = organization?.timezone || 'Asia/Phnom_Penh';
       
-      logger.debug("DateTime strings:", { startDateTime, endDateTime });
+      // Create local datetime strings first
+      const localStartDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
+      const localEndDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
+      
+      // Convert to UTC for database storage
+      const startDate = new Date(localStartDateTime);
+      const endDate = new Date(localEndDateTime);
+      
+      // Get timezone offset in minutes and convert to UTC
+      const now = new Date();
+      const timezoneOffsetMs = new Intl.DateTimeFormat('en', {
+        timeZone: orgTimezone,
+        timeZoneName: 'longOffset'
+      }).formatToParts(now).find(part => part.type === 'timeZoneName')?.value;
+      
+      // Parse offset like "GMT+07:00" to get minutes
+      const offsetMatch = timezoneOffsetMs?.match(/GMT([+-])(\d{2}):(\d{2})/);
+      let offsetMinutes = 0;
+      if (offsetMatch) {
+        const sign = offsetMatch[1] === '+' ? -1 : 1; // Reverse sign for UTC conversion
+        offsetMinutes = sign * (parseInt(offsetMatch[2]) * 60 + parseInt(offsetMatch[3]));
+      }
+      
+      // Apply timezone offset to convert local time to UTC
+      const startDateUTC = new Date(startDate.getTime() + (offsetMinutes * 60 * 1000));
+      const endDateUTC = new Date(endDate.getTime() + (offsetMinutes * 60 * 1000));
+      
+      const startDateTime = startDateUTC.toISOString();
+      const endDateTime = endDateUTC.toISOString();
+      
+      logger.debug("DateTime conversion:", { 
+        localStartDateTime, 
+        localEndDateTime, 
+        startDateTime, 
+        endDateTime,
+        orgTimezone,
+        offsetMinutes 
+      });
 
       // Check if organization is available
       if (!organization?.id) {
