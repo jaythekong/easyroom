@@ -139,8 +139,25 @@ export default function MyBookings() {
     return 'past';
   };
 
-  const formatTime = (dateTime: string) => format(new Date(dateTime), 'p');
-  const formatDate = (dateTime: string) => format(new Date(dateTime), 'MMM dd, yyyy');
+  const formatTime = (dateTime: string) => {
+    const timezone = organization?.timezone || 'America/New_York';
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone
+    }).format(new Date(dateTime));
+  };
+  
+  const formatDate = (dateTime: string) => {
+    const timezone = organization?.timezone || 'America/New_York';
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      timeZone: timezone
+    }).format(new Date(dateTime));
+  };
 
   if (isLoading) {
     return (
@@ -398,8 +415,27 @@ function BookingRow({
   onDelete: () => void;
   canEdit: boolean;
 }) {
-  const formatTime = (dateTime: string) => format(new Date(dateTime), 'p');
-  const formatDate = (dateTime: string) => format(new Date(dateTime), 'MMM dd, yyyy');
+  const { organization } = useOrganization();
+  
+  const formatTime = (dateTime: string) => {
+    const timezone = organization?.timezone || 'America/New_York';
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone
+    }).format(new Date(dateTime));
+  };
+  
+  const formatDate = (dateTime: string) => {
+    const timezone = organization?.timezone || 'America/New_York';
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: '2-digit',
+      year: 'numeric',
+      timeZone: timezone
+    }).format(new Date(dateTime));
+  };
 
   const getStatusBadge = () => {
     const now = new Date();
