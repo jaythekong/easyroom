@@ -458,7 +458,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
   }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
 
-  // Simple function to get available end times - FIXED VERSION
+  // Get available end times - handles both form state and direct booking data
   const getAvailableEndTimes = () => {
     if (!formData.startTime) {
       return [];
@@ -472,9 +472,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     // Start with all times after start time
     let availableTimes = allTimeSlots.slice(startIndex + 1);
     
-    // ✅ ALWAYS include the current endTime when editing (this is the key fix)
-    if (existingBooking && formData.endTime && !availableTimes.includes(formData.endTime)) {
-      availableTimes.unshift(formData.endTime); // Add to beginning
+    // ✅ CRITICAL FIX: Include original end time from EITHER form data OR existing booking
+    let originalEndTime = formData.endTime;
+    if (!originalEndTime && existingBooking) {
+      // Extract end time directly from existing booking if form not populated yet
+      const endLocal = new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      originalEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
+    }
+    
+    if (existingBooking && originalEndTime && !availableTimes.includes(originalEndTime)) {
+      availableTimes.unshift(originalEndTime);
       // Sort properly
       availableTimes.sort((a, b) => {
         const [aHour, aMin] = a.split(':').map(Number);
@@ -485,10 +492,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     
     console.log('✅ END TIME OPTIONS:', {
       startTime: formData.startTime,
-      endTime: formData.endTime,
+      formEndTime: formData.endTime,
+      originalEndTime,
       isEdit: !!existingBooking,
       availableTimes: availableTimes.slice(0, 10),
-      endTimeIncluded: formData.endTime ? availableTimes.includes(formData.endTime) : 'no endTime'
+      endTimeIncluded: originalEndTime ? availableTimes.includes(originalEndTime) : 'no endTime'
     });
     
     return availableTimes;
