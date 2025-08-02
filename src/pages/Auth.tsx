@@ -921,7 +921,7 @@ const Auth = () => {
                       <form onSubmit={handleOrganizationRedirect} className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="org-subdomain">Your Organization</Label>
-                          <div className="relative">
+                          <div className="space-y-2">
                             <Input
                               id="org-subdomain"
                               type="text"
@@ -929,15 +929,11 @@ const Auth = () => {
                               value={orgSubdomain}
                               onChange={(e) => setOrgSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                               required
-                              className="pr-32"
                             />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                              .easyroom.asia
-                            </span>
+                            <p className="text-xs text-muted-foreground">
+                              Your organization will be accessible at: <span className="font-mono">https://easyroom.asia/{orgSubdomain || 'your-org'}</span>
+                            </p>
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Enter your organization's subdomain to sign in
-                          </p>
                         </div>
                         <Button type="submit" className="w-full" disabled={loading}>
                           {loading ? (
@@ -1177,7 +1173,7 @@ const Auth = () => {
                               
                               <div className="space-y-2">
                                 <Label htmlFor="org-slug">Your URL</Label>
-                                <div className="relative">
+                                <div className="space-y-2">
                                   <Input
                                     id="org-slug"
                                     type="text"
@@ -1185,11 +1181,10 @@ const Auth = () => {
                                     value={organizationSlug}
                                     onChange={(e) => setOrganizationSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
                                     required
-                                    className="pr-32"
                                   />
-                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                                    .easyroom.asia
-                                  </span>
+                                  <p className="text-xs text-muted-foreground">
+                                    Your organization will be accessible at: <span className="font-mono">https://easyroom.asia/{organizationSlug || 'your-org'}</span>
+                                  </p>
                                 </div>
                               </div>
                             </div>
