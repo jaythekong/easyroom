@@ -47,7 +47,7 @@ export function BookingDetailsModal({
   onBookingUpdate 
 }: BookingDetailsModalProps) {
   const { user } = useAuth();
-  const { userRole } = useOrganization();
+  const { userRole, organization } = useOrganization();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -57,15 +57,33 @@ export function BookingDetailsModal({
   const canEditBooking = userRole === 'admin' || isMyBooking;
   
   const formatDateTime = (dateTime: string) => {
-    // Treat the stored time as local time, not UTC
-    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
-    return format(date, 'PPP p');
+    const timezone = organization?.timezone || 'America/New_York';
+    return new Intl.DateTimeFormat('en-US', {
+      dateStyle: 'full',
+      timeStyle: 'short',
+      timeZone: timezone
+    }).format(new Date(dateTime));
   };
 
   const formatTime = (dateTime: string) => {
-    // Treat the stored time as local time, not UTC
-    const date = new Date(dateTime.replace('Z', '').replace('+00:00', ''));
-    return format(date, 'p');
+    const timezone = organization?.timezone || 'America/New_York';
+    return new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone
+    }).format(new Date(dateTime));
+  };
+
+  const formatDate = (dateTime: string) => {
+    const timezone = organization?.timezone || 'America/New_York';
+    return new Intl.DateTimeFormat('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      timeZone: timezone
+    }).format(new Date(dateTime));
   };
 
   const handleCancelBooking = async () => {
@@ -193,7 +211,7 @@ export function BookingDetailsModal({
             <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="font-medium">{format(new Date(booking.start_time), 'PPPP')}</p>
+                <p className="font-medium">{formatDate(booking.start_time)}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
                 </p>

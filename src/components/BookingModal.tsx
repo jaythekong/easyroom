@@ -662,7 +662,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       
       toast({
         title: existingBooking ? "Booking Updated!" : "Booking Confirmed!",
-        description: `${room.name} has been ${existingBooking ? 'updated' : 'booked'} for ${format(formData.date, "PPP")} from ${formData.startTime} to ${formData.endTime}.`,
+        description: `${room.name} has been ${existingBooking ? 'updated' : 'booked'} for ${new Intl.DateTimeFormat('en-US', {
+          dateStyle: 'medium',
+          timeZone: organization?.timezone || 'America/New_York'
+        }).format(formData.date)} from ${formData.startTime} to ${formData.endTime}.`,
       });
       onClose();
       
