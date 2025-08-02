@@ -895,7 +895,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                       ? "Select start time first" 
                       : isLoadingGaps 
                       ? "Loading..." 
-                      : "End time"
+                      : formData.endTime || "End time"
                   } />
                 </SelectTrigger>
                 <SelectContent>
