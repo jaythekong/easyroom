@@ -471,28 +471,42 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       return [];
     }
     
+    let availableTimes: string[] = [];
+    
     // For existing bookings, simply return all times after start time
-    // Don't worry about room gaps - user is editing an existing booking
     if (existingBooking) {
-      const availableTimes = allTimeSlots.slice(startIndex + 1);
-      console.log('📝 getAvailableEndTimes for EXISTING booking:', {
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        availableTimes: availableTimes.slice(0, 10), // First 10 for debugging
-        endTimeInList: availableTimes.includes(formData.endTime || ''),
-        allSlotsLength: allTimeSlots.length
+      availableTimes = allTimeSlots.slice(startIndex + 1);
+    } else {
+      // For new bookings, use gap-based logic but fall back to simple logic if gaps not available
+      if (availableEndTimes.length > 0) {
+        availableTimes = availableEndTimes;
+      } else {
+        // Fallback: simple logic - just return times after start time
+        availableTimes = allTimeSlots.slice(startIndex + 1);
+      }
+    }
+    
+    // 🛠️ CRITICAL FIX: Always include the original formData.endTime when editing
+    if (formData.endTime && !availableTimes.includes(formData.endTime)) {
+      availableTimes.push(formData.endTime);
+      // Sort times to keep UI tidy
+      availableTimes.sort((a, b) => {
+        const [aHour, aMin] = a.split(':').map(Number);
+        const [bHour, bMin] = b.split(':').map(Number);
+        return (aHour * 60 + aMin) - (bHour * 60 + bMin);
       });
-      
-      return availableTimes;
     }
     
-    // For new bookings, use gap-based logic but fall back to simple logic if gaps not available
-    if (availableEndTimes.length > 0) {
-      return availableEndTimes;
-    }
+    console.log('📝 getAvailableEndTimes FINAL result:', {
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      availableTimesCount: availableTimes.length,
+      availableTimes: availableTimes.slice(0, 10),
+      endTimeInList: availableTimes.includes(formData.endTime || ''),
+      isExistingBooking: !!existingBooking
+    });
     
-    // Fallback: simple logic - just return times after start time
-    return allTimeSlots.slice(startIndex + 1);
+    return availableTimes;
   };
 
   const handleDeleteBooking = async () => {
