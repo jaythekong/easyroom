@@ -176,7 +176,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     console.log('📝 updateFormData called with:', updates);
     setFormData(prev => {
       const newData = { ...prev, ...updates };
-      console.log('📝 New form data:', newData);
+      console.log('📝 New form data after update:', newData);
+      console.log('📝 Specifically endTime after update:', newData.endTime);
       return newData;
     });
   };
@@ -373,18 +374,20 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           // Extract time components treating stored times as local times (no timezone conversion)
           const localStartTime = existingBooking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
           const localEndTime = existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+          
+          // Parse dates and extract HH:MM format
           const startLocal = new Date(localStartTime);
           const endLocal = new Date(localEndTime);
-          const formattedStartTime = startLocal.toTimeString().substring(0, 5); // HH:mm format from local
-          const formattedEndTime = endLocal.toTimeString().substring(0, 5); // HH:mm format from local
+          const formattedStartTime = `${startLocal.getHours().toString().padStart(2, '0')}:${startLocal.getMinutes().toString().padStart(2, '0')}`;
+          const formattedEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
           
           console.log('📝 Time formatting:', {
             originalStartTime: existingBooking.start_time,
             originalEndTime: existingBooking.end_time,
             localStartTime,
             localEndTime,
-            startLocal: startLocal.toISOString(),
-            endLocal: endLocal.toISOString(),
+            startLocal: startLocal.toString(),
+            endLocal: endLocal.toString(),
             formattedStartTime,
             formattedEndTime,
             availableTimeSlots: allTimeSlots,
@@ -403,6 +406,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           };
 
           console.log('📝 Setting form data:', newFormData);
+          console.log('📝 About to set endTime:', formattedEndTime);
           setFormData(newFormData);
         } else {
           // Reset to fresh state for new bookings
@@ -441,8 +445,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       if (conflictingBooking) {
         const localStart = conflictingBooking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
         const localEnd = conflictingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
-        const startTime = new Date(localStart).toTimeString().substring(0, 5);
-        const endTime = new Date(localEnd).toTimeString().substring(0, 5);
+        const startLocal = new Date(localStart);
+        const endLocal = new Date(localEnd);
+        const startTime = `${startLocal.getHours().toString().padStart(2, '0')}:${startLocal.getMinutes().toString().padStart(2, '0')}`;
+        const endTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
         setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime}-${endTime})`);
       } else if (formData.endTime && checkTimeConflict(formData.startTime, formData.endTime)) {
         setTimeConflictError("Time range conflicts with existing booking.");
@@ -892,17 +898,22 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               <Label htmlFor="endTime">End Time *</Label>
               <Select 
                 value={formData.endTime} 
-                onValueChange={(value) => updateFormData({ endTime: value })}
+                onValueChange={(value) => {
+                  console.log('📝 End time changed:', value);
+                  updateFormData({ endTime: value });
+                }}
                 disabled={isLoadingGaps || !formData.startTime}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder={
-                    !formData.startTime 
-                      ? "Select start time first" 
-                      : isLoadingGaps 
-                      ? "Loading..." 
-                      : formData.endTime || "End time"
-                  } />
+                  <SelectValue 
+                    placeholder={
+                      !formData.startTime 
+                        ? "Select start time first" 
+                        : isLoadingGaps 
+                        ? "Loading..." 
+                        : "Select end time"
+                    } 
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <TooltipProvider>
