@@ -932,7 +932,7 @@ const Auth = () => {
                               className="pr-32"
                             />
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                              .easyroom.app
+                              .easyroom.asia
                             </span>
                           </div>
                           <p className="text-xs text-muted-foreground">
@@ -1188,7 +1188,7 @@ const Auth = () => {
                                     className="pr-32"
                                   />
                                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-                                    .easyroom.app
+                                    .easyroom.asia
                                   </span>
                                 </div>
                               </div>
