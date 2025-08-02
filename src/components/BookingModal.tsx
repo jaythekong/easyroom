@@ -435,16 +435,27 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (formData.startTime && formData.date) {
       const conflictingBooking = getConflictingBooking(formData.startTime);
       if (conflictingBooking) {
-        const startTime = new Date(conflictingBooking.start_time).toISOString().substring(11, 16);
-        const endTime = new Date(conflictingBooking.end_time).toISOString().substring(11, 16);
-        setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime}-${endTime})`);
+        const timezone = organization?.timezone || 'America/New_York';
+        const startTime = new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: timezone
+        }).format(new Date(conflictingBooking.start_time));
+        const endTime = new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: timezone
+        }).format(new Date(conflictingBooking.end_time));
+        setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime} - ${endTime})`);
       } else if (formData.endTime && checkTimeConflict(formData.startTime, formData.endTime)) {
         setTimeConflictError("Time range conflicts with existing booking.");
       } else {
         setTimeConflictError("");
       }
     }
-  }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
+  }, [formData.startTime, formData.endTime, formData.date, existingBookings, organization]);
 
   // Simple function to get available end times
   const getAvailableEndTimes = () => {
