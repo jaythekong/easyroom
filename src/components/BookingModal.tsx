@@ -458,8 +458,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
   }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
 
-  // Get available end times - handles both form state and direct booking data
-  const getAvailableEndTimes = () => {
+  // Get available end times - now returns all times with availability info
+  const getEndTimesWithAvailability = () => {
     if (!formData.startTime) {
       return [];
     }
@@ -469,38 +469,59 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       return [];
     }
     
-    // Start with all times after start time
-    let availableTimes = allTimeSlots.slice(startIndex + 1);
+    // Get all times after start time
+    const timesAfterStart = allTimeSlots.slice(startIndex + 1);
     
-    // ✅ CRITICAL FIX: Always include original end time when editing existing booking
-    let originalEndTime = null;
+    // Create array with availability info
+    let endTimesWithInfo = timesAfterStart.map(time => ({
+      time,
+      available: true,
+      isOriginal: false
+    }));
+    
+    // ✅ CRITICAL: Always include original end time when editing existing booking
     if (existingBooking) {
-      // Extract end time directly from existing booking
       const endLocal = new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
-      originalEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
+      const originalEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
       
-      // Always ensure the original end time is included, regardless of start time
-      if (!availableTimes.includes(originalEndTime)) {
-        availableTimes.push(originalEndTime);
-        // Sort properly
-        availableTimes.sort((a, b) => {
-          const [aHour, aMin] = a.split(':').map(Number);
-          const [bHour, bMin] = b.split(':').map(Number);
+      // Check if original end time is already in the list
+      const existingIndex = endTimesWithInfo.findIndex(item => item.time === originalEndTime);
+      if (existingIndex >= 0) {
+        // Mark existing item as original
+        endTimesWithInfo[existingIndex].isOriginal = true;
+      } else {
+        // Add original end time and mark as original
+        endTimesWithInfo.push({
+          time: originalEndTime,
+          available: true,
+          isOriginal: true
+        });
+        
+        // Sort by time
+        endTimesWithInfo.sort((a, b) => {
+          const [aHour, aMin] = a.time.split(':').map(Number);
+          const [bHour, bMin] = b.time.split(':').map(Number);
           return (aHour * 60 + aMin) - (bHour * 60 + bMin);
         });
       }
     }
     
-    console.log('✅ END TIME OPTIONS:', {
+    console.log('✅ END TIME OPTIONS WITH AVAILABILITY:', {
       startTime: formData.startTime,
       formEndTime: formData.endTime,
-      originalEndTime,
       isEdit: !!existingBooking,
-      availableTimes: availableTimes.slice(0, 10),
-      endTimeIncluded: originalEndTime ? availableTimes.includes(originalEndTime) : 'no endTime'
+      totalTimes: endTimesWithInfo.length,
+      availableTimes: endTimesWithInfo.filter(item => item.available).length
     });
     
-    return availableTimes;
+    return endTimesWithInfo;
+  };
+
+  // Legacy function for backward compatibility
+  const getAvailableEndTimes = () => {
+    return getEndTimesWithAvailability()
+      .filter(item => item.available || item.isOriginal)
+      .map(item => item.time);
   };
 
   const handleDeleteBooking = async () => {
@@ -930,19 +951,40 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                 <SelectContent>
                   <TooltipProvider>
                     {(() => {
-                      const endTimes = getAvailableEndTimes();
-                      console.log('📝 Rendering end time options:', {
+                      const endTimesWithInfo = getEndTimesWithAvailability();
+                      console.log('📝 Rendering end time options with availability:', {
                         formDataEndTime: formData.endTime,
-                        endTimesCount: endTimes.length,
-                        endTimes: endTimes.slice(0, 5),
-                        valueExists: endTimes.includes(formData.endTime || '')
+                        totalTimes: endTimesWithInfo.length,
+                        availableTimes: endTimesWithInfo.filter(item => item.available).length
                       });
                       
-                      return endTimes.map((time) => {
+                      return endTimesWithInfo.map(({ time, available, isOriginal }) => {
                         const isConflicted = existingBooking ? isTimeSlotConflicted(time, true) : false;
                         const conflictingBooking = getConflictingBooking(time);
                         
-                        if (existingBooking && isConflicted && conflictingBooking) {
+                        // Always allow original end time to be selectable for edits
+                        const isSelectable = available || isOriginal;
+                        
+                        if (!isSelectable && !existingBooking) {
+                          return (
+                            <Tooltip key={time}>
+                              <TooltipTrigger asChild>
+                                <SelectItem 
+                                  value={time} 
+                                  disabled
+                                  className="text-muted-foreground opacity-40 cursor-not-allowed"
+                                >
+                                  {time}
+                                </SelectItem>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Not available - outside room booking window</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+                        
+                        if (existingBooking && isConflicted && conflictingBooking && !isOriginal) {
                           return (
                             <Tooltip key={time}>
                               <TooltipTrigger asChild>
@@ -962,7 +1004,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                         }
                         
                         return (
-                          <SelectItem key={time} value={time}>{time}</SelectItem>
+                          <SelectItem 
+                            key={time} 
+                            value={time}
+                            className={cn(
+                              !available && !isOriginal && "text-muted-foreground opacity-60"
+                            )}
+                          >
+                            {time}
+                            {isOriginal && " (original)"}
+                          </SelectItem>
                         );
                       });
                     })()}
