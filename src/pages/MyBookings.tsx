@@ -140,7 +140,9 @@ export default function MyBookings() {
   };
 
   const formatTime = (dateTime: string) => {
-    const date = new Date(dateTime);
+    // Remove timezone info and treat as local time
+    const localDateTime = dateTime.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+    const date = new Date(localDateTime);
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -149,7 +151,9 @@ export default function MyBookings() {
   };
   
   const formatDate = (dateTime: string) => {
-    const date = new Date(dateTime);
+    // Remove timezone info and treat as local time
+    const localDateTime = dateTime.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+    const date = new Date(localDateTime);
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: '2-digit', 
@@ -415,7 +419,9 @@ function BookingRow({
 }) {
   const { organization } = useOrganization();
   const formatTime = (dateTime: string) => {
-    const date = new Date(dateTime);
+    // Remove timezone info and treat as local time
+    const localDateTime = dateTime.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+    const date = new Date(localDateTime);
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -424,7 +430,9 @@ function BookingRow({
   };
   
   const formatDate = (dateTime: string) => {
-    const date = new Date(dateTime);
+    // Remove timezone info and treat as local time
+    const localDateTime = dateTime.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+    const date = new Date(localDateTime);
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: '2-digit', 

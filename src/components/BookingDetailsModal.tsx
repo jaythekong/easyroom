@@ -57,7 +57,9 @@ export function BookingDetailsModal({
   const canEditBooking = userRole === 'admin' || isMyBooking;
   
   const formatDateTime = (dateTime: string) => {
-    const date = new Date(dateTime);
+    // Remove timezone info and treat as local time
+    const localDateTime = dateTime.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+    const date = new Date(localDateTime);
     return new Intl.DateTimeFormat('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -70,7 +72,9 @@ export function BookingDetailsModal({
   };
 
   const formatTime = (dateTime: string) => {
-    const date = new Date(dateTime);
+    // Remove timezone info and treat as local time
+    const localDateTime = dateTime.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+    const date = new Date(localDateTime);
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -204,12 +208,15 @@ export function BookingDetailsModal({
               <Calendar className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="font-medium">
-                  {new Intl.DateTimeFormat('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  }).format(new Date(booking.start_time))}
+                  {(() => {
+                    const localDateTime = booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+                    return new Intl.DateTimeFormat('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    }).format(new Date(localDateTime));
+                  })()}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
