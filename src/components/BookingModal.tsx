@@ -399,7 +399,9 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           };
 
           console.log('📝 Setting form data:', newFormData);
+          console.log('📝 Current formData before setting:', formData);
           setFormData(newFormData);
+          console.log('📝 Form data set for existing booking - endTime should be:', newFormData.endTime);
         } else {
           // Reset to fresh state for new bookings
           const newFormData = {
@@ -448,14 +450,30 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
   // Simple function to get available end times
   const getAvailableEndTimes = () => {
-    if (!formData.startTime) return [];
+    console.log('📝 getAvailableEndTimes called with:', {
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      existingBooking: !!existingBooking
+    });
+    
+    if (!formData.startTime) {
+      console.log('📝 No start time, returning empty array');
+      return [];
+    }
     
     const startIndex = allTimeSlots.findIndex(time => time === formData.startTime);
-    if (startIndex === -1) return [];
+    if (startIndex === -1) {
+      console.log('📝 Start time not found in slots, returning empty array');
+      return [];
+    }
     
     // For existing bookings, allow all times after start time
     if (existingBooking) {
       const availableTimes = allTimeSlots.slice(startIndex + 1);
+      
+      console.log('📝 For existing booking - availableTimes after start:', availableTimes);
+      console.log('📝 Current formData.endTime:', formData.endTime);
+      console.log('📝 Is endTime in availableTimes?', availableTimes.includes(formData.endTime));
       
       // Ensure the original end time is always available when editing
       if (formData.endTime && !availableTimes.includes(formData.endTime)) {
@@ -464,9 +482,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
           const [bHour, bMin] = b.split(':').map(Number);
           return (aHour * 60 + aMin) - (bHour * 60 + bMin);
         });
+        console.log('📝 Added original endTime to list:', allTimes);
         return allTimes;
       }
       
+      console.log('📝 Returning availableTimes for existing booking:', availableTimes);
       return availableTimes;
     }
     
@@ -884,9 +904,12 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
             <div className="space-y-2">
               <Label htmlFor="endTime">End Time *</Label>
-              <Select 
+               <Select 
                 value={formData.endTime} 
-                onValueChange={(value) => updateFormData({ endTime: value })}
+                onValueChange={(value) => {
+                  console.log('📝 End time changed:', value);
+                  updateFormData({ endTime: value });
+                }}
                 disabled={isLoadingGaps || !formData.startTime}
               >
                 <SelectTrigger>
