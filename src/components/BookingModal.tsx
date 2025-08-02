@@ -438,7 +438,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
   }, [isOpen, existingBooking?.id, initialDate, initialStartTime]); // More specific dependencies
 
-  // Validate start time for conflicts
+  // Validate start time for conflicts - only show error for start time conflicts, not end time
   useEffect(() => {
     if (formData.startTime && formData.date) {
       const conflictingBooking = getConflictingBooking(formData.startTime);
@@ -450,13 +450,12 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         const startTime = `${startLocal.getHours().toString().padStart(2, '0')}:${startLocal.getMinutes().toString().padStart(2, '0')}`;
         const endTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
         setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime}-${endTime})`);
-      } else if (formData.endTime && checkTimeConflict(formData.startTime, formData.endTime)) {
-        setTimeConflictError("Time range conflicts with existing booking.");
       } else {
+        // ✅ REMOVED: End time conflict checking - now handled visually in dropdown
         setTimeConflictError("");
       }
     }
-  }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
+  }, [formData.startTime, formData.date, existingBookings]); // Removed formData.endTime from dependencies
 
   // Get available end times - now returns all times with availability info
   const getEndTimesWithAvailability = () => {
@@ -473,11 +472,29 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     const timesAfterStart = allTimeSlots.slice(startIndex + 1);
     
     // Create array with availability info
-    let endTimesWithInfo = timesAfterStart.map(time => ({
-      time,
-      available: true,
-      isOriginal: false
-    }));
+    let endTimesWithInfo = timesAfterStart.map(time => {
+      // Check if this time has conflicts
+      const hasConflict = existingBookings.some(booking => {
+        const dateStr = format(formData.date, 'yyyy-MM-dd');
+        const timeToCheck = new Date(`${dateStr}T${time}:00`);
+        const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+        const bookingEnd = new Date(booking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+        
+        // Skip current booking when editing
+        if (existingBooking && booking.id === existingBooking.id) {
+          return false;
+        }
+        
+        return timeToCheck > bookingStart && timeToCheck <= bookingEnd;
+      });
+      
+      return {
+        time,
+        available: !hasConflict,
+        isOriginal: false,
+        conflictReason: hasConflict ? 'conflicts' : null
+      };
+    });
     
     // ✅ CRITICAL: Always include original end time when editing existing booking
     if (existingBooking) {
@@ -487,14 +504,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       // Check if original end time is already in the list
       const existingIndex = endTimesWithInfo.findIndex(item => item.time === originalEndTime);
       if (existingIndex >= 0) {
-        // Mark existing item as original
+        // Mark existing item as original and always available
         endTimesWithInfo[existingIndex].isOriginal = true;
+        endTimesWithInfo[existingIndex].available = true;
       } else {
         // Add original end time and mark as original
         endTimesWithInfo.push({
           time: originalEndTime,
           available: true,
-          isOriginal: true
+          isOriginal: true,
+          conflictReason: null
         });
         
         // Sort by time
@@ -511,7 +530,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       formEndTime: formData.endTime,
       isEdit: !!existingBooking,
       totalTimes: endTimesWithInfo.length,
-      availableTimes: endTimesWithInfo.filter(item => item.available).length
+      availableTimes: endTimesWithInfo.filter(item => item.available).length,
+      unavailableTimes: endTimesWithInfo.filter(item => !item.available).length
     });
     
     return endTimesWithInfo;
@@ -958,63 +978,54 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                         availableTimes: endTimesWithInfo.filter(item => item.available).length
                       });
                       
-                      return endTimesWithInfo.map(({ time, available, isOriginal }) => {
-                        const isConflicted = existingBooking ? isTimeSlotConflicted(time, true) : false;
+                      return endTimesWithInfo.map(({ time, available, isOriginal, conflictReason }) => {
+                        // For existing bookings, get conflict info but allow original time
                         const conflictingBooking = getConflictingBooking(time);
                         
-                        // Always allow original end time to be selectable for edits
+                        // Determine if this time should be selectable
                         const isSelectable = available || isOriginal;
                         
-                        if (!isSelectable && !existingBooking) {
-                          return (
-                            <Tooltip key={time}>
-                              <TooltipTrigger asChild>
-                                <SelectItem 
-                                  value={time} 
-                                  disabled
-                                  className="text-muted-foreground opacity-40 cursor-not-allowed"
-                                >
-                                  {time}
-                                </SelectItem>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Not available - outside room booking window</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
+                        // Create the appropriate tooltip message
+                        let tooltipMessage = null;
+                        if (!available && !isOriginal) {
+                          if (conflictReason === 'conflicts') {
+                            tooltipMessage = conflictingBooking ? 
+                              `Conflicts with "${conflictingBooking.title}"` : 
+                              'Time conflicts with existing booking';
+                          } else {
+                            tooltipMessage = 'Not available - outside room booking window';
+                          }
                         }
                         
-                        if (existingBooking && isConflicted && conflictingBooking && !isOriginal) {
-                          return (
-                            <Tooltip key={time}>
-                              <TooltipTrigger asChild>
-                                <SelectItem 
-                                  value={time} 
-                                  disabled
-                                  className="text-muted-foreground opacity-40 cursor-not-allowed"
-                                >
-                                  {time}
-                                </SelectItem>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Conflicts with existing booking: {conflictingBooking.title}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          );
-                        }
-                        
-                        return (
+                        const selectItem = (
                           <SelectItem 
                             key={time} 
                             value={time}
+                            disabled={!isSelectable}
                             className={cn(
-                              !available && !isOriginal && "text-muted-foreground opacity-60"
+                              !available && !isOriginal && "text-muted-foreground opacity-40 cursor-not-allowed"
                             )}
                           >
                             {time}
                             {isOriginal && " (original)"}
                           </SelectItem>
                         );
+                        
+                        // Wrap with tooltip if there's a message
+                        if (tooltipMessage) {
+                          return (
+                            <Tooltip key={time}>
+                              <TooltipTrigger asChild>
+                                {selectItem}
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>{tooltipMessage}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          );
+                        }
+                        
+                        return selectItem;
                       });
                     })()}
                   </TooltipProvider>
