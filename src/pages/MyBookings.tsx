@@ -482,27 +482,17 @@ function BookingRow({
             className="flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-muted transition-colors"
           >
             <Eye className="w-4 h-4" />
-            View
+            View/Edit
           </button>
           
           {canEdit && (
-            <>
-              <button
-                onClick={onEdit}
-                className="flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-muted transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                Edit
-              </button>
-              
-              <button
-                onClick={onDelete}
-                className="flex items-center gap-2 px-3 py-2 text-sm border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </button>
-            </>
+            <button
+              onClick={onDelete}
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </button>
           )}
         </div>
       </div>
