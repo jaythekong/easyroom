@@ -450,14 +450,13 @@ export function OrganizationSettings() {
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="subdomain">Organization Path</Label>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 relative">
+            <div className="space-y-2">
+              <div className="relative">
                 <Input
                   id="subdomain"
                   value={subdomain}
                   onChange={(e) => handleSubdomainChange(e.target.value)}
                   placeholder="your-company"
-                  className="pr-12"
                 />
                 {isChecking && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -471,25 +470,23 @@ export function OrganizationSettings() {
                   <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-destructive" />
                 )}
               </div>
-              <span className="text-muted-foreground">easyroom.asia/</span>
+              
+              {isAvailable === true && (
+                <p className="text-sm text-green-600 mt-1">
+                  ✓ Path is available
+                </p>
+              )}
+              {isAvailable === false && (
+                <p className="text-sm text-destructive mt-1">
+                  ✗ Path is already taken
+                </p>
+              )}
+              
+              <p className="text-sm text-muted-foreground">
+                Your organization will be accessible at: <code className="bg-muted px-1 rounded">https://easyroom.asia/{subdomain || 'your-org'}</code>
+              </p>
             </div>
-            
-            {isAvailable === true && (
-              <p className="text-sm text-green-600 mt-1">
-                ✓ Path is available
-              </p>
-            )}
-            {isAvailable === false && (
-              <p className="text-sm text-destructive mt-1">
-                ✗ Path is already taken
-              </p>
-            )}
-            
-            <p className="text-sm text-muted-foreground mt-1">
-              Your organization will be accessible at: <code className="bg-muted px-1 rounded">https://easyroom.asia/{subdomain}</code>
-            </p>
           </div>
-
           {/* Current Status */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div>
