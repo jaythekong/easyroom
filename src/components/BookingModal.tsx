@@ -473,10 +473,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     let availableTimes = allTimeSlots.slice(startIndex + 1);
     
     // ✅ CRITICAL FIX: Always include original end time when editing existing booking
+    let originalEndTime = null;
     if (existingBooking) {
       // Extract end time directly from existing booking
       const endLocal = new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
-      const originalEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
+      originalEndTime = `${endLocal.getHours().toString().padStart(2, '0')}:${endLocal.getMinutes().toString().padStart(2, '0')}`;
       
       // Always ensure the original end time is included, regardless of start time
       if (!availableTimes.includes(originalEndTime)) {
@@ -490,10 +491,6 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       }
     }
     
-    const originalEndTime = existingBooking ? 
-      `${new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '')).getHours().toString().padStart(2, '0')}:${new Date(existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '')).getMinutes().toString().padStart(2, '0')}` : 
-      null;
-      
     console.log('✅ END TIME OPTIONS:', {
       startTime: formData.startTime,
       formEndTime: formData.endTime,
@@ -920,15 +917,15 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                 disabled={isLoadingGaps || !formData.startTime}
               >
                 <SelectTrigger>
-                  <SelectValue 
-                    placeholder={
+                  <SelectValue>
+                    {formData.endTime || (
                       !formData.startTime 
                         ? "Select start time first" 
                         : isLoadingGaps 
                         ? "Loading..." 
                         : "Select end time"
-                    } 
-                  />
+                    )}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <TooltipProvider>
