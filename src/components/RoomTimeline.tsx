@@ -147,18 +147,30 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     }
   }, [selectedDate, rooms]);
 
-  // Generate business hours time slots (8 AM to 8 PM)
+  // Generate business hours time slots (8 AM to 8 PM) with organization timezone formatting
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = 8; hour <= 20; hour++) {
+      // Create a date in the organization's timezone for proper formatting
+      const tempDate = new Date();
+      tempDate.setHours(hour, 0, 0, 0);
+      
+      const displayTime = new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: organization?.timezone || 'America/New_York'
+      }).format(tempDate);
+      
       slots.push({
         time: `${hour.toString().padStart(2, '0')}:00`,
+        displayTime,
         endTime: `${((hour + 1)).toString().padStart(2, '0')}:00`
       });
     }
     console.log('📅 Generated business hours time slots:', slots.length, 'hours (8 AM - 8 PM)');
     return slots;
-  }, []);
+  }, [organization?.timezone]);
 
   // Generate days for each room - mobile shows 3 days centered on selected date, desktop shows full week
   const getRoomWeekDays = useCallback((roomId: string) => {
@@ -533,12 +545,12 @@ const RoomTimelineComponent = memo(function RoomTimeline({
                               isMobile ? "grid grid-cols-4" : "grid grid-cols-8"
                             )}>
                               {/* Time label */}
-                              <div className={cn(
-                                "p-2 font-mono text-muted-foreground bg-muted/30 rounded",
-                                isMobile ? "text-xs" : "text-xs"
-                              )}>
-                                {time}
-                              </div>
+                               <div className={cn(
+                                 "p-2 font-mono text-muted-foreground bg-muted/30 rounded",
+                                 isMobile ? "text-xs" : "text-xs"
+                               )}>
+                                 {timeSlots.find(slot => slot.time === time)?.displayTime || time}
+                               </div>
                               
                               {/* Slots for each day */}
                               {daySlots.map((slot, dayIndex) => {
