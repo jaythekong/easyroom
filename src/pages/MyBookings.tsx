@@ -145,7 +145,7 @@ export default function MyBookings() {
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: organization?.timezone || 'America/New_York'
+      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
     }).format(date);
   };
   
@@ -155,7 +155,7 @@ export default function MyBookings() {
       month: 'short',
       day: '2-digit', 
       year: 'numeric',
-      timeZone: organization?.timezone || 'America/New_York'
+      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
     }).format(date);
   };
 
@@ -422,7 +422,7 @@ function BookingRow({
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: organization?.timezone || 'America/New_York'
+      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
     }).format(date);
   };
   
@@ -432,7 +432,7 @@ function BookingRow({
       month: 'short',
       day: '2-digit', 
       year: 'numeric',
-      timeZone: organization?.timezone || 'America/New_York'
+      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
     }).format(date);
   };
 

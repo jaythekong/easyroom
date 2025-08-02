@@ -159,7 +159,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
         hour: 'numeric',
         minute: '2-digit',
         hour12: true,
-        timeZone: organization?.timezone || 'America/New_York'
+        timeZone: organization?.timezone || 'Asia/Phnom_Penh'
       }).format(tempDate);
       
       slots.push({

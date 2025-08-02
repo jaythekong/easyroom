@@ -66,7 +66,7 @@ export function BookingDetailsModal({
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: organization?.timezone || 'America/New_York'
+      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
     }).format(date);
   };
 
@@ -76,7 +76,7 @@ export function BookingDetailsModal({
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: organization?.timezone || 'America/New_York'
+      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
     }).format(date);
   };
 
@@ -211,7 +211,7 @@ export function BookingDetailsModal({
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                    timeZone: organization?.timezone || 'America/New_York'
+                    timeZone: organization?.timezone || 'Asia/Phnom_Penh'
                   }).format(new Date(booking.start_time))}
                 </p>
                 <p className="text-xs text-muted-foreground">
