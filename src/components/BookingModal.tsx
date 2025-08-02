@@ -435,27 +435,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (formData.startTime && formData.date) {
       const conflictingBooking = getConflictingBooking(formData.startTime);
       if (conflictingBooking) {
-        const timezone = organization?.timezone || 'America/New_York';
-        const startTime = new Intl.DateTimeFormat('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: timezone
-        }).format(new Date(conflictingBooking.start_time));
-        const endTime = new Intl.DateTimeFormat('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true,
-          timeZone: timezone
-        }).format(new Date(conflictingBooking.end_time));
-        setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime} - ${endTime})`);
+        const startTime = new Date(conflictingBooking.start_time).toISOString().substring(11, 16);
+        const endTime = new Date(conflictingBooking.end_time).toISOString().substring(11, 16);
+        setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime}-${endTime})`);
       } else if (formData.endTime && checkTimeConflict(formData.startTime, formData.endTime)) {
         setTimeConflictError("Time range conflicts with existing booking.");
       } else {
         setTimeConflictError("");
       }
     }
-  }, [formData.startTime, formData.endTime, formData.date, existingBookings, organization]);
+  }, [formData.startTime, formData.endTime, formData.date, existingBookings]);
 
   // Simple function to get available end times
   const getAvailableEndTimes = () => {
@@ -468,9 +457,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (existingBooking) {
       const availableTimes = allTimeSlots.slice(startIndex + 1);
       
-      // Always ensure the original end time is available when editing an existing booking
+      // Ensure the original end time is always available when editing
       if (formData.endTime && !availableTimes.includes(formData.endTime)) {
-        // Add the original end time and sort the array
         const allTimes = [...availableTimes, formData.endTime].sort((a, b) => {
           const [aHour, aMin] = a.split(':').map(Number);
           const [bHour, bMin] = b.split(':').map(Number);
@@ -586,26 +574,9 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     console.log("Form data before submission:", formData);
 
     try {
-      // Create datetime strings in the organization's timezone
-      const timezone = organization?.timezone || 'America/New_York';
-      const dateStr = format(formData.date, 'yyyy-MM-dd');
-      
-      // Convert local time to UTC for storage
-      const startLocal = new Date(`${dateStr}T${formData.startTime}:00`);
-      const endLocal = new Date(`${dateStr}T${formData.endTime}:00`);
-      
-      // Get timezone offset for the organization's timezone at the booking date
-      const tempDate = new Date(`${dateStr}T12:00:00`);
-      const utcTime = tempDate.toLocaleString('en-US', { timeZone: 'UTC' });
-      const orgTime = tempDate.toLocaleString('en-US', { timeZone: timezone });
-      const offsetMs = new Date(utcTime).getTime() - new Date(orgTime).getTime();
-      
-      // Apply timezone offset to get UTC times
-      const startUTC = new Date(startLocal.getTime() + offsetMs);
-      const endUTC = new Date(endLocal.getTime() + offsetMs);
-      
-      const startDateTime = startUTC.toISOString();
-      const endDateTime = endUTC.toISOString();
+      // Create datetime strings
+      const startDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
+      const endDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
       
       logger.debug("DateTime strings:", { startDateTime, endDateTime });
 
@@ -690,10 +661,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       
       toast({
         title: existingBooking ? "Booking Updated!" : "Booking Confirmed!",
-        description: `${room.name} has been ${existingBooking ? 'updated' : 'booked'} for ${new Intl.DateTimeFormat('en-US', {
-          dateStyle: 'medium',
-          timeZone: organization?.timezone || 'America/New_York'
-        }).format(formData.date)} from ${formData.startTime} to ${formData.endTime}.`,
+        description: `${room.name} has been ${existingBooking ? 'updated' : 'booked'} for ${format(formData.date, "PPP")} from ${formData.startTime} to ${formData.endTime}.`,
       });
       onClose();
       
@@ -840,9 +808,9 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
                 onValueChange={(value) => {
                   console.log('📝 Start time changed:', value);
                   updateFormData({ startTime: value });
-                  // Clear end time when start time changes (only for new bookings, not when editing)
-                  if (formData.endTime && !existingBooking) {
-                    console.log('📝 Clearing end time because start time changed (new booking)');
+                  // Clear end time when start time changes
+                  if (formData.endTime) {
+                    console.log('📝 Clearing end time because start time changed');
                     updateFormData({ endTime: "" });
                   }
                 }}
@@ -916,7 +884,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
             <div className="space-y-2">
               <Label htmlFor="endTime">End Time *</Label>
-               <Select 
+              <Select 
                 value={formData.endTime} 
                 onValueChange={(value) => updateFormData({ endTime: value })}
                 disabled={isLoadingGaps || !formData.startTime}
