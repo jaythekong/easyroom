@@ -370,17 +370,21 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             endDate: endDate.toISOString()
           });
 
-          // Extract time components from the original UTC times
-          const startUTC = new Date(existingBooking.start_time);
-          const endUTC = new Date(existingBooking.end_time);
-          const formattedStartTime = startUTC.toISOString().substring(11, 16); // HH:mm format from UTC
-          const formattedEndTime = endUTC.toISOString().substring(11, 16); // HH:mm format from UTC
+          // Extract time components treating stored times as local times (no timezone conversion)
+          const localStartTime = existingBooking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+          const localEndTime = existingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+          const startLocal = new Date(localStartTime);
+          const endLocal = new Date(localEndTime);
+          const formattedStartTime = startLocal.toTimeString().substring(0, 5); // HH:mm format from local
+          const formattedEndTime = endLocal.toTimeString().substring(0, 5); // HH:mm format from local
           
           console.log('📝 Time formatting:', {
             originalStartTime: existingBooking.start_time,
             originalEndTime: existingBooking.end_time,
-            startUTC: startUTC.toISOString(),
-            endUTC: endUTC.toISOString(),
+            localStartTime,
+            localEndTime,
+            startLocal: startLocal.toISOString(),
+            endLocal: endLocal.toISOString(),
             formattedStartTime,
             formattedEndTime,
             availableTimeSlots: allTimeSlots,
