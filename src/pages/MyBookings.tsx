@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { BookingModal } from "@/components/BookingModal";
+import { BookingDetailsModal } from "@/components/BookingDetailsModal";
 
 interface BookingWithDetails {
   id: string;
@@ -66,7 +67,7 @@ export default function MyBookings() {
 
     setSelectedBooking(booking);
     setSelectedRoom(room);
-    setShowViewModal(true);
+    setShowViewModal(true); // Always show details first
   };
 
   const handleEditBooking = async (booking: BookingWithDetails) => {
@@ -78,7 +79,7 @@ export default function MyBookings() {
 
     setSelectedBooking(booking);
     setSelectedRoom(room);
-    setShowEditModal(true);
+    setShowEditModal(true); // Direct to edit modal
   };
 
   const handleDeleteBooking = (booking: BookingWithDetails) => {
@@ -314,51 +315,27 @@ export default function MyBookings() {
         )}
       </div>
 
-      {/* View Modal */}
-      {showViewModal && selectedBooking && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
-            <div className="space-y-3">
-              <div>
-                <div className="font-medium">{selectedBooking.title}</div>
-                {selectedBooking.description && (
-                  <div className="text-sm text-muted-foreground mt-1">{selectedBooking.description}</div>
-                )}
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
-                  <span>{selectedRoom?.name}</span>
-                  {selectedRoom?.location && <span>• {selectedRoom.location}</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{formatDate(selectedBooking.start_time)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>{formatTime(selectedBooking.start_time)} - {formatTime(selectedBooking.end_time)}</span>
-                </div>
-                {selectedBooking.attendees && (
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    <span>{selectedBooking.attendees} attendees</span>
-                  </div>
-                )}
-                <div>
-                  <span className="font-medium">Organizer:</span> {selectedBooking.user_profiles.display_name || selectedBooking.user_profiles.email}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <Button variant="outline" onClick={() => setShowViewModal(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* View Modal - Using BookingDetailsModal component like calendar */}
+      <BookingDetailsModal
+        isOpen={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setSelectedBooking(null);
+          setSelectedRoom(null);
+        }}
+        booking={selectedBooking ? {
+          ...selectedBooking,
+          status: selectedBooking.status || 'confirmed',
+          recurring: selectedBooking.recurring || 'none'
+        } : null}
+        room={selectedRoom}
+        onEdit={(booking) => {
+          // Close view modal and open edit modal
+          setShowViewModal(false);
+          handleEditBooking(booking);
+        }}
+        onBookingUpdate={handleBookingUpdate}
+      />
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && selectedBooking && (
