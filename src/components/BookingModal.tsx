@@ -460,17 +460,31 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
 
   // Simple function to get available end times
   const getAvailableEndTimes = () => {
-    if (!formData.startTime) return [];
+    if (!formData.startTime) {
+      console.log('📝 getAvailableEndTimes: No start time set');
+      return [];
+    }
     
     const startIndex = allTimeSlots.findIndex(time => time === formData.startTime);
-    if (startIndex === -1) return [];
+    if (startIndex === -1) {
+      console.log('📝 getAvailableEndTimes: Start time not found in slots');
+      return [];
+    }
     
     // For existing bookings, allow all times after start time
     if (existingBooking) {
       const availableTimes = allTimeSlots.slice(startIndex + 1);
       
+      console.log('📝 getAvailableEndTimes for existing booking:', {
+        formDataEndTime: formData.endTime,
+        availableTimes: availableTimes.slice(0, 5),
+        endTimeInAvailable: availableTimes.includes(formData.endTime || ''),
+        existingBookingEndTime: existingBooking.end_time
+      });
+      
       // Ensure the original end time is always available when editing
       if (formData.endTime && !availableTimes.includes(formData.endTime)) {
+        console.log('📝 Adding missing end time to available options:', formData.endTime);
         const allTimes = [...availableTimes, formData.endTime].sort((a, b) => {
           const [aHour, aMin] = a.split(':').map(Number);
           const [bHour, bMin] = b.split(':').map(Number);
