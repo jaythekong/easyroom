@@ -575,9 +575,26 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     console.log("Form data before submission:", formData);
 
     try {
-      // Create datetime strings
-      const startDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
-      const endDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
+      // Create datetime strings in the organization's timezone
+      const timezone = organization?.timezone || 'America/New_York';
+      const dateStr = format(formData.date, 'yyyy-MM-dd');
+      
+      // Convert local time to UTC for storage
+      const startLocal = new Date(`${dateStr}T${formData.startTime}:00`);
+      const endLocal = new Date(`${dateStr}T${formData.endTime}:00`);
+      
+      // Get timezone offset for the organization's timezone at the booking date
+      const tempDate = new Date(`${dateStr}T12:00:00`);
+      const utcTime = tempDate.toLocaleString('en-US', { timeZone: 'UTC' });
+      const orgTime = tempDate.toLocaleString('en-US', { timeZone: timezone });
+      const offsetMs = new Date(utcTime).getTime() - new Date(orgTime).getTime();
+      
+      // Apply timezone offset to get UTC times
+      const startUTC = new Date(startLocal.getTime() + offsetMs);
+      const endUTC = new Date(endLocal.getTime() + offsetMs);
+      
+      const startDateTime = startUTC.toISOString();
+      const endDateTime = endUTC.toISOString();
       
       logger.debug("DateTime strings:", { startDateTime, endDateTime });
 
