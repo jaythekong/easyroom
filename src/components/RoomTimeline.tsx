@@ -147,19 +147,18 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     }
   }, [selectedDate, rooms]);
 
-  // Generate business hours time slots (8 AM to 8 PM) with organization timezone formatting
+  // Generate business hours time slots (8 AM to 8 PM) with local timezone formatting
   const timeSlots = useMemo(() => {
     const slots = [];
     for (let hour = 8; hour <= 20; hour++) {
-      // Create a date in the organization's timezone for proper formatting
+      // Create a date for proper formatting
       const tempDate = new Date();
       tempDate.setHours(hour, 0, 0, 0);
       
       const displayTime = new Intl.DateTimeFormat('en-US', {
         hour: 'numeric',
         minute: '2-digit',
-        hour12: true,
-        timeZone: organization?.timezone || 'Asia/Phnom_Penh'
+        hour12: true
       }).format(tempDate);
       
       slots.push({
@@ -170,7 +169,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
     }
     console.log('📅 Generated business hours time slots:', slots.length, 'hours (8 AM - 8 PM)');
     return slots;
-  }, [organization?.timezone]);
+  }, []);
 
   // Generate days for each room - mobile shows 3 days centered on selected date, desktop shows full week
   const getRoomWeekDays = useCallback((roomId: string) => {

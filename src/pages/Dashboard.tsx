@@ -128,22 +128,12 @@ export default function Dashboard() {
   }, [userBookings]);
 
   const getTimeBasedGreeting = () => {
-    const timezone = organization?.timezone || 'America/New_York';
-    const now = new Date();
+    // Get current hour in the local timezone for greeting
+    const currentHour = new Date().getHours();
     
-    // Get current hour in the organization's timezone
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      hour12: false,
-      timeZone: timezone
-    });
-    
-    const hourString = formatter.format(now);
-    const hour = parseInt(hourString, 10);
-    
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good afternoon";
-    if (hour < 21) return "Good Evening";
+    if (currentHour < 12) return "Good Morning";
+    if (currentHour < 17) return "Good afternoon";
+    if (currentHour < 21) return "Good Evening";
     return "Good Night";
   };
 

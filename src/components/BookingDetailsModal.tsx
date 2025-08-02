@@ -65,8 +65,7 @@ export function BookingDetailsModal({
       day: 'numeric',
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true,
-      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
+      hour12: true
     }).format(date);
   };
 
@@ -75,8 +74,7 @@ export function BookingDetailsModal({
     return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true,
-      timeZone: organization?.timezone || 'Asia/Phnom_Penh'
+      hour12: true
     }).format(date);
   };
 
@@ -210,8 +208,7 @@ export function BookingDetailsModal({
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
-                    day: 'numeric',
-                    timeZone: organization?.timezone || 'Asia/Phnom_Penh'
+                    day: 'numeric'
                   }).format(new Date(booking.start_time))}
                 </p>
                 <p className="text-xs text-muted-foreground">
