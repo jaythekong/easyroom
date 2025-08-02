@@ -37,9 +37,9 @@ export function useBookings(selectedDate: Date) {
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday
       const weekEnd = addDays(weekStart, 6); // Sunday
       
-      // Format dates with time to ensure proper comparison with timestamps
-      const startDateTime = format(weekStart, 'yyyy-MM-dd') + 'T00:00:00.000Z';
-      const endDateTime = format(addDays(weekEnd, 1), 'yyyy-MM-dd') + 'T00:00:00.000Z'; // Add 1 day to include all of Sunday
+      // Format dates as local times for comparison with stored timestamps
+      const startDateTime = format(weekStart, 'yyyy-MM-dd') + 'T00:00:00';
+      const endDateTime = format(addDays(weekEnd, 1), 'yyyy-MM-dd') + 'T00:00:00'; // Add 1 day to include all of Sunday
       
       console.log(`Fetching bookings from ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')} for org: ${organization.slug}`);
       console.log('Query range:', { startDateTime, endDateTime });
@@ -163,9 +163,9 @@ export function useDowntime(selectedDate: Date) {
       const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday
       const weekEnd = addDays(weekStart, 6); // Sunday
       
-      // Format dates with time to ensure proper comparison with timestamps
-      const startDateTime = format(weekStart, 'yyyy-MM-dd') + 'T00:00:00.000Z';
-      const endDateTime = format(addDays(weekEnd, 1), 'yyyy-MM-dd') + 'T00:00:00.000Z'; // Add 1 day to include all of Sunday
+      // Format dates as local times for comparison with stored timestamps
+      const startDateTime = format(weekStart, 'yyyy-MM-dd') + 'T00:00:00';
+      const endDateTime = format(addDays(weekEnd, 1), 'yyyy-MM-dd') + 'T00:00:00'; // Add 1 day to include all of Sunday
       
       console.log(`Fetching downtime from ${format(weekStart, 'yyyy-MM-dd')} to ${format(weekEnd, 'yyyy-MM-dd')} for org: ${organization.slug}`);
       

@@ -103,7 +103,7 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   const { data: downtime = [], refetch: refetchDowntime } = useDowntime(selectedDate);
 
   console.log('📅 CALENDAR DEBUG - Raw Data:', {
-    selectedDate: selectedDate.toISOString(),
+    selectedDate: selectedDate.toString(),
     totalBookings: bookings.length,
     bookingsList: bookings.map(b => ({
       id: b.id,
@@ -197,13 +197,15 @@ const RoomTimelineComponent = memo(function RoomTimeline({
   // CRITICAL: Simple and bulletproof booking overlap check
   const doesBookingOverlapSlot = useCallback((booking: Booking, slotDate: string, slotHour: number): boolean => {
     try {
-      // Parse booking times as UTC (they're stored in UTC)
-      const bookingStart = new Date(booking.start_time);
-      const bookingEnd = new Date(booking.end_time);
+      // Parse booking times as local times (strip timezone info)
+      const bookingStartLocal = booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+      const bookingEndLocal = booking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+      const bookingStart = new Date(bookingStartLocal);
+      const bookingEnd = new Date(bookingEndLocal);
       
-      // Create slot boundaries in UTC
-      const slotStart = new Date(`${slotDate}T${slotHour.toString().padStart(2, '0')}:00:00.000Z`);
-      const slotEnd = new Date(`${slotDate}T${((slotHour + 1) % 24).toString().padStart(2, '0')}:00:00.000Z`);
+      // Create slot boundaries in local time
+      const slotStart = new Date(`${slotDate}T${slotHour.toString().padStart(2, '0')}:00:00`);
+      const slotEnd = new Date(`${slotDate}T${((slotHour + 1) % 24).toString().padStart(2, '0')}:00:00`);
       
       // Simple overlap check: booking overlaps if it starts before slot ends and ends after slot starts
       const overlaps = bookingStart < slotEnd && bookingEnd > slotStart;
@@ -211,8 +213,8 @@ const RoomTimelineComponent = memo(function RoomTimeline({
       if (overlaps) {
         console.log('✅ BOOKING OVERLAP FOUND:', {
           booking: booking.title,
-          bookingWindow: `${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`,
-          slotWindow: `${slotStart.toISOString()} - ${slotEnd.toISOString()}`,
+          bookingWindow: `${bookingStart.toString()} - ${bookingEnd.toString()}`,
+          slotWindow: `${slotStart.toString()} - ${slotEnd.toString()}`,
           slotDate,
           slotHour
         });

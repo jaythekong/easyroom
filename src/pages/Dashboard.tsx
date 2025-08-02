@@ -114,17 +114,19 @@ export default function Dashboard() {
   // Count user's personal upcoming bookings
   const personalUpcomingBookings = useMemo(() => {
     const now = new Date();
-    return userBookings.filter(booking => 
-      booking.user_id === userId && new Date(booking.start_time) > now
-    ).length;
+    return userBookings.filter(booking => {
+      const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      return booking.user_id === userId && bookingStart > now;
+    }).length;
   }, [userBookings, userId]);
 
   // Count organization-wide upcoming bookings
   const organizationUpcomingBookings = useMemo(() => {
     const now = new Date();
-    return userBookings.filter(booking => 
-      new Date(booking.start_time) > now
-    ).length;
+    return userBookings.filter(booking => {
+      const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      return bookingStart > now;
+    }).length;
   }, [userBookings]);
 
   const getTimeBasedGreeting = () => {

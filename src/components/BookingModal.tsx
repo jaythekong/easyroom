@@ -99,11 +99,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
   // Helper function to check if a time falls within any gap
   const timeInGaps = (timeStr: string) => {
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const timeToCheck = new Date(`${dateStr}T${timeStr}:00.000Z`);
+    const timeToCheck = new Date(`${dateStr}T${timeStr}:00`);
     
     return roomGaps.some(gap => {
-      const gapStart = new Date(gap.gap_start);
-      const gapEnd = new Date(gap.gap_end);
+      const gapStart = new Date(gap.gap_start.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      const gapEnd = new Date(gap.gap_end.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
       return timeToCheck >= gapStart && timeToCheck < gapEnd;
     });
   };
@@ -129,24 +129,24 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     }
     
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const startTime = new Date(`${dateStr}T${formData.startTime}:00.000Z`);
+    const startTime = new Date(`${dateStr}T${formData.startTime}:00`);
     
     console.log('🕐 Looking for gap containing:', {
       dateStr,
-      startTime: startTime.toISOString(),
+      startTime: startTime.toString(),
       formattedStartTime: formData.startTime
     });
     
     // Find the gap that contains the start time
     const currentGap = roomGaps.find(gap => {
-      const gapStart = new Date(gap.gap_start);
-      const gapEnd = new Date(gap.gap_end);
+      const gapStart = new Date(gap.gap_start.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      const gapEnd = new Date(gap.gap_end.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
       const isInGap = startTime >= gapStart && startTime < gapEnd;
       
       console.log('🕐 Checking gap:', {
-        gapStart: gapStart.toISOString(),
-        gapEnd: gapEnd.toISOString(),
-        startTime: startTime.toISOString(),
+        gapStart: gapStart.toString(),
+        gapEnd: gapEnd.toString(),
+        startTime: startTime.toString(),
         isInGap
       });
       
@@ -162,8 +162,8 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     
     // Return all times after start time but within the same gap
     const endTimes = allTimeSlots.filter(timeStr => {
-      const time = new Date(`${dateStr}T${timeStr}:00.000Z`);
-      const gapEnd = new Date(currentGap.gap_end);
+      const time = new Date(`${dateStr}T${timeStr}:00`);
+      const gapEnd = new Date(currentGap.gap_end.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
       return time > startTime && time <= gapEnd;
     });
     
@@ -229,12 +229,12 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (!startTime || !endTime || !formData.date) return false;
 
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const checkStart = new Date(`${dateStr}T${startTime}:00.000Z`); // Fixed: Add .000Z for UTC
-    const checkEnd = new Date(`${dateStr}T${endTime}:00.000Z`); // Fixed: Add .000Z for UTC
+    const checkStart = new Date(`${dateStr}T${startTime}:00`);
+    const checkEnd = new Date(`${dateStr}T${endTime}:00`);
 
     console.log('📝 CHECKING CONFLICT:', {
-      checkStart: checkStart.toISOString(),
-      checkEnd: checkEnd.toISOString(),
+      checkStart: checkStart.toString(),
+      checkEnd: checkEnd.toString(),
       existingBookingsCount: existingBookings.length,
       existingBookings: existingBookings.map(b => ({
         title: b.title,
@@ -244,16 +244,16 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     });
 
     const hasConflict = existingBookings.some(booking => {
-      const bookingStart = new Date(booking.start_time);
-      const bookingEnd = new Date(booking.end_time);
+      const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      const bookingEnd = new Date(booking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
       
       // Check if times overlap
       const overlaps = checkStart < bookingEnd && checkEnd > bookingStart;
       
       if (overlaps) {
         console.log('📝 CONFLICT DETECTED:', {
-          newBooking: `${checkStart.toISOString()} - ${checkEnd.toISOString()}`,
-          existingBooking: `${bookingStart.toISOString()} - ${bookingEnd.toISOString()}`,
+          newBooking: `${checkStart.toString()} - ${checkEnd.toString()}`,
+          existingBooking: `${bookingStart.toString()} - ${bookingEnd.toString()}`,
           title: booking.title
         });
       }
@@ -270,25 +270,25 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (!time || !formData.date) return false;
 
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const slotTime = new Date(`${dateStr}T${time}:00.000Z`); // Fixed: Add .000Z for UTC
+    const slotTime = new Date(`${dateStr}T${time}:00`);
 
     console.log('🔍 Checking time slot conflict:', {
       time,
       dateStr,
-      slotTime: slotTime.toISOString(),
+      slotTime: slotTime.toString(),
       existingBookingsCount: existingBookings.length,
       isEndTime
     });
 
     const hasConflict = existingBookings.some(booking => {
-      const bookingStart = new Date(booking.start_time);
-      const bookingEnd = new Date(booking.end_time);
+      const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      const bookingEnd = new Date(booking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
       
       console.log('🔍 Comparing with booking:', {
         bookingTitle: booking.title,
-        bookingStart: bookingStart.toISOString(),
-        bookingEnd: bookingEnd.toISOString(),
-        slotTime: slotTime.toISOString()
+        bookingStart: bookingStart.toString(),
+        bookingEnd: bookingEnd.toString(),
+        slotTime: slotTime.toString()
       });
       
       if (isEndTime) {
@@ -313,11 +313,11 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (!time || !formData.date) return null;
 
     const dateStr = format(formData.date, 'yyyy-MM-dd');
-    const slotTime = new Date(`${dateStr}T${time}:00.000Z`); // Fixed: Add .000Z for UTC
+    const slotTime = new Date(`${dateStr}T${time}:00`);
 
     return existingBookings.find(booking => {
-      const bookingStart = new Date(booking.start_time);
-      const bookingEnd = new Date(booking.end_time);
+      const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      const bookingEnd = new Date(booking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
       return slotTime >= bookingStart && slotTime < bookingEnd;
     });
   };
@@ -439,8 +439,10 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     if (formData.startTime && formData.date) {
       const conflictingBooking = getConflictingBooking(formData.startTime);
       if (conflictingBooking) {
-        const startTime = new Date(conflictingBooking.start_time).toISOString().substring(11, 16);
-        const endTime = new Date(conflictingBooking.end_time).toISOString().substring(11, 16);
+        const localStart = conflictingBooking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+        const localEnd = conflictingBooking.end_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, '');
+        const startTime = new Date(localStart).toTimeString().substring(0, 5);
+        const endTime = new Date(localEnd).toTimeString().substring(0, 5);
         setTimeConflictError(`Start time conflicts with "${conflictingBooking.title}" (${startTime}-${endTime})`);
       } else if (formData.endTime && checkTimeConflict(formData.startTime, formData.endTime)) {
         setTimeConflictError("Time range conflicts with existing booking.");
@@ -578,7 +580,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     console.log("Form data before submission:", formData);
 
     try {
-      // Create datetime strings in local timezone for storage
+      // Create datetime strings as local times without timezone conversion
       const startDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.startTime}:00`;
       const endDateTime = `${format(formData.date, 'yyyy-MM-dd')}T${formData.endTime}:00`;
       
