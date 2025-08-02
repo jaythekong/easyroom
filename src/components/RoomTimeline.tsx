@@ -371,20 +371,14 @@ const RoomTimelineComponent = memo(function RoomTimeline({
           hasOnEditBooking: !!onEditBooking
         });
         
-        // If user can edit AND onEditBooking is provided, allow editing
-        if (canEditBooking && onEditBooking) {
-          console.log('📅 EDITING booking:', fullBooking.title);
-          onEditBooking(fullBooking);
-        } else {
-          // Otherwise, show details modal (for view-only or when onEditBooking is not available)
-          console.log('📅 SHOWING DETAILS for booking:', fullBooking.title);
-          console.log('📅 Setting selectedBooking:', fullBooking);
-          console.log('📅 Setting selectedBookingRoom:', room);
-          setSelectedBooking(fullBooking);
-          setSelectedBookingRoom(room);
-          setIsBookingDetailsOpen(true);
-          console.log('📅 Modal should be open now');
-        }
+        // Always show details modal first, regardless of permissions
+        console.log('📅 SHOWING DETAILS for booking:', fullBooking.title);
+        console.log('📅 Setting selectedBooking:', fullBooking);
+        console.log('📅 Setting selectedBookingRoom:', room);
+        setSelectedBooking(fullBooking);
+        setSelectedBookingRoom(room);
+        setIsBookingDetailsOpen(true);
+        console.log('📅 Modal should be open now');
       } else {
         console.error('❌ Full booking not found for ID:', booking.bookingId);
       }
