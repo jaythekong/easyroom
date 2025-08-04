@@ -108,7 +108,7 @@ export function TeamManagement() {
         .eq('status', 'pending')
         .is('accepted_at', null)
         .is('revoked_at', null)
-        .gt('expires_at', new Date().toString());
+        .gt('expires_at', new Date().toISOString());
 
       if (invitesError) {
         console.error('Invites query error:', invitesError);
