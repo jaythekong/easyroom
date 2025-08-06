@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, RefreshCw, Building2, AlertCircle, ExternalLink, Copy } from "lucide-react";
+import { Loader2, Mail, Building2, AlertCircle, ExternalLink, Copy } from "lucide-react";
 
 interface OrganizationData {
   id: string;
@@ -24,7 +24,7 @@ export default function InviteAwaitVerify() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [organizationData, setOrganizationData] = useState<OrganizationData | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  
   const [showResendOption, setShowResendOption] = useState(false);
   const [error, setError] = useState("");
   const [orgUrlCopied, setOrgUrlCopied] = useState(false);
@@ -186,20 +186,6 @@ export default function InviteAwaitVerify() {
     return `${h} ${s} ${newL}%`;
   };
 
-  const handleRefreshStatus = async () => {
-    setIsRefreshing(true);
-    try {
-      await supabase.auth.refreshSession();
-      toast({
-        title: "Status refreshed",
-        description: "Checking for email confirmation...",
-      });
-    } catch (error) {
-      console.error('Refresh error:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
 
   const handleCopyOrgUrl = async () => {
     if (!slug) return;
@@ -295,26 +281,6 @@ export default function InviteAwaitVerify() {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="flex justify-center">
-            <Button
-              onClick={handleRefreshStatus}
-              disabled={isRefreshing}
-              variant="outline"
-              size="sm"
-            >
-              {isRefreshing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Checking...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Refresh status
-                </>
-              )}
-            </Button>
-          </div>
 
           {/* Organization Access Section */}
           {slug && (
