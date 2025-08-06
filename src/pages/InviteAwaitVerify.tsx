@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, RefreshCw, Building2, AlertCircle } from "lucide-react";
+import { Loader2, Mail, RefreshCw, Building2, AlertCircle, ExternalLink, Copy } from "lucide-react";
 
 interface OrganizationData {
   id: string;
@@ -27,6 +27,7 @@ export default function InviteAwaitVerify() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showResendOption, setShowResendOption] = useState(false);
   const [error, setError] = useState("");
+  const [orgUrlCopied, setOrgUrlCopied] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -200,6 +201,28 @@ export default function InviteAwaitVerify() {
     }
   };
 
+  const handleCopyOrgUrl = async () => {
+    if (!slug) return;
+    
+    const orgUrl = `${window.location.origin}/${slug}`;
+    try {
+      await navigator.clipboard.writeText(orgUrl);
+      setOrgUrlCopied(true);
+      toast({
+        title: "Link copied!",
+        description: "Organization link copied to clipboard",
+      });
+      setTimeout(() => setOrgUrlCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  const handleGoToOrg = () => {
+    if (!slug) return;
+    window.open(`/${slug}`, '_blank');
+  };
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -253,14 +276,25 @@ export default function InviteAwaitVerify() {
           
           <div>
             <CardTitle className="text-2xl">Almost there!</CardTitle>
-            <CardDescription className="mt-2">
-              We've emailed a confirmation link to{" "}
-              <span className="font-medium">{email}</span>. Click it on this device and we'll drop you straight into your workspace.
+            <CardDescription className="mt-4 space-y-3">
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
+                <div className="flex items-center gap-2 text-primary font-medium">
+                  <Mail className="h-4 w-4" />
+                  Check your email now
+                </div>
+                <p className="text-sm">
+                  We've sent a confirmation link to{" "}
+                  <span className="font-medium text-foreground">{email}</span>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Click the link in your email to complete your invitation and access the workspace.
+                </p>
+              </div>
             </CardDescription>
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex justify-center">
             <Button
               onClick={handleRefreshStatus}
@@ -281,9 +315,49 @@ export default function InviteAwaitVerify() {
               )}
             </Button>
           </div>
+
+          {/* Organization Access Section */}
+          {slug && (
+            <div className="border-t pt-6 space-y-4">
+              <div className="text-center">
+                <h4 className="font-medium text-sm text-muted-foreground mb-3">
+                  Quick Access to Your Organization
+                </h4>
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleGoToOrg}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Go to {organizationData?.name || 'Organization'}
+                  </Button>
+                  
+                  <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Save this link for future access:
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-background border rounded px-2 py-1 text-xs font-mono text-center">
+                        {window.location.origin}/{slug}
+                      </div>
+                      <Button
+                        onClick={handleCopyOrgUrl}
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                      >
+                        <Copy className={`h-3 w-3 ${orgUrlCopied ? 'text-primary' : ''}`} />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {showResendOption && (
-            <div className="text-center text-sm text-muted-foreground space-y-2">
+            <div className="text-center text-sm text-muted-foreground space-y-2 border-t pt-4">
               <p>Didn't get it? Check your spam folder or contact support.</p>
             </div>
           )}
