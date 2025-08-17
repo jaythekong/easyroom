@@ -1028,33 +1028,11 @@ const Auth = () => {
                                      return;
                                    }
                                    
-                                   // User not signed in - attempt to validate credentials by trying to sign in
-                                   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-                                     email: sanitizedEmail,
-                                     password: password,
-                                   });
-                                   
-                                   if (authError) {
-                                     if (authError.message.includes("Invalid login credentials") || 
-                                         authError.message.includes("Email not confirmed")) {
-                                       toast.error("Invalid email or password. Please check your credentials.");
-                                     } else {
-                                       toast.error(authError.message);
-                                     }
-                                     logger.security('Step 1 credential validation failed', { 
-                                       error: authError.message, 
-                                       email: sanitizedEmail 
-                                     });
-                                     return;
-                                   }
-                                   
-                                   if (authData.user) {
-                                     // Credentials are valid, proceed to step 2
-                                     toast.success("Credentials validated! Please continue with organization setup.");
-                                     setOrgCreationStep(2);
-                                   } else {
-                                     toast.error("Authentication failed. Please try again.");
-                                   }
+                                   // User not signed in - this is a new account creation
+                                   // For new organization creation, we'll create the account in step 3
+                                   // For now, just validate the inputs and proceed
+                                   console.log('Step 1: New account - proceeding to step 2');
+                                   setOrgCreationStep(2);
                                 } catch (error) {
                                   logger.error('Admin account setup error:', error);
                                   toast.error("An error occurred while setting up your account.");
