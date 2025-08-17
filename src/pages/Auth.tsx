@@ -201,7 +201,7 @@ const Auth = () => {
           email: sanitizedEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/${sanitizedSlug}`
+            emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(`/${sanitizedSlug}`)}`
           }
         });
         
@@ -441,13 +441,12 @@ const Auth = () => {
       
       const redirectTo = searchParams.get('redirectTo') || '/';
       logger.debug('Auth: Signing up with redirectTo:', redirectTo);
-      const redirectUrl = `${window.location.origin}${redirectTo}`;
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
-          emailRedirectTo: redirectUrl
+          emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`
         }
       });
 
