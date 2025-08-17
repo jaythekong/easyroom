@@ -411,16 +411,9 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
-    try {
-      // SECURITY: Block signup on org-specific auth pages
-      if (orgSlug) {
-        toast.error("Only invited users can sign up. Ask an admin for an invite link.");
-        logger.security('Blocked signup attempt on org-specific auth', { orgSlug, email });
-        return;
-      }
-      
-      // Input validation and sanitization
-      const sanitizedEmail = sanitizeEmail(email);
+  try {
+    // Input validation and sanitization
+    const sanitizedEmail = sanitizeEmail(email);
       
       const emailValidation = emailSchema.safeParse(sanitizedEmail);
       const passwordValidation = passwordSchema.safeParse(password);
