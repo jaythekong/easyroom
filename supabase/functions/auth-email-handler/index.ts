@@ -54,75 +54,91 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log(`Processing auth email for: ${user.email}, type: ${email_data.email_action_type}`);
 
-    // Build the confirmation/action URL
-    const actionUrl = `${email_data.site_url}/auth/callback?token_hash=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
+    // Start email sending in background task to avoid timeout
+    const emailTask = async () => {
+      try {
+        // Build the confirmation/action URL
+        const actionUrl = `${email_data.site_url}/auth/callback?token_hash=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
 
-    let subject = '';
-    let htmlContent = '';
+        let subject = '';
+        let htmlContent = '';
 
-    switch (email_data.email_action_type) {
-      case 'signup':
-        subject = 'Confirm your email address';
-        htmlContent = createSignupEmailHTML(user.email, actionUrl, email_data.token);
-        break;
-        
-      case 'invite':
-        subject = 'You\'ve been invited to join';
-        htmlContent = createInviteEmailHTML(user.email, actionUrl, email_data.token);
-        break;
-        
-      case 'magiclink':
-        subject = 'Sign in to your account';
-        htmlContent = createMagicLinkEmailHTML(user.email, actionUrl, email_data.token);
-        break;
-        
-      case 'recovery':
-        subject = 'Reset your password';
-        htmlContent = createPasswordResetEmailHTML(user.email, actionUrl, email_data.token);
-        break;
-        
-      case 'email_change':
-        subject = 'Confirm your new email address';
-        htmlContent = createEmailChangeEmailHTML(user.email, actionUrl, email_data.token);
-        break;
+        switch (email_data.email_action_type) {
+          case 'signup':
+            subject = 'Confirm your email address';
+            htmlContent = createSignupEmailHTML(user.email, actionUrl, email_data.token);
+            break;
+            
+          case 'invite':
+            subject = 'You\'ve been invited to join';
+            htmlContent = createInviteEmailHTML(user.email, actionUrl, email_data.token);
+            break;
+            
+          case 'magiclink':
+            subject = 'Sign in to your account';
+            htmlContent = createMagicLinkEmailHTML(user.email, actionUrl, email_data.token);
+            break;
+            
+          case 'recovery':
+            subject = 'Reset your password';
+            htmlContent = createPasswordResetEmailHTML(user.email, actionUrl, email_data.token);
+            break;
+            
+          case 'email_change':
+            subject = 'Confirm your new email address';
+            htmlContent = createEmailChangeEmailHTML(user.email, actionUrl, email_data.token);
+            break;
 
-      case 'reauthentication':
-        subject = 'Confirm it\'s really you';
-        htmlContent = createReauthEmailHTML(user.email, actionUrl, email_data.token);
-        break;
-        
-      default:
-        console.warn(`Unknown email action type: ${email_data.email_action_type}`);
-        subject = 'Confirm your action';
-        htmlContent = createGenericEmailHTML(user.email, actionUrl, email_data.token);
+          case 'reauthentication':
+            subject = 'Confirm it\'s really you';
+            htmlContent = createReauthEmailHTML(user.email, actionUrl, email_data.token);
+            break;
+            
+          default:
+            console.warn(`Unknown email action type: ${email_data.email_action_type}`);
+            subject = 'Confirm your action';
+            htmlContent = createGenericEmailHTML(user.email, actionUrl, email_data.token);
+        }
+
+        const { error } = await resend.emails.send({
+          from: 'EasyRoom <noreply@easyroom.asia>',
+          to: [user.email],
+          subject: subject,
+          html: htmlContent,
+        });
+
+        if (error) {
+          console.error('Resend error:', error);
+          throw error;
+        }
+
+        console.log(`✅ Email sent successfully to ${user.email} for ${email_data.email_action_type}`);
+      } catch (emailError: any) {
+        console.error('Background email task error:', emailError);
+      }
+    };
+
+    // Use waitUntil to run email sending in background
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+      EdgeRuntime.waitUntil(emailTask());
+    } else {
+      // Fallback for local development - run in background with setTimeout
+      setTimeout(() => emailTask(), 0);
     }
 
-    const { error } = await resend.emails.send({
-      from: 'EasyRoom <noreply@easyroom.asia>',
-      to: [user.email],
-      subject: subject,
-      html: htmlContent,
-    });
-
-    if (error) {
-      console.error('Resend error:', error);
-      throw error;
-    }
-
-    console.log(`✅ Email sent successfully to ${user.email} for ${email_data.email_action_type}`);
-
-    return new Response(JSON.stringify({ success: true }), {
+    // Return immediate success response to prevent timeout
+    return new Response(JSON.stringify({ success: true, message: 'Email processing started' }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
 
   } catch (error: any) {
-    console.error('Error sending auth email:', error);
+    console.error('Error processing auth email webhook:', error);
     
     return new Response(JSON.stringify({
       error: {
         http_code: error.code || 500,
-        message: error.message || 'Failed to send email',
+        message: error.message || 'Failed to process email request',
       },
     }), {
       status: error.code || 500,
