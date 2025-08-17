@@ -98,7 +98,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const { error } = await resend.emails.send({
-      from: 'EasyRoom <noreply@easybook.asia>',
+      from: 'EasyRoom <noreply@easyroom.asia>',
       to: [user.email],
       subject: subject,
       html: htmlContent,
