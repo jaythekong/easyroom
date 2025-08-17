@@ -666,7 +666,7 @@ const Auth = () => {
         toast.error(error.message);
       } else {
         logger.security('Password reset requested', { email: sanitizedEmail });
-        toast.success("Password reset email sent! Check your inbox.");
+        toast.success("Password reset email sent! Check your inbox and spam/junk folder.");
         setShowForgotPassword(false);
         setResetEmail("");
       }
