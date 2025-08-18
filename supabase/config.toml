@@ -3,9 +3,6 @@ project_id = "yjdrwwelnuyuifjqfebv"
 [auth]
 external_email_enabled = true
 enable_signup = true
-# Custom email templates via Resend
-enable_email_confirmations = false
-enable_email_change_confirmations = false
 # Site URL should be your production domain
 site_url = "https://easyroom.asia"
 # Redirect URLs for different auth actions
@@ -15,9 +12,6 @@ additional_redirect_urls = [
   "https://d0aa88b5-d019-46f1-b86a-c5a76a8c649d.lovableproject.com",
   "https://d0aa88b5-d019-46f1-b86a-c5a76a8c649d.lovableproject.com/auth/callback",
 ]
-# Hook for custom email handling
-hook_send_email_enabled = true
-hook_send_email_uri = "https://yjdrwwelnuyuifjqfebv.supabase.co/functions/v1/auth-email-handler"
 
 [functions.send-telegram-notification]
 verify_jwt = false
