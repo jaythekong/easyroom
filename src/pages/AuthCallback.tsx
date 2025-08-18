@@ -13,9 +13,24 @@ const AuthCallback = () => {
       try {
         logger.debug('Processing auth callback...');
         
-        const type = searchParams.get('type');
-        const tokenHash = searchParams.get('token_hash');
-        const redirectTo = searchParams.get('redirect_to');
+        // Check both URL params and hash params for compatibility
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        
+        const type = searchParams.get('type') || hashParams.get('type');
+        const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
+        const redirectTo = searchParams.get('redirect_to') || hashParams.get('redirect_to');
+        
+        // Handle error cases from hash
+        const error = hashParams.get('error');
+        const errorCode = hashParams.get('error_code');
+        const errorDescription = hashParams.get('error_description');
+        
+        if (error) {
+          logger.error('Auth error from URL:', { error, errorCode, errorDescription });
+          navigate('/auth?error=auth_failed&details=' + encodeURIComponent(errorDescription || error));
+          return;
+        }
         
         logger.debug('Callback params:', { type, tokenHash: !!tokenHash, redirectTo });
         
