@@ -69,11 +69,25 @@ const Auth = () => {
     }
   }, [organizationName, orgSlug]);
 
-  // Check for password reset parameter
+  // Check for password reset parameter and session
   useEffect(() => {
+    const mode = searchParams.get('mode');
     const resetParam = searchParams.get('reset');
-    if (resetParam === 'true') {
+    const sessionParam = searchParams.get('session');
+    
+    if (mode === 'reset' || resetParam === 'true') {
       setShowUpdatePassword(true);
+      
+      // If we have a session parameter, set it in Supabase
+      if (sessionParam) {
+        try {
+          const sessionData = JSON.parse(decodeURIComponent(sessionParam));
+          logger.debug('Setting session from URL parameter');
+          supabase.auth.setSession(sessionData);
+        } catch (error) {
+          logger.error('Failed to parse session from URL:', error);
+        }
+      }
     }
   }, [searchParams]);
 
@@ -656,8 +670,13 @@ const Auth = () => {
       
       passwordResetRateLimiter.recordAttempt(rateLimitKey);
 
+      // Build proper callback URL that will handle the reset token
+      const redirectTo = orgSlug 
+        ? `${window.location.origin}/${orgSlug}/auth?mode=reset`
+        : `${window.location.origin}/auth?mode=reset`;
+      
       const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
-        redirectTo: `${window.location.origin}${window.location.pathname}?reset=true`,
+        redirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
       });
 
       if (error) {
