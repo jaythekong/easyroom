@@ -54,13 +54,18 @@ const AuthCallback = () => {
             logger.debug('Recovery successful, redirecting to password reset');
             // Extract org slug from redirect_to if present
             if (redirectTo) {
-              const orgMatch = redirectTo.match(/^\/([^\/]+)/);
+              const orgMatch = redirectTo.match(/mode%3Dreset/);
               if (orgMatch) {
-                navigate(`/${orgMatch[1]}/auth?mode=reset&session=${encodeURIComponent(JSON.stringify(session))}`);
-                return;
+                // Find the org slug in the redirect URL
+                const orgSlugMatch = redirectTo.match(/easyroom\.asia%252F([^%]+)%252Fauth/);
+                if (orgSlugMatch) {
+                  const orgSlug = decodeURIComponent(orgSlugMatch[1]);
+                  navigate(`/${orgSlug}/auth?mode=reset`);
+                  return;
+                }
               }
             }
-            navigate(`/auth?mode=reset&session=${encodeURIComponent(JSON.stringify(session))}`);
+            navigate(`/auth?mode=reset`);
             return;
           }
         } else {
