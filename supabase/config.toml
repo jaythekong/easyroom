@@ -3,7 +3,7 @@ project_id = "yjdrwwelnuyuifjqfebv"
 [auth]
 external_email_enabled = true
 enable_signup = true
-# Site URL should be your production domain
+# Site URL should be your production domain - this controls ConfirmationURL in email templates
 site_url = "https://easyroom.asia"
 # Redirect URLs for different auth actions
 additional_redirect_urls = [
@@ -12,6 +12,9 @@ additional_redirect_urls = [
   "https://d0aa88b5-d019-46f1-b86a-c5a76a8c649d.lovableproject.com",
   "https://d0aa88b5-d019-46f1-b86a-c5a76a8c649d.lovableproject.com/auth/callback",
 ]
+# Ensure email confirmation redirects use the correct domain
+email_confirm_redirect_to = "https://easyroom.asia/auth/callback"
+email_change_confirm_redirect_to = "https://easyroom.asia/auth/callback"
 
 [functions.send-telegram-notification]
 verify_jwt = false
