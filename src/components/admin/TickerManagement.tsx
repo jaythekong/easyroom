@@ -96,28 +96,33 @@ export function TickerManagement() {
     if (!organization?.id) return;
 
     setSavingSettings(true);
-    console.log('Updating ticker settings:', newSettings);
+    console.log('Attempting to save ticker settings:', newSettings);
+    console.log('Organization ID:', organization.id);
+
+    // Validate values before sending
+    const validatedSettings = {
+      organization_id: organization.id,
+      master_speed: Math.max(1, Math.min(500, newSettings.master_speed || 50)),
+      message_spacing: Math.max(0, Math.min(50, newSettings.message_spacing || 8))
+    };
+    
+    console.log('Validated settings to send:', validatedSettings);
 
     const { error } = await supabase
       .from('ticker_settings')
-      .upsert(
-        {
-          organization_id: organization.id,
-          master_speed: newSettings.master_speed,
-          message_spacing: newSettings.message_spacing
-        },
-        {
-          onConflict: 'organization_id'
-        }
-      );
+      .upsert(validatedSettings, {
+        onConflict: 'organization_id'
+      });
 
     setSavingSettings(false);
 
     if (error) {
-      console.error('Error updating ticker settings:', error);
+      console.error('Full error object:', error);
+      console.error('Error code:', error.code);
+      console.error('Error details:', error.details);
       toast({
         title: "Error",
-        description: `Failed to update ticker settings: ${error.message}`,
+        description: `Failed to update ticker settings: ${error.message}. Values: speed=${validatedSettings.master_speed}, spacing=${validatedSettings.message_spacing}`,
         variant: "destructive",
       });
     } else {
