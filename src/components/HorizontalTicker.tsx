@@ -114,14 +114,27 @@ export function HorizontalTicker() {
 
   if (!messages.length || !isVisible) return null;
 
-  // Create expanded message array based on frequency
-  const expandedMessages = messages.reduce((acc: TickerMessage[], msg) => {
-    const frequency = Math.max(1, Math.min(10, msg.frequency || 1));
-    for (let i = 0; i < frequency; i++) {
-      acc.push({ ...msg, id: `${msg.id}-${i}` });
+  // Create message cycles based on frequency
+  // First, show all messages once, then add extra cycles for higher frequency messages
+  const createMessageCycles = () => {
+    const maxFrequency = Math.max(...messages.map(msg => msg.frequency || 1));
+    const cycles = [];
+    
+    // Create cycles - each cycle shows all messages once
+    for (let cycle = 1; cycle <= maxFrequency; cycle++) {
+      messages.forEach(msg => {
+        const frequency = msg.frequency || 1;
+        // Only include message in this cycle if its frequency is >= current cycle number
+        if (frequency >= cycle) {
+          cycles.push({ ...msg, id: `${msg.id}-cycle-${cycle}` });
+        }
+      });
     }
-    return acc;
-  }, []);
+    
+    return cycles;
+  };
+
+  const expandedMessages = createMessageCycles();
 
   // Calculate dynamic speed based on organization settings
   const totalWidth = expandedMessages.length * 300; // Approximate width per message
