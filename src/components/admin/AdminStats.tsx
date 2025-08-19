@@ -36,20 +36,12 @@ export function AdminStats() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      // Prevent multiple concurrent requests
-      if (isRequestInProgress) {
-        console.log('Request already in progress, skipping...');
-        return;
-      }
-
       if (!organization?.id || !user) {
-        console.log('Missing organization or user:', { orgId: organization?.id, user: !!user });
         setLoading(false);
         return;
       }
 
-      setIsRequestInProgress(true);
-      console.log('Fetching admin stats for organization:', organization.id);
+      setLoading(true);
       
       try {
         // Use the organization stats function
@@ -63,7 +55,6 @@ export function AdminStats() {
           throw statsError;
         }
 
-        console.log('Organization stats received:', orgStats);
         const stats = orgStats as unknown as OrganizationStats;
 
         // Get amenities count
@@ -95,24 +86,16 @@ export function AdminStats() {
           organizationBookings: stats.total_bookings || 0,
         };
 
-        console.log('Final stats calculated:', finalStats);
         setStats(finalStats);
       } catch (error) {
         console.error("Error fetching stats:", error);
-        // Keep existing stats on error to avoid flashing zeros
       } finally {
         setLoading(false);
-        setIsRequestInProgress(false);
       }
     };
 
-    // Only fetch if we have the required data and no request is in progress
-    if (user && organization?.id && !isRequestInProgress) {
-      fetchStats();
-    } else if (!user || !organization?.id) {
-      setLoading(false);
-    }
-  }, [user, organization?.id, isRequestInProgress]);
+    fetchStats();
+  }, [user, organization?.id]);
 
   const statsCards = [
     {
