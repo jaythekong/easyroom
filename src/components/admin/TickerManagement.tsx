@@ -49,13 +49,16 @@ export function TickerManagement() {
     master_speed: 50,
     message_spacing: 8
   });
+  const [originalSettings, setOriginalSettings] = useState({
+    master_speed: 50,
+    message_spacing: 8
+  });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const { organization } = useOrganization();
   const { toast } = useToast();
   
-  // Debounce settings to avoid too many API calls
-  const [debouncedSettings] = useDebounce(tickerSettings, 1000);
+  // Remove auto-save, only save manually now
 
   useEffect(() => {
     if (organization?.id) {
@@ -63,13 +66,6 @@ export function TickerManagement() {
       fetchTickerSettings();
     }
   }, [organization?.id]);
-
-  // Auto-save settings when debounced value changes (but only after initial load)
-  useEffect(() => {
-    if (settingsLoaded && organization?.id) {
-      updateTickerSettings(debouncedSettings);
-    }
-  }, [debouncedSettings, settingsLoaded, organization?.id]);
 
   const fetchTickerSettings = async () => {
     if (!organization?.id) return;
@@ -86,10 +82,12 @@ export function TickerManagement() {
     }
 
     if (data) {
-      setTickerSettings({
+      const newSettings = {
         master_speed: data.master_speed,
         message_spacing: data.message_spacing
-      });
+      };
+      setTickerSettings(newSettings);
+      setOriginalSettings(newSettings);
     }
     setSettingsLoaded(true);
   };
@@ -124,12 +122,19 @@ export function TickerManagement() {
       });
     } else {
       console.log('Settings updated successfully');
+      setOriginalSettings(newSettings);
       toast({
         title: "Settings Saved",
         description: "Ticker settings updated successfully",
       });
     }
   };
+
+  const handleManualSave = () => {
+    updateTickerSettings(tickerSettings);
+  };
+
+  const hasUnsavedChanges = JSON.stringify(tickerSettings) !== JSON.stringify(originalSettings);
 
   const fetchMessages = async () => {
     if (!organization?.id) return;
@@ -356,15 +361,33 @@ export function TickerManagement() {
       <CardContent>
         {/* Ticker Settings */}
         <div className="mb-6 p-4 border border-border rounded-lg bg-muted/20">
-          <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-            <Badge variant="outline" className="text-xs">Global Settings</Badge>
-            Master Controls
-            {savingSettings && (
-              <Badge variant="secondary" className="text-xs animate-pulse">
-                Saving...
-              </Badge>
-            )}
-          </h3>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">Global Settings</Badge>
+              Master Controls
+              {savingSettings && (
+                <Badge variant="secondary" className="text-xs animate-pulse">
+                  Saving...
+                </Badge>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              {hasUnsavedChanges && (
+                <Badge variant="destructive" className="text-xs">
+                  Unsaved Changes
+                </Badge>
+              )}
+              <Button 
+                onClick={handleManualSave}
+                disabled={savingSettings || !hasUnsavedChanges}
+                size="sm"
+                variant={hasUnsavedChanges ? "default" : "outline"}
+              >
+                {savingSettings ? "Saving..." : "Save Settings"}
+              </Button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="master_speed">Master Speed (px/s)</Label>
@@ -375,8 +398,8 @@ export function TickerManagement() {
                 onChange={(e) => {
                   setTickerSettings({ ...tickerSettings, master_speed: parseInt(e.target.value) || 50 });
                 }}
-                min="10"
-                max="200"
+                min="1"
+                max="500"
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground">
@@ -394,7 +417,7 @@ export function TickerManagement() {
                   setTickerSettings({ ...tickerSettings, message_spacing: parseInt(e.target.value) || 8 });
                 }}
                 min="0"
-                max="20"
+                max="50"
                 className="w-full"
               />
               <p className="text-xs text-muted-foreground">
