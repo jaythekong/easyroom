@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -584,12 +584,12 @@ export type Database = {
     Functions: {
       accept_invitation_and_create_user: {
         Args:
-          | { invitation_token: string; user_email: string }
           | {
+              auth_user_id: string
               invitation_token: string
               user_email: string
-              auth_user_id: string
             }
+          | { invitation_token: string; user_email: string }
         Returns: Json
       }
       accept_invitation_link: {
@@ -617,10 +617,10 @@ export type Database = {
         Returns: Json
       }
       get_room_gaps: {
-        Args: { p_room_id: string; p_date: string }
+        Args: { p_date: string; p_room_id: string }
         Returns: {
-          gap_start: string
           gap_end: string
+          gap_start: string
         }[]
       }
       get_user_admin_org_ids: {
@@ -630,12 +630,12 @@ export type Database = {
       get_user_memberships: {
         Args: { p_user_id: string }
         Returns: {
+          created_at: string
           id: string
           organization_id: string
-          role: Database["public"]["Enums"]["user_role"]
-          created_at: string
-          updated_at: string
           organizations: Json
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
         }[]
       }
       get_user_organization_id: {
@@ -660,26 +660,26 @@ export type Database = {
       }
       has_role_in_org: {
         Args: {
-          required_role: Database["public"]["Enums"]["user_role"]
           org_id?: string
+          required_role: Database["public"]["Enums"]["user_role"]
         }
         Returns: boolean
       }
       has_telegram_sub: {
-        Args: { p_user: string; p_org: string }
+        Args: { p_org: string; p_user: string }
         Returns: boolean
       }
       impersonate_admin: {
-        Args: { target_org_id: string; impersonation_mode?: string }
+        Args: { impersonation_mode?: string; target_org_id: string }
         Returns: Json
       }
       log_invitation_event: {
         Args: {
-          invitation_id: string
-          organization_id: string
           action: string
-          user_id?: string
+          invitation_id: string
           metadata?: Json
+          organization_id: string
+          user_id?: string
         }
         Returns: undefined
       }
@@ -700,7 +700,7 @@ export type Database = {
         Returns: string
       }
       track_invitation_open: {
-        Args: { invitation_token?: string; invitation_short_code?: string }
+        Args: { invitation_short_code?: string; invitation_token?: string }
         Returns: Json
       }
     }
