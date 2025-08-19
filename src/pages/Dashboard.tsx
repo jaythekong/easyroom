@@ -115,16 +115,16 @@ export default function Dashboard() {
   const personalUpcomingBookings = useMemo(() => {
     const now = new Date();
     return userBookings.filter(booking => {
-      const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      const bookingStart = new Date(booking.start_time);
       return booking.user_id === userId && bookingStart > now;
     }).length;
   }, [userBookings, userId]);
 
-  // Count organization-wide upcoming bookings
+  // Count organization-wide upcoming bookings from this week's data
   const organizationUpcomingBookings = useMemo(() => {
     const now = new Date();
     return userBookings.filter(booking => {
-      const bookingStart = new Date(booking.start_time.replace(/[+\-]\d{2}:?\d{2}?$|Z$/g, ''));
+      const bookingStart = new Date(booking.start_time);
       return bookingStart > now;
     }).length;
   }, [userBookings]);

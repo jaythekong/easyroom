@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Building, Users, Calendar, TrendingUp, User, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,70 +31,55 @@ export function AdminStats() {
     organizationBookings: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+  const fetchInProgressRef = useRef(false);
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (!organization?.id || !user) {
-        setLoading(false);
+      // Prevent concurrent requests
+      if (fetchInProgressRef.current || !organization?.id || !user?.id) {
         return;
       }
 
+      fetchInProgressRef.current = true;
       setLoading(true);
       
       try {
-        // Use the organization stats function
-        const { data: orgStats, error: statsError } = await supabase
-          .rpc('get_organization_stats', { 
-            org_id: organization.id 
-          });
-        
-        if (statsError) {
-          console.error('Error fetching organization stats:', statsError);
-          throw statsError;
-        }
+        // Fetch all data in parallel with proper error handling
+        const [orgStatsResult, amenitiesResult, personalBookingsResult] = await Promise.allSettled([
+          supabase.rpc('get_organization_stats', { org_id: organization.id }),
+          supabase.from("amenities").select("id", { count: 'exact' }).eq("organization_id", organization.id),
+          supabase.from("bookings").select("id", { count: 'exact' }).eq("organization_id", organization.id).eq("user_id", user.id)
+        ]);
 
-        const stats = orgStats as unknown as OrganizationStats;
+        // Extract data with fallbacks
+        const orgStats = orgStatsResult.status === 'fulfilled' ? (orgStatsResult.value.data as unknown as OrganizationStats) : null;
+        const amenities = amenitiesResult.status === 'fulfilled' ? amenitiesResult.value.data : [];
+        const personalBookings = personalBookingsResult.status === 'fulfilled' ? personalBookingsResult.value.data : [];
 
-        // Get amenities count
-        const { data: amenities, error: amenitiesError } = await supabase
-          .from("amenities")
-          .select("id", { count: 'exact' })
-          .eq("organization_id", organization.id);
-          
-        if (amenitiesError) {
-          console.error('Error fetching amenities:', amenitiesError);
-        }
-
-        // Get personal bookings count
-        const { data: personalBookings, error: personalError } = await supabase
-          .from("bookings")
-          .select("id", { count: 'exact' })
-          .eq("organization_id", organization.id)
-          .eq("user_id", user.id);
-
-        if (personalError) {
-          console.error('Error fetching personal bookings:', personalError);
-        }
+        // Log errors for debugging
+        if (orgStatsResult.status === 'rejected') console.error('Org stats error:', orgStatsResult.reason);
+        if (amenitiesResult.status === 'rejected') console.error('Amenities error:', amenitiesResult.reason);
+        if (personalBookingsResult.status === 'rejected') console.error('Personal bookings error:', personalBookingsResult.reason);
 
         const finalStats = {
-          totalRooms: stats.rooms || 0,
-          activeRooms: stats.rooms || 0,
+          totalRooms: orgStats?.rooms || 0,
+          activeRooms: orgStats?.rooms || 0,
           totalAmenities: amenities?.length || 0,
           personalBookings: personalBookings?.length || 0,
-          organizationBookings: stats.total_bookings || 0,
+          organizationBookings: orgStats?.total_bookings || 0,
         };
 
         setStats(finalStats);
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Error in fetchStats:", error);
       } finally {
         setLoading(false);
+        fetchInProgressRef.current = false;
       }
     };
 
     fetchStats();
-  }, [user, organization?.id]);
+  }, [user?.id, organization?.id]);
 
   const statsCards = [
     {
