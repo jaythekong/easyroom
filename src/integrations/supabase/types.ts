@@ -476,7 +476,6 @@ export type Database = {
           message: string
           order_index: number
           organization_id: string
-          speed: number | null
           text_color: string | null
           updated_at: string
         }
@@ -490,7 +489,6 @@ export type Database = {
           message: string
           order_index?: number
           organization_id: string
-          speed?: number | null
           text_color?: string | null
           updated_at?: string
         }
@@ -504,8 +502,34 @@ export type Database = {
           message?: string
           order_index?: number
           organization_id?: string
-          speed?: number | null
           text_color?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ticker_settings: {
+        Row: {
+          created_at: string
+          id: string
+          master_speed: number | null
+          message_spacing: number | null
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          master_speed?: number | null
+          message_spacing?: number | null
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          master_speed?: number | null
+          message_spacing?: number | null
+          organization_id?: string
           updated_at?: string
         }
         Relationships: []

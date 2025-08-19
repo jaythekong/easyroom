@@ -8,23 +8,32 @@ interface TickerMessage {
   emoji: string;
   background_color: string;
   text_color: string;
-  speed: number;
   frequency: number;
   order_index: number;
+}
+
+interface TickerSettings {
+  master_speed: number;
+  message_spacing: number;
 }
 
 export function HorizontalTicker() {
   const [messages, setMessages] = useState<TickerMessage[]>([]);
   const [isVisible, setIsVisible] = useState(true);
+  const [settings, setSettings] = useState<TickerSettings>({
+    master_speed: 50,
+    message_spacing: 8
+  });
   const { organization } = useOrganization();
 
   useEffect(() => {
     if (!organization?.id) return;
 
     fetchMessages();
+    fetchSettings();
 
-    // Subscribe to real-time updates
-    const channel = supabase
+    // Subscribe to real-time updates for both messages and settings
+    const messagesChannel = supabase
       .channel('ticker-messages')
       .on(
         'postgres_changes',
@@ -40,10 +49,50 @@ export function HorizontalTicker() {
       )
       .subscribe();
 
+    const settingsChannel = supabase
+      .channel('ticker-settings')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ticker_settings',
+          filter: `organization_id=eq.${organization.id}`
+        },
+        () => {
+          fetchSettings();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(settingsChannel);
     };
   }, [organization?.id]);
+
+  const fetchSettings = async () => {
+    if (!organization?.id) return;
+
+    const { data, error } = await supabase
+      .from('ticker_settings')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .single();
+
+    if (error) {
+      console.error('Error fetching ticker settings:', error);
+      // Use defaults if no settings found
+      return;
+    }
+
+    if (data) {
+      setSettings({
+        master_speed: data.master_speed,
+        message_spacing: data.message_spacing
+      });
+    }
+  };
 
   const fetchMessages = async () => {
     if (!organization?.id) return;
@@ -74,11 +123,9 @@ export function HorizontalTicker() {
     return acc;
   }, []);
 
-  // Get organization ticker settings (for now use defaults, will be configurable)
-  const masterSpeed = 50; // pixels per second
-  const messageSpacing = 8; // gap between messages
+  // Calculate dynamic speed based on organization settings
   const totalWidth = expandedMessages.length * 300; // Approximate width per message
-  const animationDuration = totalWidth / masterSpeed; // seconds
+  const animationDuration = totalWidth / settings.master_speed; // seconds
 
   return (
     <>
@@ -95,7 +142,7 @@ export function HorizontalTicker() {
       <div className="relative bg-primary text-primary-foreground overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="relative flex-1 overflow-hidden">
-            <div className={`ticker-animate flex items-center whitespace-nowrap`} style={{ gap: `${messageSpacing * 4}px` }}>
+            <div className={`ticker-animate flex items-center whitespace-nowrap`} style={{ gap: `${settings.message_spacing * 4}px` }}>
               {expandedMessages.map((msg, index) => (
                 <div key={`${msg.id}-${index}`} className="flex items-center gap-2 text-sm font-medium">
                   <span className="text-base">{msg.emoji}</span>

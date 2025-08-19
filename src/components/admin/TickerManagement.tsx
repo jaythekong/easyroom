@@ -21,7 +21,6 @@ interface TickerMessage {
   order_index: number;
   background_color: string;
   text_color: string;
-  speed: number;
   frequency: number;
   created_at: string;
   updated_at: string;
@@ -42,9 +41,12 @@ export function TickerManagement() {
     emoji: "📢",
     background_color: "#3B82F6",
     text_color: "#FFFFFF",
-    speed: 50,
     frequency: 1,
     is_active: true
+  });
+  const [tickerSettings, setTickerSettings] = useState({
+    master_speed: 50,
+    message_spacing: 8
   });
   const { organization } = useOrganization();
   const { toast } = useToast();
@@ -52,8 +54,57 @@ export function TickerManagement() {
   useEffect(() => {
     if (organization?.id) {
       fetchMessages();
+      fetchTickerSettings();
     }
   }, [organization?.id]);
+
+  const fetchTickerSettings = async () => {
+    if (!organization?.id) return;
+    
+    const { data, error } = await supabase
+      .from('ticker_settings')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching ticker settings:', error);
+      return;
+    }
+
+    if (data) {
+      setTickerSettings({
+        master_speed: data.master_speed,
+        message_spacing: data.message_spacing
+      });
+    }
+  };
+
+  const updateTickerSettings = async (newSettings: typeof tickerSettings) => {
+    if (!organization?.id) return;
+
+    const { error } = await supabase
+      .from('ticker_settings')
+      .upsert({
+        organization_id: organization.id,
+        master_speed: newSettings.master_speed,
+        message_spacing: newSettings.message_spacing
+      });
+
+    if (error) {
+      console.error('Error updating ticker settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update ticker settings",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "Ticker settings updated successfully",
+      });
+    }
+  };
 
   const fetchMessages = async () => {
     if (!organization?.id) return;
@@ -116,7 +167,6 @@ export function TickerManagement() {
         emoji: "📢",
         background_color: "#3B82F6",
         text_color: "#FFFFFF",
-        speed: 50,
         frequency: 1,
         is_active: true
       });
@@ -171,7 +221,6 @@ export function TickerManagement() {
       emoji: message.emoji,
       background_color: message.background_color,
       text_color: message.text_color,
-      speed: message.speed,
       frequency: message.frequency,
       is_active: message.is_active
     });
@@ -213,7 +262,7 @@ export function TickerManagement() {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="emoji">Emoji</Label>
                     <Select 
@@ -231,18 +280,6 @@ export function TickerManagement() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="speed">Speed (px/s)</Label>
-                    <Input
-                      id="speed"
-                      type="number"
-                      value={formData.speed}
-                      onChange={(e) => setFormData({ ...formData, speed: parseInt(e.target.value) || 50 })}
-                      min="10"
-                      max="200"
-                    />
                   </div>
 
                   <div className="space-y-2">
@@ -292,6 +329,56 @@ export function TickerManagement() {
       </CardHeader>
 
       <CardContent>
+        {/* Ticker Settings */}
+        <div className="mb-6 p-4 border border-border rounded-lg bg-muted/20">
+          <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+            <Badge variant="outline" className="text-xs">Global Settings</Badge>
+            Master Controls
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="master_speed">Master Speed (px/s)</Label>
+              <Input
+                id="master_speed"
+                type="number"
+                value={tickerSettings.master_speed}
+                onChange={(e) => {
+                  const newSettings = { ...tickerSettings, master_speed: parseInt(e.target.value) || 50 };
+                  setTickerSettings(newSettings);
+                  updateTickerSettings(newSettings);
+                }}
+                min="10"
+                max="200"
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                Controls overall ticker scrolling speed
+              </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="message_spacing">Message Spacing</Label>
+              <Input
+                id="message_spacing"
+                type="number"
+                value={tickerSettings.message_spacing}
+                onChange={(e) => {
+                  const newSettings = { ...tickerSettings, message_spacing: parseInt(e.target.value) || 8 };
+                  setTickerSettings(newSettings);
+                  updateTickerSettings(newSettings);
+                }}
+                min="0"
+                max="20"
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                Space between messages (multiplier)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Messages List */}
         {isLoading ? (
           <div className="text-center py-8 text-muted-foreground">Loading messages...</div>
         ) : messages.length === 0 ? (
@@ -320,9 +407,6 @@ export function TickerManagement() {
                     <Badge variant={message.is_active ? "default" : "secondary"} className="text-xs">
                       {message.is_active ? "Active" : "Inactive"}
                     </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      Speed: {message.speed}px/s
-                    </span>
                     <span className="text-xs text-muted-foreground">
                       Frequency: {message.frequency}x
                     </span>
