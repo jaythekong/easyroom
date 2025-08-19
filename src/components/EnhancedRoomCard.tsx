@@ -188,7 +188,8 @@ export const EnhancedRoomCard = memo(function EnhancedRoomCard({
           </Button>
         </div>
 
-        {/* Premium available now indicator */}
+        {/* Premium available now indicator - removed to prevent overlap */}
+        {/* 
         {room.status === 'available' && (
           <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="bg-success text-success-foreground text-xs px-2 py-1 rounded-full shadow-lg animate-pulse">
@@ -196,6 +197,7 @@ export const EnhancedRoomCard = memo(function EnhancedRoomCard({
             </div>
           </div>
         )}
+        */}
       </CardContent>
     </Card>
   );
