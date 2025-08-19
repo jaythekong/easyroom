@@ -1,10 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone, MessageCircle, Globe, Lock, Clock, Bell, Eye, UserCheck, Workflow, Database, Palette, Monitor, Coffee, Wifi } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppFooter } from "@/components/AppFooter";
+import { useEffect } from "react";
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for authentication errors in URL hash (from password reset, etc.)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const error = hashParams.get('error');
+    const errorCode = hashParams.get('error_code');
+    const errorDescription = hashParams.get('error_description');
+
+    if (error) {
+      // Redirect to auth page with error details
+      navigate('/auth?error=auth_failed&details=' + encodeURIComponent(errorDescription || error));
+    }
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
