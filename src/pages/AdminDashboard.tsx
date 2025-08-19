@@ -9,12 +9,15 @@ import { AdminStats } from "@/components/admin/AdminStats";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { TelegramNotifications } from "@/components/admin/TelegramNotifications";
+import { TelegramBanner } from "@/components/TelegramBanner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 const AdminDashboardContent = memo(function AdminDashboardContent() {
   useOrganizationTheme(); // Apply organization theme
+  const { organization } = useOrganization();
   
   return (
     <div className="min-h-screen bg-background">
@@ -38,6 +41,11 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
         </div>
 
         <AdminStats />
+
+        {/* Telegram Banner for accounts with Telegram configured */}
+        {organization && (
+          <TelegramBanner organization={organization} />
+        )}
 
         <Tabs defaultValue="rooms" className="space-y-6">
           <TabsList className="grid w-full grid-cols-6">

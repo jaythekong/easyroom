@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { BookingModal } from "@/components/BookingModal";
 import { BookingDetailsModal } from "@/components/BookingDetailsModal";
+import { TelegramBanner } from "@/components/TelegramBanner";
 
 interface BookingWithDetails {
   id: string;
@@ -208,6 +209,11 @@ export default function MyBookings() {
 
         {/* View Mode Selector */}
         <div className="mb-8">
+          {/* Telegram Banner for accounts with Telegram configured */}
+          {organization && (
+            <TelegramBanner organization={organization} />
+          )}
+          
           <div className="flex items-center gap-4 mb-6">
             <Filter className="w-5 h-5 text-muted-foreground" />
             <div className="flex bg-muted rounded-lg p-1">
