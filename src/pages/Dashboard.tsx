@@ -59,6 +59,11 @@ export default function Dashboard() {
   const [currentTimeSlot, setCurrentTimeSlot] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [expandedRooms, setExpandedRooms] = useState<Set<string>>(new Set());
+  const [totalBookingStats, setTotalBookingStats] = useState({
+    personalTotal: 0,
+    organizationTotal: 0,
+    loading: true
+  });
   const { toast } = useToast();
 
   // Memoize user ID to prevent unnecessary re-fetches
@@ -108,26 +113,52 @@ export default function Dashboard() {
     }
   }, [roomsError, toast]);
 
-  // Fetch user's bookings for this week
-  const { data: userBookings = [] } = useBookings(new Date());
-  
-  // Count user's personal upcoming bookings
-  const personalUpcomingBookings = useMemo(() => {
-    const now = new Date();
-    return userBookings.filter(booking => {
-      const bookingStart = new Date(booking.start_time);
-      return booking.user_id === userId && bookingStart > now;
-    }).length;
-  }, [userBookings, userId]);
+  const fetchTotalBookingStats = useCallback(async () => {
+    if (!userId || !organization?.id) {
+      setTotalBookingStats(prev => ({ ...prev, loading: false }));
+      return;
+    }
 
-  // Count organization-wide upcoming bookings from this week's data
-  const organizationUpcomingBookings = useMemo(() => {
-    const now = new Date();
-    return userBookings.filter(booking => {
-      const bookingStart = new Date(booking.start_time);
-      return bookingStart > now;
-    }).length;
-  }, [userBookings]);
+    try {
+      // Fetch personal bookings count
+      const { data: personalBookings, error: personalError } = await supabase
+        .from("bookings")
+        .select("id", { count: 'exact' })
+        .eq("organization_id", organization.id)
+        .eq("user_id", userId);
+
+      // Use organization stats function for total
+      const { data: orgStats, error: orgError } = await supabase
+        .rpc('get_organization_stats', { 
+          org_id: organization.id 
+        });
+
+      if (personalError) {
+        console.error('Error fetching personal booking stats:', personalError);
+      }
+      
+      if (orgError) {
+        console.error('Error fetching org stats:', orgError);
+      }
+
+      setTotalBookingStats({
+        personalTotal: personalBookings?.length || 0,
+        organizationTotal: (orgStats as any)?.total_bookings || 0,
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error fetching total booking stats:', error);
+      setTotalBookingStats(prev => ({ ...prev, loading: false }));
+    }
+  }, [userId, organization?.id]);
+
+  // Fetch total booking stats
+  useEffect(() => {
+    fetchTotalBookingStats();
+  }, [fetchTotalBookingStats]);
+
+  // Fetch user's bookings for this week (for timeline display)
+  const { data: userBookings = [] } = useBookings(new Date());
 
   const getTimeBasedGreeting = () => {
     // Get current hour in the local timezone for greeting
@@ -198,6 +229,9 @@ export default function Dashboard() {
     setEditingBooking(null);
     // Trigger refresh of timeline data
     setRefreshKey(prev => prev + 1);
+    // Refresh total booking stats
+    setTotalBookingStats(prev => ({ ...prev, loading: true }));
+    fetchTotalBookingStats();
   };
 
   // Moved to memoized values above
@@ -323,10 +357,12 @@ export default function Dashboard() {
                     <User className="w-3 h-3 sm:w-4 sm:h-4 text-accent-foreground drop-shadow-sm" />
                     <div className="absolute inset-0 bg-accent/20 rounded-xl blur-sm"></div>
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground">{personalUpcomingBookings}</p>
-                  </div>
+                   <div className="min-w-0">
+                     <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">My Bookings</span>
+                     <p className="text-xl sm:text-2xl font-bold text-foreground">
+                       {totalBookingStats.loading ? '...' : totalBookingStats.personalTotal}
+                     </p>
+                   </div>
                 </div>
               </Link>
             </Button>
@@ -339,10 +375,12 @@ export default function Dashboard() {
                   <Building className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400 drop-shadow-sm" />
                   <div className="absolute inset-0 bg-blue-500/20 rounded-xl blur-sm"></div>
                 </div>
-                <div className="min-w-0">
-                  <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Org Total</span>
-                  <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">{organizationUpcomingBookings}</p>
-                </div>
+                 <div className="min-w-0">
+                   <span className="text-xs sm:text-sm font-medium text-muted-foreground block leading-tight">Org Total</span>
+                   <p className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+                     {totalBookingStats.loading ? '...' : totalBookingStats.organizationTotal}
+                   </p>
+                 </div>
               </div>
             </div>
           </div>
