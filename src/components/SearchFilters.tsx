@@ -44,12 +44,12 @@ const timeSlots = [
 export function SearchFilters({ onFiltersChange, rooms = [] }: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
     date: new Date(),
-    startTime: "",
-    endTime: "",
-    capacity: "",
+    startTime: "any",
+    endTime: "any",
+    capacity: "any",
     amenities: [],
     searchTerm: "",
-    selectedRoom: ""
+    selectedRoom: "all"
   });
 
   const updateFilters = (updates: Partial<FilterState>) => {
@@ -68,12 +68,12 @@ export function SearchFilters({ onFiltersChange, rooms = [] }: SearchFiltersProp
   const clearFilters = () => {
     const clearedFilters: FilterState = {
       date: new Date(),
-      startTime: "",
-      endTime: "",
-      capacity: "",
+      startTime: "any",
+      endTime: "any",
+      capacity: "any",
       amenities: [],
       searchTerm: "",
-      selectedRoom: ""
+      selectedRoom: "all"
     };
     setFilters(clearedFilters);
     onFiltersChange(clearedFilters);
@@ -97,7 +97,7 @@ export function SearchFilters({ onFiltersChange, rooms = [] }: SearchFiltersProp
               <SelectValue placeholder="All rooms" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border shadow-lg z-50">
-              <SelectItem value="" className="hover:bg-accent">All rooms</SelectItem>
+              <SelectItem value="all" className="hover:bg-accent">All rooms</SelectItem>
               {rooms.map((room) => (
                 <SelectItem key={room.id} value={room.id} className="hover:bg-accent">
                   {room.name} {room.location && `• ${room.location}`}
@@ -159,7 +159,7 @@ export function SearchFilters({ onFiltersChange, rooms = [] }: SearchFiltersProp
                   <SelectValue placeholder="Any time" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border shadow-lg z-50">
-                  <SelectItem value="" className="hover:bg-accent">Any time</SelectItem>
+                  <SelectItem value="any" className="hover:bg-accent">Any time</SelectItem>
                   {timeSlots.map((time) => (
                     <SelectItem key={time} value={time} className="hover:bg-accent">{time}</SelectItem>
                   ))}
@@ -174,7 +174,7 @@ export function SearchFilters({ onFiltersChange, rooms = [] }: SearchFiltersProp
                   <SelectValue placeholder="Any time" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border shadow-lg z-50">
-                  <SelectItem value="" className="hover:bg-accent">Any time</SelectItem>
+                  <SelectItem value="any" className="hover:bg-accent">Any time</SelectItem>
                   {timeSlots.map((time) => (
                     <SelectItem key={time} value={time} className="hover:bg-accent">{time}</SelectItem>
                   ))}
@@ -192,7 +192,7 @@ export function SearchFilters({ onFiltersChange, rooms = [] }: SearchFiltersProp
               <SelectValue placeholder="Select capacity" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border shadow-lg z-50">
-              <SelectItem value="" className="hover:bg-accent">Any capacity</SelectItem>
+              <SelectItem value="any" className="hover:bg-accent">Any capacity</SelectItem>
               <SelectItem value="2" className="hover:bg-accent">2+ people</SelectItem>
               <SelectItem value="4" className="hover:bg-accent">4+ people</SelectItem>
               <SelectItem value="6" className="hover:bg-accent">6+ people</SelectItem>

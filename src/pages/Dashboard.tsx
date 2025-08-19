@@ -191,7 +191,7 @@ export default function Dashboard() {
     console.log('Applying filters:', filters);
 
     // Filter by selected room first (most specific)
-    if (filters.selectedRoom) {
+    if (filters.selectedRoom && filters.selectedRoom !== "all") {
       filtered = filtered.filter(room => room.id === filters.selectedRoom);
     }
     // Then filter by search term (only if no specific room selected and search term provided)
@@ -203,7 +203,7 @@ export default function Dashboard() {
     // If neither selectedRoom nor searchTerm, show all rooms (this handles empty search)
 
     // Filter by capacity
-    if (filters.capacity) {
+    if (filters.capacity && filters.capacity !== "any") {
       filtered = filtered.filter(room => room.capacity >= parseInt(filters.capacity));
     }
 
@@ -215,7 +215,7 @@ export default function Dashboard() {
     }
 
     // Filter by availability if date and time are specified
-    if (filters.date && (filters.startTime || filters.endTime) && organization?.id) {
+    if (filters.date && (filters.startTime !== "any" || filters.endTime !== "any") && organization?.id) {
       try {
         const dateStr = format(filters.date, 'yyyy-MM-dd');
         
@@ -239,12 +239,12 @@ export default function Dashboard() {
             // Check if the requested time slot conflicts with existing bookings
             let isAvailable = true;
             
-            if (filters.startTime || filters.endTime) {
-              const requestedStart = filters.startTime ? 
+            if (filters.startTime !== "any" || filters.endTime !== "any") {
+              const requestedStart = filters.startTime !== "any" ? 
                 new Date(`${dateStr}T${filters.startTime}:00`) : 
                 new Date(`${dateStr}T08:00:00`); // Default to 8 AM if no start time
               
-              const requestedEnd = filters.endTime ? 
+              const requestedEnd = filters.endTime !== "any" ? 
                 new Date(`${dateStr}T${filters.endTime}:00`) : 
                 new Date(`${dateStr}T22:00:00`); // Default to 10 PM if no end time
 
