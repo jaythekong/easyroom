@@ -4,13 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, ArrowLeft, Edit, Trash2, Eye, Users, Filter } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
-import { useBookings } from "@/hooks/useBookings";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { BookingModal } from "@/components/BookingModal";
 import { BookingDetailsModal } from "@/components/BookingDetailsModal";
+import { useQuery } from '@tanstack/react-query';
 
 interface BookingWithDetails {
   id: string;
@@ -48,7 +48,107 @@ export default function MyBookings() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
-  const { data: allBookings = [], isLoading, error, refetch } = useBookings(new Date());
+  // Custom query to fetch ALL bookings (not just current week)
+  const { data: allBookings = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['all-bookings', organization?.id],
+    queryFn: async () => {
+      if (!organization?.id) {
+        return [];
+      }
+
+      console.log(`Fetching ALL bookings for org: ${organization.slug}`);
+      
+      // First fetch all bookings for the organization
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .order('start_time', { ascending: false });
+      
+      if (bookingsError) {
+        console.error('Error fetching bookings:', bookingsError);
+        throw bookingsError;
+      }
+
+      if (!bookingsData || bookingsData.length === 0) {
+        console.log(`No bookings found for org ${organization.slug}`);
+        return [];
+      }
+
+      // Get unique user IDs from the bookings
+      const userIds = [...new Set(bookingsData.map(booking => booking.user_id))];
+      const roomIds = [...new Set(bookingsData.map(booking => booking.room_id))];
+      
+      // Fetch user profiles for these users in this organization
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('user_id, email, display_name, avatar_url')
+        .eq('organization_id', organization.id)
+        .in('user_id', userIds);
+      
+      if (profilesError) {
+        console.error('Error fetching user profiles:', profilesError);
+        // Don't throw error, just continue without profile data
+      }
+
+      // Fetch room details for these bookings
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('rooms')
+        .select('id, name, location')
+        .eq('organization_id', organization.id)
+        .in('id', roomIds);
+      
+      if (roomsError) {
+        console.error('Error fetching rooms:', roomsError);
+        // Don't throw error, just continue without room data
+      }
+
+      // Create a map of user profiles for quick lookup
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.user_id, {
+            email: profile.email,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url,
+          });
+        });
+      }
+
+      // Create a map of rooms for quick lookup
+      const roomsMap = new Map();
+      if (roomsData) {
+        roomsData.forEach(room => {
+          roomsMap.set(room.id, {
+            id: room.id,
+            name: room.name,
+            location: room.location,
+          });
+        });
+      }
+
+      // Combine bookings with user profile and room data
+      const bookingsWithProfiles = bookingsData.map(booking => ({
+        ...booking,
+        user_profiles: profilesMap.get(booking.user_id) || {
+          email: 'Unknown user',
+          display_name: null,
+          avatar_url: null,
+        },
+        room: roomsMap.get(booking.room_id) || {
+          id: booking.room_id,
+          name: `Room ${booking.room_id}`,
+          location: null,
+        }
+      }));
+      
+      console.log(`Found ${bookingsWithProfiles.length} total bookings for org ${organization.slug}`);
+      return bookingsWithProfiles as BookingWithDetails[];
+    },
+    enabled: !!organization?.id,
+    staleTime: 1000 * 30, // 30 seconds
+    refetchOnWindowFocus: false,
+  });
   
   // Filter bookings based on view mode
   const displayBookings = viewMode === 'my' 
