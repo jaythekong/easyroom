@@ -49,6 +49,8 @@ export function TickerManagement() {
     master_speed: 50,
     message_spacing: 8
   });
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [savingSettings, setSavingSettings] = useState(false);
   const { organization } = useOrganization();
   const { toast } = useToast();
   
@@ -62,12 +64,12 @@ export function TickerManagement() {
     }
   }, [organization?.id]);
 
-  // Auto-save settings when debounced value changes
+  // Auto-save settings when debounced value changes (but only after initial load)
   useEffect(() => {
-    if (organization?.id && debouncedSettings.master_speed !== 50 || debouncedSettings.message_spacing !== 8) {
+    if (settingsLoaded && organization?.id) {
       updateTickerSettings(debouncedSettings);
     }
-  }, [debouncedSettings, organization?.id]);
+  }, [debouncedSettings, settingsLoaded, organization?.id]);
 
   const fetchTickerSettings = async () => {
     if (!organization?.id) return;
@@ -76,7 +78,7 @@ export function TickerManagement() {
       .from('ticker_settings')
       .select('*')
       .eq('organization_id', organization.id)
-      .single();
+      .maybeSingle();
 
     if (error && error.code !== 'PGRST116') {
       console.error('Error fetching ticker settings:', error);
@@ -89,10 +91,14 @@ export function TickerManagement() {
         message_spacing: data.message_spacing
       });
     }
+    setSettingsLoaded(true);
   };
 
   const updateTickerSettings = async (newSettings: typeof tickerSettings) => {
     if (!organization?.id) return;
+
+    setSavingSettings(true);
+    console.log('Updating ticker settings:', newSettings);
 
     const { error } = await supabase
       .from('ticker_settings')
@@ -107,12 +113,20 @@ export function TickerManagement() {
         }
       );
 
+    setSavingSettings(false);
+
     if (error) {
       console.error('Error updating ticker settings:', error);
       toast({
         title: "Error",
-        description: "Failed to update ticker settings",
+        description: `Failed to update ticker settings: ${error.message}`,
         variant: "destructive",
+      });
+    } else {
+      console.log('Settings updated successfully');
+      toast({
+        title: "Settings Saved",
+        description: "Ticker settings updated successfully",
       });
     }
   };
@@ -345,6 +359,11 @@ export function TickerManagement() {
           <h3 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
             <Badge variant="outline" className="text-xs">Global Settings</Badge>
             Master Controls
+            {savingSettings && (
+              <Badge variant="secondary" className="text-xs animate-pulse">
+                Saving...
+              </Badge>
+            )}
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
