@@ -471,7 +471,7 @@ export default function Dashboard() {
 
         {/* Main Content with Tabs */}
         <Tabs defaultValue="timeline" className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-8 sm:h-10 p-0.5 sm:p-1">
+          <TabsList className="grid w-full grid-cols-2 h-8 sm:h-10 p-0.5 sm:p-1">
             <TabsTrigger 
               value="timeline" 
               className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
@@ -486,14 +486,19 @@ export default function Dashboard() {
               <Grid3X3 className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Grid</span>
             </TabsTrigger>
-            <TabsTrigger 
-              value="filters" 
-              className="flex items-center gap-1 text-xs sm:text-sm h-6 sm:h-8 px-2 sm:px-3 data-[state=active]:shadow-none"
-            >
-              <Settings className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Filters</span>
-            </TabsTrigger>
           </TabsList>
+
+          {/* Search Filters - Always at top */}
+          <div className="timeline-card p-4 rounded-xl">
+            <SearchFilters 
+              onFiltersChange={handleFiltersChange} 
+              rooms={rooms.map(room => ({ 
+                id: room.id, 
+                name: room.name, 
+                location: room.location 
+              }))} 
+            />
+          </div>
 
           <TabsContent value="timeline" className="space-y-6">
             {roomsLoading ? (
@@ -564,53 +569,6 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="filters" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-1">
-                <SearchFilters 
-                  onFiltersChange={handleFiltersChange} 
-                  rooms={rooms.map(room => ({ 
-                    id: room.id, 
-                    name: room.name, 
-                    location: room.location 
-                  }))} 
-                />
-              </div>
-              <div className="lg:col-span-2">
-                {filteredRooms.length > 0 ? (
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-foreground">
-                      Found {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''}
-                    </h3>
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                      {filteredRooms.map((room) => (
-                        <EnhancedRoomCard
-                          key={room.id}
-                          room={{
-                            ...room,
-                            status: 'available',
-                            amenities: room.amenities || []
-                          }}
-                          onBook={handleBookRoom}
-                          onViewDetails={handleViewDetails}
-                          showQuickActions={false}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="timeline-card p-8 text-center">
-                    <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-foreground mb-2">No rooms found</h3>
-                    <p className="text-muted-foreground">
-                      Try adjusting your filters to find available rooms.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </div>
