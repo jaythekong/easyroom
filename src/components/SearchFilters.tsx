@@ -18,10 +18,12 @@ interface FilterState {
   capacity: string;
   amenities: string[];
   searchTerm: string;
+  selectedRoom: string;
 }
 
 interface SearchFiltersProps {
   onFiltersChange: (filters: FilterState) => void;
+  rooms?: Array<{ id: string; name: string; location?: string }>;
 }
 
 const availableAmenities = [
@@ -39,14 +41,15 @@ const timeSlots = [
   "16:00", "16:30", "17:00", "17:30", "18:00"
 ];
 
-export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
+export function SearchFilters({ onFiltersChange, rooms = [] }: SearchFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
     date: new Date(),
     startTime: "",
     endTime: "",
     capacity: "",
     amenities: [],
-    searchTerm: ""
+    searchTerm: "",
+    selectedRoom: ""
   });
 
   const updateFilters = (updates: Partial<FilterState>) => {
@@ -69,7 +72,8 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
       endTime: "",
       capacity: "",
       amenities: [],
-      searchTerm: ""
+      searchTerm: "",
+      selectedRoom: ""
     };
     setFilters(clearedFilters);
     onFiltersChange(clearedFilters);
@@ -85,12 +89,30 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
       </CardHeader>
       
       <CardContent className="space-y-6">
+        {/* Room Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="room-select">Select Room (Optional)</Label>
+          <Select value={filters.selectedRoom} onValueChange={(value) => updateFilters({ selectedRoom: value })}>
+            <SelectTrigger className="bg-background border-border">
+              <SelectValue placeholder="All rooms" />
+            </SelectTrigger>
+            <SelectContent className="bg-popover border-border shadow-lg z-50">
+              <SelectItem value="" className="hover:bg-accent">All rooms</SelectItem>
+              {rooms.map((room) => (
+                <SelectItem key={room.id} value={room.id} className="hover:bg-accent">
+                  {room.name} {room.location && `• ${room.location}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Search */}
         <div className="space-y-2">
-          <Label htmlFor="search">Search rooms</Label>
+          <Label htmlFor="search">Search by name</Label>
           <Input
             id="search"
-            placeholder="Search by room name..."
+            placeholder="Search by room name (leave empty for all rooms)..."
             value={filters.searchTerm}
             onChange={(e) => updateFilters({ searchTerm: e.target.value })}
             className="bg-background"
@@ -100,7 +122,7 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
         {/* Date and Time */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Date</Label>
+            <Label>Date (for availability check)</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -124,16 +146,20 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
                 />
               </PopoverContent>
             </Popover>
+            <p className="text-xs text-muted-foreground">
+              Select a date to check room availability for specific time slots
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
+              <Label htmlFor="startTime">Available From</Label>
               <Select value={filters.startTime} onValueChange={(value) => updateFilters({ startTime: value })}>
                 <SelectTrigger className="bg-background border-border">
-                  <SelectValue placeholder="Start time" />
+                  <SelectValue placeholder="Any time" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border shadow-lg z-50">
+                  <SelectItem value="" className="hover:bg-accent">Any time</SelectItem>
                   {timeSlots.map((time) => (
                     <SelectItem key={time} value={time} className="hover:bg-accent">{time}</SelectItem>
                   ))}
@@ -142,12 +168,13 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
+              <Label htmlFor="endTime">Available Until</Label>
               <Select value={filters.endTime} onValueChange={(value) => updateFilters({ endTime: value })}>
                 <SelectTrigger className="bg-background border-border">
-                  <SelectValue placeholder="End time" />
+                  <SelectValue placeholder="Any time" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border shadow-lg z-50">
+                  <SelectItem value="" className="hover:bg-accent">Any time</SelectItem>
                   {timeSlots.map((time) => (
                     <SelectItem key={time} value={time} className="hover:bg-accent">{time}</SelectItem>
                   ))}
@@ -165,6 +192,7 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
               <SelectValue placeholder="Select capacity" />
             </SelectTrigger>
             <SelectContent className="bg-popover border-border shadow-lg z-50">
+              <SelectItem value="" className="hover:bg-accent">Any capacity</SelectItem>
               <SelectItem value="2" className="hover:bg-accent">2+ people</SelectItem>
               <SelectItem value="4" className="hover:bg-accent">4+ people</SelectItem>
               <SelectItem value="6" className="hover:bg-accent">6+ people</SelectItem>
@@ -210,9 +238,9 @@ export function SearchFilters({ onFiltersChange }: SearchFiltersProps) {
             className="flex-1"
             onClick={() => onFiltersChange(filters)}
           >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Apply Filters
-          </Button>
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              Search Rooms
+            </Button>
         </div>
       </CardContent>
     </Card>

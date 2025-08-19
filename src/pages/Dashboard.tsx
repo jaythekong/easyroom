@@ -19,6 +19,7 @@ import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { useBookings } from "@/hooks/useBookings";
 import { useRooms } from "@/hooks/useRooms";
 import { TelegramBanner } from "@/components/TelegramBanner";
+import { format } from "date-fns";
 
 interface Room {
   id: string;
@@ -184,15 +185,22 @@ export default function Dashboard() {
     [rooms]
   );
 
-  const handleFiltersChange = useCallback((filters: any) => {
+  const handleFiltersChange = useCallback(async (filters: any) => {
     let filtered = [...rooms];
 
-    // Filter by search term
-    if (filters.searchTerm) {
+    console.log('Applying filters:', filters);
+
+    // Filter by selected room first (most specific)
+    if (filters.selectedRoom) {
+      filtered = filtered.filter(room => room.id === filters.selectedRoom);
+    }
+    // Then filter by search term (only if no specific room selected and search term provided)
+    else if (filters.searchTerm && filters.searchTerm.trim()) {
       filtered = filtered.filter(room => 
         room.name.toLowerCase().includes(filters.searchTerm.toLowerCase())
       );
     }
+    // If neither selectedRoom nor searchTerm, show all rooms (this handles empty search)
 
     // Filter by capacity
     if (filters.capacity) {
@@ -206,8 +214,67 @@ export default function Dashboard() {
       );
     }
 
+    // Filter by availability if date and time are specified
+    if (filters.date && (filters.startTime || filters.endTime) && organization?.id) {
+      try {
+        const dateStr = format(filters.date, 'yyyy-MM-dd');
+        
+        // Check availability for each room
+        const availableRooms = await Promise.all(
+          filtered.map(async (room) => {
+            // Fetch existing bookings for this room on the selected date
+            const { data: bookings, error } = await supabase
+              .from('bookings')
+              .select('start_time, end_time')
+              .eq('room_id', room.id)
+              .eq('organization_id', organization.id)
+              .gte('start_time', `${dateStr}T00:00:00.000Z`)
+              .lt('start_time', `${dateStr}T23:59:59.999Z`);
+
+            if (error) {
+              console.error('Error checking availability:', error);
+              return { room, isAvailable: true }; // Default to available on error
+            }
+
+            // Check if the requested time slot conflicts with existing bookings
+            let isAvailable = true;
+            
+            if (filters.startTime || filters.endTime) {
+              const requestedStart = filters.startTime ? 
+                new Date(`${dateStr}T${filters.startTime}:00`) : 
+                new Date(`${dateStr}T08:00:00`); // Default to 8 AM if no start time
+              
+              const requestedEnd = filters.endTime ? 
+                new Date(`${dateStr}T${filters.endTime}:00`) : 
+                new Date(`${dateStr}T22:00:00`); // Default to 10 PM if no end time
+
+              isAvailable = !bookings?.some(booking => {
+                const bookingStart = new Date(booking.start_time);
+                const bookingEnd = new Date(booking.end_time);
+                
+                // Check for overlap
+                return requestedStart < bookingEnd && requestedEnd > bookingStart;
+              });
+            }
+
+            return { room, isAvailable };
+          })
+        );
+
+        // Only keep available rooms
+        filtered = availableRooms
+          .filter(({ isAvailable }) => isAvailable)
+          .map(({ room }) => room);
+        
+        console.log(`Filtered to ${filtered.length} available rooms for ${dateStr} ${filters.startTime}-${filters.endTime}`);
+      } catch (error) {
+        console.error('Error filtering by availability:', error);
+        // Continue with basic filtering on error
+      }
+    }
+
     setFilteredRooms(filtered);
-  }, [rooms]);
+  }, [rooms, organization?.id]);
 
   const handleBookRoom = (roomId: string) => {
     const room = rooms.find(r => r.id === roomId);
@@ -502,7 +569,14 @@ export default function Dashboard() {
           <TabsContent value="filters" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-1">
-                <SearchFilters onFiltersChange={handleFiltersChange} />
+                <SearchFilters 
+                  onFiltersChange={handleFiltersChange} 
+                  rooms={rooms.map(room => ({ 
+                    id: room.id, 
+                    name: room.name, 
+                    location: room.location 
+                  }))} 
+                />
               </div>
               <div className="lg:col-span-2">
                 {filteredRooms.length > 0 ? (
