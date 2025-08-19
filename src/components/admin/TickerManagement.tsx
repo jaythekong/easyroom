@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useToast } from "@/hooks/use-toast";
+import { useDebounce } from "use-debounce";
 
 interface TickerMessage {
   id: string;
@@ -50,6 +51,9 @@ export function TickerManagement() {
   });
   const { organization } = useOrganization();
   const { toast } = useToast();
+  
+  // Debounce settings to avoid too many API calls
+  const [debouncedSettings] = useDebounce(tickerSettings, 1000);
 
   useEffect(() => {
     if (organization?.id) {
@@ -57,6 +61,13 @@ export function TickerManagement() {
       fetchTickerSettings();
     }
   }, [organization?.id]);
+
+  // Auto-save settings when debounced value changes
+  useEffect(() => {
+    if (organization?.id && debouncedSettings.master_speed !== 50 || debouncedSettings.message_spacing !== 8) {
+      updateTickerSettings(debouncedSettings);
+    }
+  }, [debouncedSettings, organization?.id]);
 
   const fetchTickerSettings = async () => {
     if (!organization?.id) return;
@@ -85,11 +96,16 @@ export function TickerManagement() {
 
     const { error } = await supabase
       .from('ticker_settings')
-      .upsert({
-        organization_id: organization.id,
-        master_speed: newSettings.master_speed,
-        message_spacing: newSettings.message_spacing
-      });
+      .upsert(
+        {
+          organization_id: organization.id,
+          master_speed: newSettings.master_speed,
+          message_spacing: newSettings.message_spacing
+        },
+        {
+          onConflict: 'organization_id'
+        }
+      );
 
     if (error) {
       console.error('Error updating ticker settings:', error);
@@ -97,11 +113,6 @@ export function TickerManagement() {
         title: "Error",
         description: "Failed to update ticker settings",
         variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Ticker settings updated successfully",
       });
     }
   };
@@ -343,9 +354,7 @@ export function TickerManagement() {
                 type="number"
                 value={tickerSettings.master_speed}
                 onChange={(e) => {
-                  const newSettings = { ...tickerSettings, master_speed: parseInt(e.target.value) || 50 };
-                  setTickerSettings(newSettings);
-                  updateTickerSettings(newSettings);
+                  setTickerSettings({ ...tickerSettings, master_speed: parseInt(e.target.value) || 50 });
                 }}
                 min="10"
                 max="200"
@@ -363,9 +372,7 @@ export function TickerManagement() {
                 type="number"
                 value={tickerSettings.message_spacing}
                 onChange={(e) => {
-                  const newSettings = { ...tickerSettings, message_spacing: parseInt(e.target.value) || 8 };
-                  setTickerSettings(newSettings);
-                  updateTickerSettings(newSettings);
+                  setTickerSettings({ ...tickerSettings, message_spacing: parseInt(e.target.value) || 8 });
                 }}
                 min="0"
                 max="20"
@@ -442,17 +449,39 @@ export function TickerManagement() {
 
         {messages.length > 0 && (
           <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Preview:</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-muted-foreground">Live Preview:</p>
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>Speed: {tickerSettings.master_speed}px/s</span>
+                <span>•</span>
+                <span>Spacing: {tickerSettings.message_spacing}x</span>
+              </div>
+            </div>
             <div className="relative bg-primary text-primary-foreground rounded overflow-hidden">
+              <style>{`
+                @keyframes live-ticker-scroll {
+                  0% { transform: translateX(100%); }
+                  100% { transform: translateX(-100%); }
+                }
+                .live-ticker-animate {
+                  animation: live-ticker-scroll ${(messages.filter(m => m.is_active).length * 300) / tickerSettings.master_speed}s linear infinite;
+                }
+              `}</style>
               <div className="flex items-center px-4 py-2">
                 <div className="relative flex-1 overflow-hidden">
-                  <div className="flex items-center gap-8 whitespace-nowrap">
-                    {messages.filter(m => m.is_active).map((msg) => (
-                      <div key={msg.id} className="flex items-center gap-2 text-sm">
-                        <span>{msg.emoji}</span>
-                        <span>{msg.message}</span>
-                      </div>
-                    ))}
+                  <div 
+                    className="live-ticker-animate flex items-center whitespace-nowrap" 
+                    style={{ gap: `${tickerSettings.message_spacing * 4}px` }}
+                  >
+                    {messages.filter(m => m.is_active).flatMap((msg) => {
+                      // Create array based on frequency
+                      return Array(msg.frequency || 1).fill(msg).map((_, index) => (
+                        <div key={`${msg.id}-${index}`} className="flex items-center gap-2 text-sm">
+                          <span>{msg.emoji}</span>
+                          <span>{msg.message}</span>
+                        </div>
+                      ));
+                    })}
                   </div>
                 </div>
               </div>
