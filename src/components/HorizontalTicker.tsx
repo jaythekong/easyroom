@@ -74,11 +74,11 @@ export function HorizontalTicker() {
     return acc;
   }, []);
 
-  // Calculate dynamic speed based on content and first message speed
-  const primaryMessage = messages[0];
-  const baseSpeed = primaryMessage?.speed || 50; // pixels per second
+  // Get organization ticker settings (for now use defaults, will be configurable)
+  const masterSpeed = 50; // pixels per second
+  const messageSpacing = 8; // gap between messages
   const totalWidth = expandedMessages.length * 300; // Approximate width per message
-  const animationDuration = totalWidth / baseSpeed; // seconds
+  const animationDuration = totalWidth / masterSpeed; // seconds
 
   return (
     <>
@@ -95,8 +95,8 @@ export function HorizontalTicker() {
       <div className="relative bg-primary text-primary-foreground overflow-hidden">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="relative flex-1 overflow-hidden">
-            <div className="ticker-animate flex items-center gap-8 whitespace-nowrap">
-              {[...expandedMessages, ...expandedMessages, ...expandedMessages].map((msg, index) => (
+            <div className={`ticker-animate flex items-center whitespace-nowrap`} style={{ gap: `${messageSpacing * 4}px` }}>
+              {expandedMessages.map((msg, index) => (
                 <div key={`${msg.id}-${index}`} className="flex items-center gap-2 text-sm font-medium">
                   <span className="text-base">{msg.emoji}</span>
                   <span>{msg.message}</span>
