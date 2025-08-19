@@ -9,6 +9,7 @@ interface TickerMessage {
   background_color: string;
   text_color: string;
   speed: number;
+  frequency: number;
   order_index: number;
 }
 
@@ -64,10 +65,19 @@ export function HorizontalTicker() {
 
   if (!messages.length || !isVisible) return null;
 
+  // Create expanded message array based on frequency
+  const expandedMessages = messages.reduce((acc: TickerMessage[], msg) => {
+    const frequency = Math.max(1, Math.min(10, msg.frequency || 1));
+    for (let i = 0; i < frequency; i++) {
+      acc.push({ ...msg, id: `${msg.id}-${i}` });
+    }
+    return acc;
+  }, []);
+
   // Calculate dynamic speed based on content and first message speed
   const primaryMessage = messages[0];
   const baseSpeed = primaryMessage?.speed || 50; // pixels per second
-  const totalWidth = messages.length * 300; // Approximate width per message
+  const totalWidth = expandedMessages.length * 300; // Approximate width per message
   const animationDuration = totalWidth / baseSpeed; // seconds
 
   return (
@@ -86,7 +96,7 @@ export function HorizontalTicker() {
         <div className="flex items-center justify-between px-4 py-2">
           <div className="relative flex-1 overflow-hidden">
             <div className="ticker-animate flex items-center gap-8 whitespace-nowrap">
-              {[...messages, ...messages, ...messages].map((msg, index) => (
+              {[...expandedMessages, ...expandedMessages, ...expandedMessages].map((msg, index) => (
                 <div key={`${msg.id}-${index}`} className="flex items-center gap-2 text-sm font-medium">
                   <span className="text-base">{msg.emoji}</span>
                   <span>{msg.message}</span>

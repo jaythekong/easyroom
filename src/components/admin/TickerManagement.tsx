@@ -22,13 +22,14 @@ interface TickerMessage {
   background_color: string;
   text_color: string;
   speed: number;
+  frequency: number;
   created_at: string;
   updated_at: string;
 }
 
 const emojiOptions = [
   "📢", "🎉", "⚡", "💬", "🚀", "✨", "🎯", "💡", "🔥", "⭐", 
-  "👋", "📅", "🏢", "💼", "📍", "🎪", "🌟", "🎊", "📣", "🎁"
+  "👋", "📅", "🏢", "💼", "📍", "🎪", "🌟", "🎊", "📣", "🎁", "🇰🇭"
 ];
 
 export function TickerManagement() {
@@ -42,6 +43,7 @@ export function TickerManagement() {
     background_color: "#3B82F6",
     text_color: "#FFFFFF",
     speed: 50,
+    frequency: 1,
     is_active: true
   });
   const { organization } = useOrganization();
@@ -115,6 +117,7 @@ export function TickerManagement() {
         background_color: "#3B82F6",
         text_color: "#FFFFFF",
         speed: 50,
+        frequency: 1,
         is_active: true
       });
       fetchMessages();
@@ -169,6 +172,7 @@ export function TickerManagement() {
       background_color: message.background_color,
       text_color: message.text_color,
       speed: message.speed,
+      frequency: message.frequency,
       is_active: message.is_active
     });
     setIsDialogOpen(true);
@@ -209,7 +213,7 @@ export function TickerManagement() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="emoji">Emoji</Label>
                     <Select 
@@ -239,6 +243,21 @@ export function TickerManagement() {
                       min="10"
                       max="200"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="frequency">Frequency</Label>
+                    <Input
+                      id="frequency"
+                      type="number"
+                      value={formData.frequency}
+                      onChange={(e) => setFormData({ ...formData, frequency: parseInt(e.target.value) || 1 })}
+                      min="1"
+                      max="10"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      How often this appears (1=normal, 2=twice as often)
+                    </p>
                   </div>
                 </div>
 
@@ -303,6 +322,9 @@ export function TickerManagement() {
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       Speed: {message.speed}px/s
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Frequency: {message.frequency}x
                     </span>
                   </div>
                 </div>

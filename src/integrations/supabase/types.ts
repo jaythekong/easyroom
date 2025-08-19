@@ -470,6 +470,7 @@ export type Database = {
           background_color: string | null
           created_at: string
           emoji: string | null
+          frequency: number | null
           id: string
           is_active: boolean
           message: string
@@ -483,6 +484,7 @@ export type Database = {
           background_color?: string | null
           created_at?: string
           emoji?: string | null
+          frequency?: number | null
           id?: string
           is_active?: boolean
           message: string
@@ -496,6 +498,7 @@ export type Database = {
           background_color?: string | null
           created_at?: string
           emoji?: string | null
+          frequency?: number | null
           id?: string
           is_active?: boolean
           message?: string
