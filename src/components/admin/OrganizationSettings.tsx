@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { TickerManagement } from "./TickerManagement";
 
 interface Organization {
   id: string;
@@ -495,6 +496,9 @@ export function OrganizationSettings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Ticker Management */}
+      <TickerManagement />
 
       {/* Additional Info */}
       <Card>

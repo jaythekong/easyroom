@@ -465,6 +465,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ticker_messages: {
+        Row: {
+          background_color: string | null
+          created_at: string
+          emoji: string | null
+          id: string
+          is_active: boolean
+          message: string
+          order_index: number
+          organization_id: string
+          speed: number | null
+          text_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          background_color?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          message: string
+          order_index?: number
+          organization_id: string
+          speed?: number | null
+          text_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          background_color?: string | null
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          is_active?: boolean
+          message?: string
+          order_index?: number
+          organization_id?: string
+          speed?: number | null
+          text_color?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       unauthorized_access_attempts: {
         Row: {
           attempted_at: string

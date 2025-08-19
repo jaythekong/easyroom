@@ -244,4 +244,10 @@ All colors MUST be HSL.
     transform: translateY(-1px);
     box-shadow: var(--shadow-elegant), var(--shadow-glow);
   }
+
+  /* Ticker Animation */
+  @keyframes ticker-scroll {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
 }

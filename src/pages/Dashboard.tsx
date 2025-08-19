@@ -19,6 +19,7 @@ import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { useBookings } from "@/hooks/useBookings";
 import { useRooms } from "@/hooks/useRooms";
 import { TelegramBanner } from "@/components/TelegramBanner";
+import { HorizontalTicker } from "@/components/HorizontalTicker";
 import { format } from "date-fns";
 
 interface Room {
@@ -357,6 +358,9 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Horizontal Ticker */}
+      <HorizontalTicker />
+      
       {/* Enhanced Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
