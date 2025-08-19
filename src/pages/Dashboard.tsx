@@ -240,23 +240,42 @@ export default function Dashboard() {
             let isAvailable = true;
             
             if (filters.startTime !== "any" || filters.endTime !== "any") {
+              // Create UTC dates to match database timezone
               const requestedStart = filters.startTime !== "any" ? 
-                new Date(`${dateStr}T${filters.startTime}:00`) : 
-                new Date(`${dateStr}T08:00:00`); // Default to 8 AM if no start time
+                new Date(`${dateStr}T${filters.startTime}:00.000Z`) : 
+                new Date(`${dateStr}T08:00:00.000Z`); // Default to 8 AM if no start time
               
               const requestedEnd = filters.endTime !== "any" ? 
-                new Date(`${dateStr}T${filters.endTime}:00`) : 
-                new Date(`${dateStr}T22:00:00`); // Default to 10 PM if no end time
+                new Date(`${dateStr}T${filters.endTime}:00.000Z`) : 
+                new Date(`${dateStr}T22:00:00.000Z`); // Default to 10 PM if no end time
+
+              console.log(`Checking availability for ${room.name}:`, {
+                requested: `${filters.startTime || '08:00'} - ${filters.endTime || '22:00'}`,
+                requestedStart: requestedStart.toISOString(),
+                requestedEnd: requestedEnd.toISOString(),
+                existingBookings: bookings?.map(b => ({ start: b.start_time, end: b.end_time }))
+              });
 
               isAvailable = !bookings?.some(booking => {
                 const bookingStart = new Date(booking.start_time);
                 const bookingEnd = new Date(booking.end_time);
                 
-                // Check for overlap
-                return requestedStart < bookingEnd && requestedEnd > bookingStart;
+                // Check for overlap: two time periods overlap if start1 < end2 && start2 < end1
+                const hasOverlap = requestedStart < bookingEnd && bookingStart < requestedEnd;
+                
+                console.log(`Overlap check for ${room.name}:`, {
+                  bookingStart: bookingStart.toISOString(),
+                  bookingEnd: bookingEnd.toISOString(),
+                  requestedStart: requestedStart.toISOString(),
+                  requestedEnd: requestedEnd.toISOString(),
+                  hasOverlap
+                });
+                
+                return hasOverlap;
               });
             }
 
+            console.log(`Room ${room.name} availability:`, isAvailable);
             return { room, isAvailable };
           })
         );
