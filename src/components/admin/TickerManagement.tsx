@@ -13,6 +13,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useToast } from "@/hooks/use-toast";
 import { useDebounce } from "use-debounce";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TickerMessage {
   id: string;
@@ -31,6 +49,85 @@ const emojiOptions = [
   "📢", "🎉", "⚡", "💬", "🚀", "✨", "🎯", "💡", "🔥", "⭐", 
   "👋", "📅", "🏢", "💼", "📍", "🎪", "🌟", "🎊", "📣", "🎁", "🇰🇭"
 ];
+
+// Sortable Message Item Component
+function SortableMessageItem({ message, onToggleActive, onEdit, onDelete }: {
+  message: TickerMessage;
+  onToggleActive: (id: string, currentActive: boolean) => void;
+  onEdit: (message: TickerMessage) => void;
+  onDelete: (id: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({id: message.id});
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-3 border border-border rounded-lg bg-card/50 ${
+        isDragging ? 'z-50' : ''
+      }`}
+    >
+      <div 
+        className="flex items-center gap-2 cursor-grab active:cursor-grabbing"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4 text-muted-foreground" />
+        <span className="text-lg">{message.emoji}</span>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">
+          {message.message}
+        </p>
+        <div className="flex items-center gap-2 mt-1">
+          <Badge variant={message.is_active ? "default" : "secondary"} className="text-xs">
+            {message.is_active ? "Active" : "Inactive"}
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            Frequency: {message.frequency}x
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-1">
+        <Switch
+          checked={message.is_active}
+          onCheckedChange={() => onToggleActive(message.id, message.is_active)}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onEdit(message)}
+          className="p-2"
+        >
+          <Palette className="h-3 w-3" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onDelete(message.id)}
+          className="p-2 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 export function TickerManagement() {
   const [messages, setMessages] = useState<TickerMessage[]>([]);
@@ -58,7 +155,13 @@ export function TickerManagement() {
   const { organization } = useOrganization();
   const { toast } = useToast();
   
-  // Remove auto-save, only save manually now
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (organization?.id) {
@@ -140,6 +243,51 @@ export function TickerManagement() {
   };
 
   const hasUnsavedChanges = JSON.stringify(tickerSettings) !== JSON.stringify(originalSettings);
+
+  const handleDragEnd = async (event: any) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = messages.findIndex(item => item.id === active.id);
+      const newIndex = messages.findIndex(item => item.id === over.id);
+      
+      const newMessages = arrayMove(messages, oldIndex, newIndex);
+      setMessages(newMessages);
+
+      // Update order indices in database
+      try {
+        const updates = newMessages.map((msg, index) => ({
+          id: msg.id,
+          order_index: index + 1
+        }));
+
+        for (const update of updates) {
+          const { error } = await supabase
+            .from('ticker_messages')
+            .update({ order_index: update.order_index })
+            .eq('id', update.id);
+
+          if (error) {
+            console.error('Error updating message order:', error);
+          }
+        }
+
+        toast({
+          title: "Order Updated",
+          description: "Message order saved successfully",
+        });
+      } catch (error) {
+        console.error('Error updating message order:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save message order",
+          variant: "destructive",
+        });
+        // Revert the order on error
+        fetchMessages();
+      }
+    }
+  };
 
   const fetchMessages = async () => {
     if (!organization?.id) return;
@@ -442,56 +590,28 @@ export function TickerManagement() {
             <p className="text-sm text-muted-foreground">Add your first message to get started</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className="flex items-center gap-3 p-3 border border-border rounded-lg bg-card/50"
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="space-y-3">
+              <SortableContext 
+                items={messages.map(m => m.id)}
+                strategy={verticalListSortingStrategy}
               >
-                <div className="flex items-center gap-2 cursor-grab">
-                  <GripVertical className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-lg">{message.emoji}</span>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {message.message}
-                  </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Badge variant={message.is_active ? "default" : "secondary"} className="text-xs">
-                      {message.is_active ? "Active" : "Inactive"}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      Frequency: {message.frequency}x
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <Switch
-                    checked={message.is_active}
-                    onCheckedChange={() => toggleActive(message.id, message.is_active)}
+                {messages.map((message) => (
+                  <SortableMessageItem
+                    key={message.id}
+                    message={message}
+                    onToggleActive={toggleActive}
+                    onEdit={openEditDialog}
+                    onDelete={handleDelete}
                   />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => openEditDialog(message)}
-                    className="p-2"
-                  >
-                    <Palette className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(message.id)}
-                    className="p-2 text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+                ))}
+              </SortableContext>
+            </div>
+          </DndContext>
         )}
 
         {messages.length > 0 && (
