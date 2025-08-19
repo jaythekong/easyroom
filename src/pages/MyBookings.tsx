@@ -264,12 +264,28 @@ export default function MyBookings() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="animate-pulse space-y-4">
-            {[1,2,3].map(i => (
-              <div key={i} className="h-32 bg-muted rounded-lg"></div>
-            ))}
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="space-y-8 animate-fade-in">
+            {/* Header Skeleton */}
+            <div className="space-y-4">
+              <div className="h-8 w-48 bg-muted/50 rounded-lg animate-pulse"></div>
+              <div className="h-12 w-96 bg-muted/50 rounded-lg animate-pulse"></div>
+            </div>
+            
+            {/* Stats Skeleton */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1,2,3].map(i => (
+                <div key={i} className="h-32 bg-muted/50 rounded-xl animate-pulse"></div>
+              ))}
+            </div>
+            
+            {/* Bookings Skeleton */}
+            <div className="space-y-4">
+              {[1,2,3,4].map(i => (
+                <div key={i} className="h-40 bg-muted/50 rounded-xl animate-pulse"></div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -289,34 +305,46 @@ export default function MyBookings() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto p-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/10">
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="mb-10 animate-fade-in">
+          <div className="flex items-center gap-4 mb-6">
             <Link to={`/${organization?.slug || ''}`}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+              <Button variant="ghost" size="sm" className="hover-scale group">
+                <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
                 Back to Dashboard
               </Button>
             </Link>
           </div>
           
-          <h1 className="text-3xl font-bold mb-2">Booking Management</h1>
-          <p className="text-muted-foreground">Track and manage your meeting room reservations</p>
+          <div className="space-y-3">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              Booking Management
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl">
+              Track and manage your meeting room reservations with comprehensive insights and controls
+            </p>
+          </div>
         </div>
 
         {/* View Mode Selector */}
-        <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <Filter className="w-5 h-5 text-muted-foreground" />
-            <div className="flex bg-muted rounded-lg p-1">
+        <div className="mb-10 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Filter className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">Filter View</span>
+            </div>
+            
+            <div className="flex bg-muted/50 backdrop-blur-sm rounded-xl p-1.5 border shadow-sm">
               <button
                 onClick={() => setViewMode('my')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                   viewMode === 'my' 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-background text-foreground shadow-md scale-105' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                 }`}
               >
                 My Bookings
@@ -324,10 +352,10 @@ export default function MyBookings() {
               {userRole === 'admin' && (
                 <button
                   onClick={() => setViewMode('all')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-6 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
                     viewMode === 'all' 
-                      ? 'bg-background text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'bg-background text-foreground shadow-md scale-105' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
                   }`}
                 >
                   All Organization Bookings
@@ -337,39 +365,81 @@ export default function MyBookings() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-6 mb-8">
-            <div className="bg-card border rounded-lg p-6">
-              <div className="text-2xl font-bold">{displayBookings.length}</div>
-              <div className="text-sm text-muted-foreground">Total Bookings</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="group bg-gradient-to-br from-card to-card/80 border rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <Calendar className="w-6 h-6 text-primary" />
+                </div>
+                <div className="text-3xl font-bold text-foreground group-hover:scale-110 transition-transform">
+                  {displayBookings.length}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-muted-foreground">Total Bookings</div>
+                <div className="text-xs text-muted-foreground/70">All time records</div>
+              </div>
             </div>
-            <div className="bg-card border rounded-lg p-6">
-              <div className="text-2xl font-bold text-amber-600">{upcomingBookings.length}</div>
-              <div className="text-sm text-muted-foreground">Upcoming</div>
+            
+            <div className="group bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/20 dark:to-amber-900/10 border border-amber-200/50 dark:border-amber-800/30 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 rounded-xl bg-amber-100 dark:bg-amber-900/30 group-hover:bg-amber-200 dark:group-hover:bg-amber-900/50 transition-colors">
+                  <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="text-3xl font-bold text-amber-700 dark:text-amber-300 group-hover:scale-110 transition-transform">
+                  {upcomingBookings.length}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-amber-700 dark:text-amber-300">Upcoming</div>
+                <div className="text-xs text-amber-600/70 dark:text-amber-400/70">Future reservations</div>
+              </div>
             </div>
-            <div className="bg-card border rounded-lg p-6">
-              <div className="text-2xl font-bold text-muted-foreground">{pastBookings.length}</div>
-              <div className="text-sm text-muted-foreground">Past</div>
+            
+            <div className="group bg-gradient-to-br from-slate-50 to-slate-100/50 dark:from-slate-950/20 dark:to-slate-900/10 border border-slate-200/50 dark:border-slate-800/30 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900/30 group-hover:bg-slate-200 dark:group-hover:bg-slate-900/50 transition-colors">
+                  <Calendar className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+                </div>
+                <div className="text-3xl font-bold text-slate-700 dark:text-slate-300 group-hover:scale-110 transition-transform">
+                  {pastBookings.length}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-sm font-medium text-slate-700 dark:text-slate-300">Past</div>
+                <div className="text-xs text-slate-600/70 dark:text-slate-400/70">Completed bookings</div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Upcoming Bookings */}
         {upcomingBookings.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Upcoming Bookings
-            </h2>
+          <div className="mb-10 animate-fade-in">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/30">
+                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Upcoming Bookings</h2>
+              <div className="px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium">
+                {upcomingBookings.length}
+              </div>
+            </div>
             <div className="space-y-4">
-              {upcomingBookings.map((booking) => (
-                <BookingRow 
-                  key={booking.id}
-                  booking={booking}
-                  onView={() => handleViewBooking(booking)}
-                  onEdit={() => handleEditBooking(booking)}
-                  onDelete={() => handleDeleteBooking(booking)}
-                  canEdit={userRole === 'admin' || booking.user_id === user?.id}
-                />
+              {upcomingBookings.map((booking, index) => (
+                <div 
+                  key={booking.id} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <BookingRow 
+                    booking={booking}
+                    onView={() => handleViewBooking(booking)}
+                    onEdit={() => handleEditBooking(booking)}
+                    onDelete={() => handleDeleteBooking(booking)}
+                    canEdit={userRole === 'admin' || booking.user_id === user?.id}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -377,21 +447,31 @@ export default function MyBookings() {
 
         {/* Past Bookings */}
         {pastBookings.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Past Bookings
-            </h2>
+          <div className="mb-10 animate-fade-in">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900/30">
+                <Calendar className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Past Bookings</h2>
+              <div className="px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300 text-sm font-medium">
+                {pastBookings.length}
+              </div>
+            </div>
             <div className="space-y-4">
-              {pastBookings.map((booking) => (
-                <BookingRow 
-                  key={booking.id}
-                  booking={booking}
-                  onView={() => handleViewBooking(booking)}
-                  onEdit={() => handleEditBooking(booking)}
-                  onDelete={() => handleDeleteBooking(booking)}
-                  canEdit={userRole === 'admin' || booking.user_id === user?.id}
-                />
+              {pastBookings.map((booking, index) => (
+                <div 
+                  key={booking.id} 
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <BookingRow 
+                    booking={booking}
+                    onView={() => handleViewBooking(booking)}
+                    onEdit={() => handleEditBooking(booking)}
+                    onDelete={() => handleDeleteBooking(booking)}
+                    canEdit={userRole === 'admin' || booking.user_id === user?.id}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -399,17 +479,25 @@ export default function MyBookings() {
 
         {/* No Bookings Message */}
         {displayBookings.length === 0 && (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No bookings found</h3>
-            <p className="text-muted-foreground mb-4">
-              {viewMode === 'my' 
-                ? "You haven't made any bookings yet."
-                : "No bookings have been made in this organization yet."
-              }
-            </p>
+          <div className="text-center py-20 animate-fade-in">
+            <div className="mb-8">
+              <div className="p-6 rounded-full bg-muted/50 w-32 h-32 mx-auto flex items-center justify-center mb-6">
+                <Calendar className="w-16 h-16 text-muted-foreground" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">No bookings found</h3>
+              <p className="text-lg text-muted-foreground mb-8 max-w-md mx-auto">
+                {viewMode === 'my' 
+                  ? "You haven't made any bookings yet. Start by exploring available meeting rooms."
+                  : "No bookings have been made in this organization yet. Be the first to book a room!"
+                }
+              </p>
+            </div>
+            
             <Link to={`/${organization?.slug || ''}`}>
-              <Button>Make a Booking</Button>
+              <Button size="lg" className="hover-scale group px-8 py-3">
+                <Calendar className="w-5 h-5 mr-2 transition-transform group-hover:scale-110" />
+                Make Your First Booking
+              </Button>
             </Link>
           </div>
         )}
@@ -439,18 +527,31 @@ export default function MyBookings() {
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && selectedBooking && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-background border rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-2">Delete Booking</h3>
-            <p className="text-muted-foreground mb-4">
-              Are you sure you want to delete this booking? This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-background border border-border shadow-2xl rounded-2xl p-8 max-w-md w-full mx-4 animate-scale-in">
+            <div className="text-center mb-6">
+              <div className="p-4 rounded-full bg-destructive/10 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                <Trash2 className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Delete Booking</h3>
+              <p className="text-muted-foreground">
+                Are you sure you want to delete "<span className="font-medium text-foreground">{selectedBooking.title}</span>"? This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteConfirm(false)} 
+                className="flex-1 hover-scale"
+              >
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={confirmDelete}>
-                Delete
+              <Button 
+                variant="destructive" 
+                onClick={confirmDelete}
+                className="flex-1 hover-scale"
+              >
+                Delete Booking
               </Button>
             </div>
           </div>
@@ -523,76 +624,119 @@ function BookingRow({
     const endTime = new Date(booking.end_time);
     
     if (now >= startTime && now <= endTime) {
-      return <Badge className="bg-green-100 text-green-800 border-green-300">In Progress</Badge>;
+      return (
+        <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800 font-medium px-3 py-1">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></div>
+          In Progress
+        </Badge>
+      );
     }
     if (startTime > now) {
-      return <Badge className="bg-amber-100 text-amber-800 border-amber-300">Upcoming</Badge>;
+      return (
+        <Badge className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800 font-medium px-3 py-1">
+          <Clock className="w-3 h-3 mr-2" />
+          Upcoming
+        </Badge>
+      );
     }
-    return <Badge variant="secondary">Past</Badge>;
+    return (
+      <Badge variant="secondary" className="font-medium px-3 py-1">
+        <Calendar className="w-3 h-3 mr-2" />
+        Completed
+      </Badge>
+    );
   };
 
   return (
-    <div className="bg-card border rounded-lg p-6 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-3">
-            <h3 className="font-semibold text-lg">{booking.title}</h3>
+    <div className="group bg-gradient-to-r from-card to-card/95 border border-border/50 rounded-2xl p-6 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 hover:-translate-y-1 hover:border-border">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+        <div className="flex-1 space-y-4">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <h3 className="font-bold text-xl text-foreground group-hover:text-primary transition-colors">
+              {booking.title}
+            </h3>
             {getStatusBadge()}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-muted-foreground mb-3">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 flex-shrink-0" />
-              <span>{booking.room?.name}</span>
-              {booking.room?.location && <span>• {booking.room.location}</span>}
+          {/* Details Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+              <div className="p-2 rounded-lg bg-background">
+                <MapPin className="w-4 h-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-sm text-foreground">{booking.room?.name}</div>
+                {booking.room?.location && (
+                  <div className="text-xs text-muted-foreground">{booking.room.location}</div>
+                )}
+              </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 flex-shrink-0" />
-              <span>{formatDate(booking.start_time)}</span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 flex-shrink-0" />
-              <span>{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</span>
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+              <div className="p-2 rounded-lg bg-background">
+                <Calendar className="w-4 h-4 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="font-medium text-sm text-foreground">{formatDate(booking.start_time)}</div>
+                <div className="text-xs text-muted-foreground">{formatTime(booking.start_time)} - {formatTime(booking.end_time)}</div>
+              </div>
             </div>
             
             {booking.attendees && (
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 flex-shrink-0" />
-                <span>{booking.attendees} attendees</span>
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors">
+                <div className="p-2 rounded-lg bg-background">
+                  <Users className="w-4 h-4 text-primary" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-sm text-foreground">{booking.attendees} Attendees</div>
+                  <div className="text-xs text-muted-foreground">Expected guests</div>
+                </div>
               </div>
             )}
           </div>
           
-          <div className="text-sm">
-            <span className="font-medium">Organizer:</span> {booking.user_profiles.display_name || booking.user_profiles.email}
+          {/* Organizer & Description */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">Organizer:</span>
+              <span className="text-sm font-medium text-foreground">
+                {booking.user_profiles.display_name || booking.user_profiles.email}
+              </span>
+            </div>
+            
+            {booking.description && (
+              <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                  {booking.description}
+                </p>
+              </div>
+            )}
           </div>
-          
-          {booking.description && (
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-              {booking.description}
-            </p>
-          )}
         </div>
         
-        <div className="flex flex-col gap-2 ml-6">
-          <button
+        {/* Actions */}
+        <div className="flex flex-row lg:flex-col gap-3 lg:min-w-[140px]">
+          <Button
             onClick={onView}
-            className="flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-muted transition-colors"
+            variant="outline"
+            size="sm"
+            className="flex-1 lg:flex-none hover-scale group"
           >
-            <Eye className="w-4 h-4" />
-            View/Edit
-          </button>
+            <Eye className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
+            View Details
+          </Button>
           
           {canEdit && (
-            <button
+            <Button
               onClick={onDelete}
-              className="flex items-center gap-2 px-3 py-2 text-sm border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+              variant="outline"
+              size="sm"
+              className="flex-1 lg:flex-none border-destructive/20 text-destructive hover:bg-destructive hover:text-destructive-foreground hover-scale group"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4 mr-2 transition-transform group-hover:scale-110" />
               Delete
-            </button>
+            </Button>
           )}
         </div>
       </div>
