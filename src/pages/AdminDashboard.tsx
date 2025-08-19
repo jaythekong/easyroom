@@ -9,6 +9,7 @@ import { AdminStats } from "@/components/admin/AdminStats";
 import { TeamManagement } from "@/components/admin/TeamManagement";
 import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { TelegramNotifications } from "@/components/admin/TelegramNotifications";
+import { TickerManagement } from "@/components/admin/TickerManagement";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
@@ -40,7 +41,7 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
         <AdminStats />
 
         <Tabs defaultValue="rooms" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="rooms" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Rooms
@@ -60,6 +61,10 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
             <TabsTrigger value="telegram" className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4" />
               Telegram
+            </TabsTrigger>
+            <TabsTrigger value="ticker" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Ticker
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -109,6 +114,10 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
 
           <TabsContent value="telegram" className="space-y-6">
             <TelegramNotifications />
+          </TabsContent>
+
+          <TabsContent value="ticker" className="space-y-6">
+            <TickerManagement />
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">

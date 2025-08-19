@@ -64,9 +64,11 @@ export function HorizontalTicker() {
 
   if (!messages.length || !isVisible) return null;
 
-  // Use the first message's settings for global ticker style
+  // Calculate dynamic speed based on content and first message speed
   const primaryMessage = messages[0];
-  const tickerSpeed = primaryMessage?.speed || 50;
+  const baseSpeed = primaryMessage?.speed || 50; // pixels per second
+  const totalWidth = messages.length * 300; // Approximate width per message
+  const animationDuration = totalWidth / baseSpeed; // seconds
 
   return (
     <>
@@ -76,7 +78,7 @@ export function HorizontalTicker() {
           100% { transform: translateX(-100%); }
         }
         .ticker-animate {
-          animation: ticker-scroll ${Math.max(messages.length * 8, 20)}s linear infinite;
+          animation: ticker-scroll ${animationDuration}s linear infinite;
         }
       `}</style>
       
