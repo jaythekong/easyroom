@@ -110,7 +110,7 @@ const LandingPage = () => {
             <div className="bg-background p-8 rounded-2xl shadow-sm border">
               <Calendar className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">Smart Booking System</h3>
-              <p className="text-muted-foreground">Real-time availability, recurring meetings, conflict detection — all in timeline or grid view.</p>
+              <p className="text-muted-foreground">Real-time availability, smart scheduling, conflict detection — all in timeline or grid view.</p>
             </div>
             
             <div className="bg-background p-8 rounded-2xl shadow-sm border">
@@ -146,7 +146,7 @@ const LandingPage = () => {
             <div className="bg-background p-8 rounded-2xl shadow-sm border">
               <Clock className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">Flexible Scheduling</h3>
-              <p className="text-muted-foreground">Recurring bookings, time-based rules, and automatic conflict resolution.</p>
+              <p className="text-muted-foreground">Smart scheduling, time-based rules, and automatic conflict resolution.</p>
             </div>
             
             <div className="bg-background p-8 rounded-2xl shadow-sm border">

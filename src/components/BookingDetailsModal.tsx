@@ -20,7 +20,6 @@ interface BookingDetailsModalProps {
     end_time: string;
     attendees?: number;
     status: string;
-    recurring: string;
     user_id: string;
     user_profiles?: {
       email: string;
@@ -179,11 +178,6 @@ export function BookingDetailsModal({
               <Badge className={getStatusColor(booking.status)}>
                 {booking.status}
               </Badge>
-              {booking.recurring !== 'none' && (
-                <Badge variant="outline">
-                  {booking.recurring}
-                </Badge>
-              )}
             </div>
             {booking.description && (
               <p className="text-sm text-muted-foreground">

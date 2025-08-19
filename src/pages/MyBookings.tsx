@@ -513,8 +513,7 @@ export default function MyBookings() {
         }}
         booking={selectedBooking ? {
           ...selectedBooking,
-          status: selectedBooking.status || 'confirmed',
-          recurring: selectedBooking.recurring || 'none'
+          status: selectedBooking.status || 'confirmed'
         } : null}
         room={selectedRoom}
         onEdit={(booking) => {
@@ -572,7 +571,6 @@ export default function MyBookings() {
             start_time: selectedBooking.start_time,
             end_time: selectedBooking.end_time,
             attendees: selectedBooking.attendees,
-            recurring: selectedBooking.recurring || 'none',
             user_profiles: selectedBooking.user_profiles
           }}
         />

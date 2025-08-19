@@ -47,7 +47,6 @@ interface BookingModalProps {
     start_time: string;
     end_time: string;
     attendees?: number;
-    recurring: string;
     user_profiles?: {
       email: string;
       display_name?: string;
@@ -85,8 +84,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
     startTime: initialStartTime || "",
     endTime: "",
     attendees: "",
-    description: "",
-    recurring: "none"
+    description: ""
   });
 
   // Fetch room gaps for smart time selection
@@ -366,7 +364,6 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             start_time: existingBooking.start_time,
             end_time: existingBooking.end_time,
             attendees: existingBooking.attendees,
-            recurring: existingBooking.recurring,
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString()
           });
@@ -401,8 +398,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             startTime: formattedStartTime,
             endTime: formattedEndTime,
             attendees: existingBooking.attendees?.toString() || "",
-            description: existingBooking.description || "",
-            recurring: existingBooking.recurring || "none"
+            description: existingBooking.description || ""
           };
 
           console.log('📝 Setting form data:', newFormData);
@@ -416,8 +412,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             startTime: initialStartTime || "",
             endTime: "",
             attendees: "",
-            description: "",
-            recurring: "none"
+            description: ""
           };
           console.log('📝 Setting new booking form data with initialStartTime:', { initialStartTime, newFormData });
           setFormData(newFormData);
@@ -657,7 +652,6 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         start_time: startDateTime,
         end_time: endDateTime,
         attendees: parseInt(formData.attendees) || 1,
-        recurring: formData.recurring,
         organization_id: organization.id
       };
 
@@ -737,8 +731,7 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
         startTime: "",
         endTime: "",
         attendees: "",
-        description: "",
-        recurring: "none"
+        description: ""
       });
     } catch (error) {
       console.error('📝 BOOKING ERROR DETAILS:', {
@@ -1045,23 +1038,6 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               onChange={(e) => updateFormData({ attendees: e.target.value })}
               max={room.capacity}
             />
-          </div>
-
-          {/* Recurring */}
-          <div className="space-y-2">
-            <Label htmlFor="recurring">Recurring Meeting</Label>
-            <Select value={formData.recurring} onValueChange={(value) => updateFormData({ recurring: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select recurrence" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">One-time meeting</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="biweekly">Bi-weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Description */}
