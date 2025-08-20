@@ -660,6 +660,9 @@ export type Database = {
           is_active: boolean
           logo_position: string | null
           organization_id: string
+          sub_text: string | null
+          sub_text_color: string | null
+          sub_text_size: string | null
           text_color: string
           text_outline: boolean | null
           text_shadow: boolean | null
@@ -679,6 +682,9 @@ export type Database = {
           is_active?: boolean
           logo_position?: string | null
           organization_id: string
+          sub_text?: string | null
+          sub_text_color?: string | null
+          sub_text_size?: string | null
           text_color?: string
           text_outline?: boolean | null
           text_shadow?: boolean | null
@@ -698,6 +704,9 @@ export type Database = {
           is_active?: boolean
           logo_position?: string | null
           organization_id?: string
+          sub_text?: string | null
+          sub_text_color?: string | null
+          sub_text_size?: string | null
           text_color?: string
           text_outline?: boolean | null
           text_shadow?: boolean | null
