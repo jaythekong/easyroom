@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone, MessageCircle, Globe, Lock, Clock, Bell, Eye, UserCheck, Workflow, Database, Palette, Monitor, Coffee, Wifi } from "lucide-react";
+import { Building, Calendar, Users, MapPin, ArrowRight, Star, Shield, Zap, BarChart3, Settings, Smartphone, MessageCircle, Globe, Lock, Clock, Bell, Eye, UserCheck, Workflow, Database, Palette, Monitor, Coffee, Wifi, Tv, MessageSquare, Radio } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppFooter } from "@/components/AppFooter";
@@ -159,6 +159,120 @@ const LandingPage = () => {
               <MessageCircle className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">Telegram Integration</h3>
               <p className="text-muted-foreground">Connect your bot for instant notifications and booking management via Telegram.</p>
+            </div>
+
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Radio className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Smart Ticker Display</h3>
+              <p className="text-muted-foreground">Dynamic messaging system for announcements, updates, and real-time information on room displays.</p>
+            </div>
+
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Tv className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Welcome Screen TV Mode</h3>
+              <p className="text-muted-foreground">Customizable full-screen welcome displays with animations, branding, and dynamic content for room TVs.</p>
+            </div>
+
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <MessageSquare className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Dynamic Messaging</h3>
+              <p className="text-muted-foreground">Scrolling tickers, custom fonts, colors, and flexible scheduling for room announcements.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Digital Signage Features */}
+      <section className="py-20 px-4 bg-muted/50">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">📺 Digital Signage & TV Integration</h2>
+            <p className="text-xl text-muted-foreground">Transform your meeting room TVs into dynamic information displays</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            <div className="space-y-6">
+              <div className="bg-background p-8 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="bg-primary/10 p-3 rounded-lg">
+                    <Tv className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-semibold">Welcome Screen TV Mode</h3>
+                </div>
+                <ul className="space-y-3 text-muted-foreground">
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Full-screen customizable welcome displays</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Beautiful animations with 5 speed levels (0=static to 5=very fast)</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Custom fonts (Sans, Cursive, Elegant, Modern) for main & sub text</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Preset gradients or custom backgrounds & colors</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Organization branding with logo positioning</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Text shadows & outlines for better readability</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="bg-background p-8 rounded-2xl shadow-sm">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="bg-primary/10 p-3 rounded-lg">
+                    <Radio className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-semibold">Smart Ticker System</h3>
+                </div>
+                <ul className="space-y-3 text-muted-foreground">
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Scrolling news ticker for announcements & updates</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Multiple messages with custom colors & emojis</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Adjustable scroll speed & message frequency</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Easy drag & drop message ordering</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Perfect for emergency alerts, event notices, and general info</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                    <span>Works seamlessly with room booking display</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center mt-12">
+            <div className="bg-background p-8 rounded-2xl shadow-sm max-w-3xl mx-auto">
+              <h3 className="text-2xl font-semibold mb-4">Perfect for Modern Workplaces</h3>
+              <p className="text-muted-foreground text-lg">
+                Turn any TV or display into an engaging information hub. Keep your team informed with real-time updates, 
+                beautiful welcome messages, and important announcements - all managed from your admin dashboard.
+              </p>
             </div>
           </div>
         </div>
