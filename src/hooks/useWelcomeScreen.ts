@@ -14,6 +14,7 @@ export interface WelcomeScreenSettings {
   font_size: 'text-4xl' | 'text-5xl' | 'text-6xl' | 'text-7xl' | 'text-8xl';
   sub_text_size?: 'text-lg' | 'text-xl' | 'text-2xl' | 'text-3xl' | 'text-4xl';
   font_family: 'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern';
+  sub_font_family?: 'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern';
   text_shadow: boolean;
   text_outline: boolean;
   logo_position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-bottom';

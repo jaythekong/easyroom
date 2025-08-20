@@ -32,6 +32,7 @@ export function WelcomeScreen() {
   const fontSize = settings?.font_size || "text-6xl";
   const subTextSize = settings?.sub_text_size || "text-2xl";
   const fontFamily = settings?.font_family || "font-sans";
+  const subFontFamily = settings?.sub_font_family || "font-sans";
   const textShadow = settings?.text_shadow ?? true;
   const textOutline = settings?.text_outline ?? false;
   const logoPosition = settings?.logo_position || "bottom-right";
@@ -73,9 +74,9 @@ export function WelcomeScreen() {
         return animationSpeed === 'slow' ? 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 
                animationSpeed === 'fast' ? 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 'animate-pulse';
       case 'fade':
-        return `animate-[fade_${4 * speedMultiplier}s_ease-in-out_infinite_alternate]`;
+        return `animate-[fade_${4 * speedMultiplier}s_ease-in-out_infinite]`;
       case 'slide':
-        return `animate-[slide_${8 * speedMultiplier}s_ease-in-out_infinite_alternate]`;
+        return `animate-[slide_${8 * speedMultiplier}s_ease-in-out_infinite]`;
       default:
         return `animate-[float_${6 * speedMultiplier}s_ease-in-out_infinite]`;
     }
@@ -138,7 +139,7 @@ export function WelcomeScreen() {
         
         {subText && (
           <p 
-            className={`${subTextSize} ${fontFamily} opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
+            className={`${subTextSize} ${subFontFamily} opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
             style={{ color: subTextColor }}
           >
             {subText}
