@@ -261,7 +261,49 @@ All colors MUST be HSL.
     }
   }
 
+  @keyframes float-slow {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes float-fast {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
   @keyframes drift {
+    0%, 100% {
+      transform: translate(0px, 0px) rotate(0deg);
+    }
+    33% {
+      transform: translate(30px, -30px) rotate(120deg);
+    }
+    66% {
+      transform: translate(-20px, 20px) rotate(240deg);
+    }
+  }
+
+  @keyframes drift-slow {
+    0%, 100% {
+      transform: translate(0px, 0px) rotate(0deg);
+    }
+    33% {
+      transform: translate(30px, -30px) rotate(120deg);
+    }
+    66% {
+      transform: translate(-20px, 20px) rotate(240deg);
+    }
+  }
+
+  @keyframes drift-fast {
     0%, 100% {
       transform: translate(0px, 0px) rotate(0deg);
     }
@@ -282,6 +324,24 @@ All colors MUST be HSL.
     }
   }
 
+  @keyframes fade-slow {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes fade-fast {
+    0%, 100% {
+      opacity: 0.6;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
   @keyframes slide {
     0%, 100% {
       transform: translateX(0px);
@@ -289,5 +349,84 @@ All colors MUST be HSL.
     50% {
       transform: translateX(20px);
     }
+  }
+
+  @keyframes slide-slow {
+    0%, 100% {
+      transform: translateX(0px);
+    }
+    50% {
+      transform: translateX(20px);
+    }
+  }
+
+  @keyframes slide-fast {
+    0%, 100% {
+      transform: translateX(0px);
+    }
+    50% {
+      transform: translateX(20px);
+    }
+  }
+
+  /* Animation Classes */
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: float-slow 12s ease-in-out infinite;
+  }
+
+  .animate-float-fast {
+    animation: float-fast 3s ease-in-out infinite;
+  }
+
+  .animate-fade-custom {
+    animation: fade 4s ease-in-out infinite;
+  }
+
+  .animate-fade-slow {
+    animation: fade-slow 8s ease-in-out infinite;
+  }
+
+  .animate-fade-fast {
+    animation: fade-fast 2s ease-in-out infinite;
+  }
+
+  .animate-slide-custom {
+    animation: slide 8s ease-in-out infinite;
+  }
+
+  .animate-slide-slow {
+    animation: slide-slow 16s ease-in-out infinite;
+  }
+
+  .animate-slide-fast {
+    animation: slide-fast 4s ease-in-out infinite;
+  }
+
+  .animate-drift {
+    animation: drift 20s ease-in-out infinite;
+  }
+
+  .animate-drift-slow {
+    animation: drift-slow 40s ease-in-out infinite;
+  }
+
+  .animate-drift-fast {
+    animation: drift-fast 10s ease-in-out infinite;
+  }
+
+  .animate-drift-reverse {
+    animation: drift 25s ease-in-out infinite reverse;
+  }
+
+  .animate-drift-slow-reverse {
+    animation: drift-slow 50s ease-in-out infinite reverse;
+  }
+
+  .animate-drift-fast-reverse {
+    animation: drift-fast 12s ease-in-out infinite reverse;
   }
 }

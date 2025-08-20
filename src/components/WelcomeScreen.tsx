@@ -67,23 +67,23 @@ export function WelcomeScreen() {
     
     switch (animationType) {
       case 'floating':
-        return animationSpeed === 'slow' ? 'animate-[float_12s_ease-in-out_infinite]' : 
-               animationSpeed === 'fast' ? 'animate-[float_3s_ease-in-out_infinite]' : 
-               'animate-[float_6s_ease-in-out_infinite]';
+        return animationSpeed === 'slow' ? 'animate-float-slow' : 
+               animationSpeed === 'fast' ? 'animate-float-fast' : 
+               'animate-float';
       case 'pulse':
         return animationSpeed === 'slow' ? 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 
                animationSpeed === 'fast' ? 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 
                'animate-pulse';
       case 'fade':
-        return animationSpeed === 'slow' ? 'animate-[fade_8s_ease-in-out_infinite]' : 
-               animationSpeed === 'fast' ? 'animate-[fade_2s_ease-in-out_infinite]' : 
-               'animate-[fade_4s_ease-in-out_infinite]';
+        return animationSpeed === 'slow' ? 'animate-fade-slow' : 
+               animationSpeed === 'fast' ? 'animate-fade-fast' : 
+               'animate-fade-custom';
       case 'slide':
-        return animationSpeed === 'slow' ? 'animate-[slide_16s_ease-in-out_infinite]' : 
-               animationSpeed === 'fast' ? 'animate-[slide_4s_ease-in-out_infinite]' : 
-               'animate-[slide_8s_ease-in-out_infinite]';
+        return animationSpeed === 'slow' ? 'animate-slide-slow' : 
+               animationSpeed === 'fast' ? 'animate-slide-fast' : 
+               'animate-slide-custom';
       default:
-        return 'animate-[float_6s_ease-in-out_infinite]';
+        return 'animate-float';
     }
   };
 
@@ -120,17 +120,17 @@ export function WelcomeScreen() {
       {/* Animated overlay */}
       {animationEnabled && (
         <div className="absolute inset-0 opacity-20">
-          <div className={animationSpeed === 'slow' ? 'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-[drift_40s_ease-in-out_infinite]' : 
-                          animationSpeed === 'fast' ? 'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-[drift_10s_ease-in-out_infinite]' : 
-                          'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-[drift_20s_ease-in-out_infinite]'} 
+          <div className={animationSpeed === 'slow' ? 'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift-slow' : 
+                          animationSpeed === 'fast' ? 'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift-fast' : 
+                          'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift'} 
                style={{ animationDelay: '0s' }} />
-          <div className={animationSpeed === 'slow' ? 'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-[drift_50s_ease-in-out_infinite_reverse]' : 
-                          animationSpeed === 'fast' ? 'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-[drift_12s_ease-in-out_infinite_reverse]' : 
-                          'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-[drift_25s_ease-in-out_infinite_reverse]'} 
+          <div className={animationSpeed === 'slow' ? 'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-slow-reverse' : 
+                          animationSpeed === 'fast' ? 'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-fast-reverse' : 
+                          'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-reverse'} 
                style={{ animationDelay: '5s' }} />
-          <div className={animationSpeed === 'slow' ? 'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-[drift_36s_ease-in-out_infinite]' : 
-                          animationSpeed === 'fast' ? 'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-[drift_9s_ease-in-out_infinite]' : 
-                          'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-[drift_18s_ease-in-out_infinite]'} 
+          <div className={animationSpeed === 'slow' ? 'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift-slow' : 
+                          animationSpeed === 'fast' ? 'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift-fast' : 
+                          'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift'} 
                style={{ animationDelay: '10s' }} />
         </div>
       )}
