@@ -649,43 +649,58 @@ export type Database = {
       welcome_screen_settings: {
         Row: {
           animation_enabled: boolean
+          animation_speed: string | null
           animation_type: string
           background_type: string
           background_value: string
           created_at: string
+          font_family: string | null
           font_size: string
           id: string
           is_active: boolean
+          logo_position: string | null
           organization_id: string
           text_color: string
+          text_outline: boolean | null
+          text_shadow: boolean | null
           updated_at: string
           welcome_text: string
         }
         Insert: {
           animation_enabled?: boolean
+          animation_speed?: string | null
           animation_type?: string
           background_type?: string
           background_value?: string
           created_at?: string
+          font_family?: string | null
           font_size?: string
           id?: string
           is_active?: boolean
+          logo_position?: string | null
           organization_id: string
           text_color?: string
+          text_outline?: boolean | null
+          text_shadow?: boolean | null
           updated_at?: string
           welcome_text?: string
         }
         Update: {
           animation_enabled?: boolean
+          animation_speed?: string | null
           animation_type?: string
           background_type?: string
           background_value?: string
           created_at?: string
+          font_family?: string | null
           font_size?: string
           id?: string
           is_active?: boolean
+          logo_position?: string | null
           organization_id?: string
           text_color?: string
+          text_outline?: boolean | null
+          text_shadow?: boolean | null
           updated_at?: string
           welcome_text?: string
         }

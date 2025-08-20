@@ -40,14 +40,19 @@ export function WelcomeScreenManagement() {
   // Load settings when they change
   useEffect(() => {
     if (settings) {
-      setWelcomeText(settings.welcome_text);
-      setBackgroundType(settings.background_type);
-      setBackgroundValue(settings.background_value);
-      setTextColor(settings.text_color);
-      setFontSize(settings.font_size);
-      setAnimationEnabled(settings.animation_enabled);
-      setAnimationType(settings.animation_type);
-      setIsActive(settings.is_active);
+      setWelcomeText(settings.welcome_text || "Welcome!");
+      setBackgroundType(settings.background_type || "gradient");
+      setBackgroundValue(settings.background_value || "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))");
+      setTextColor(settings.text_color || "#FFFFFF");
+      setFontSize(settings.font_size || "text-6xl");
+      setFontFamily(settings.font_family || "font-sans");
+      setTextShadow(settings.text_shadow ?? true);
+      setTextOutline(settings.text_outline ?? false);
+      setLogoPosition(settings.logo_position || "bottom-right");
+      setAnimationEnabled(settings.animation_enabled ?? true);
+      setAnimationType(settings.animation_type || "floating");
+      setAnimationSpeed(settings.animation_speed || "normal");
+      setIsActive(settings.is_active ?? true);
     }
   }, [settings]);
 
@@ -61,8 +66,13 @@ export function WelcomeScreenManagement() {
       background_value: backgroundValue,
       text_color: textColor,
       font_size: fontSize,
+      font_family: fontFamily,
+      text_shadow: textShadow,
+      text_outline: textOutline,
+      logo_position: logoPosition,
       animation_enabled: animationEnabled,
       animation_type: animationType,
+      animation_speed: animationSpeed,
       is_active: isActive,
     });
   };
@@ -311,6 +321,57 @@ export function WelcomeScreenManagement() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="font-family">Font Style</Label>
+                <Select value={fontFamily} onValueChange={(value: 'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern') => setFontFamily(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="font-sans">Sans Serif (Default)</SelectItem>
+                    <SelectItem value="font-cursive">Cursive (Dancing Script)</SelectItem>
+                    <SelectItem value="font-elegant">Elegant (Playfair Display)</SelectItem>
+                    <SelectItem value="font-modern">Modern (Poppins)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="text-shadow"
+                    checked={textShadow}
+                    onCheckedChange={setTextShadow}
+                  />
+                  <Label htmlFor="text-shadow">Text Shadow (for better readability)</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="text-outline"
+                    checked={textOutline}
+                    onCheckedChange={setTextOutline}
+                  />
+                  <Label htmlFor="text-outline">Text Outline (for complex backgrounds)</Label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="logo-position">Logo Position</Label>
+                <Select value={logoPosition} onValueChange={(value: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-bottom') => setLogoPosition(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                    <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                    <SelectItem value="top-right">Top Right</SelectItem>
+                    <SelectItem value="top-left">Top Left</SelectItem>
+                    <SelectItem value="center-bottom">Center Bottom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </TabsContent>
 
             <TabsContent value="animation" className="space-y-4">
@@ -340,10 +401,26 @@ export function WelcomeScreenManagement() {
                   <p className="text-sm text-muted-foreground mt-1">
                     Choose the animation style for the welcome text
                   </p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+                  </div>
+                )}
+
+                {animationEnabled && (
+                  <div className="space-y-2">
+                    <Label htmlFor="animation-speed">Animation Speed</Label>
+                    <Select value={animationSpeed} onValueChange={(value: 'slow' | 'normal' | 'fast') => setAnimationSpeed(value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="slow">Slow</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="fast">Fast</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
 
           <div className="flex justify-end gap-2 pt-6 border-t">
             <Button variant="outline" onClick={openPreview}>

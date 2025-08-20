@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'cursive': ['Dancing Script', 'Brush Script MT', 'cursive'],
+				'elegant': ['Playfair Display', 'serif'],
+				'modern': ['Poppins', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
