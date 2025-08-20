@@ -6,10 +6,13 @@ export interface WelcomeScreenSettings {
   id: string;
   organization_id: string;
   welcome_text: string;
+  sub_text?: string;
   background_type: 'gradient' | 'image' | 'color';
   background_value: string;
   text_color: string;
+  sub_text_color?: string;
   font_size: 'text-4xl' | 'text-5xl' | 'text-6xl' | 'text-7xl' | 'text-8xl';
+  sub_text_size?: 'text-lg' | 'text-xl' | 'text-2xl' | 'text-3xl' | 'text-4xl';
   font_family: 'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern';
   text_shadow: boolean;
   text_outline: boolean;

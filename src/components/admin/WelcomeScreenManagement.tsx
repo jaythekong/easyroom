@@ -23,10 +23,13 @@ export function WelcomeScreenManagement() {
 
   // Form state
   const [welcomeText, setWelcomeText] = useState("Welcome!");
+  const [subText, setSubText] = useState("");
   const [backgroundType, setBackgroundType] = useState<'gradient' | 'image' | 'color'>('gradient');
   const [backgroundValue, setBackgroundValue] = useState("linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))");
   const [textColor, setTextColor] = useState("#FFFFFF");
+  const [subTextColor, setSubTextColor] = useState("#FFFFFF");
   const [fontSize, setFontSize] = useState<'text-4xl' | 'text-5xl' | 'text-6xl' | 'text-7xl' | 'text-8xl'>('text-6xl');
+  const [subTextSize, setSubTextSize] = useState<'text-lg' | 'text-xl' | 'text-2xl' | 'text-3xl' | 'text-4xl'>('text-2xl');
   const [fontFamily, setFontFamily] = useState<'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern'>('font-sans');
   const [textShadow, setTextShadow] = useState(true);
   const [textOutline, setTextOutline] = useState(false);
@@ -41,10 +44,13 @@ export function WelcomeScreenManagement() {
   useEffect(() => {
     if (settings) {
       setWelcomeText(settings.welcome_text || "Welcome!");
+      setSubText(settings.sub_text || "");
       setBackgroundType(settings.background_type || "gradient");
       setBackgroundValue(settings.background_value || "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))");
       setTextColor(settings.text_color || "#FFFFFF");
+      setSubTextColor(settings.sub_text_color || "#FFFFFF");
       setFontSize(settings.font_size || "text-6xl");
+      setSubTextSize(settings.sub_text_size || "text-2xl");
       setFontFamily(settings.font_family || "font-sans");
       setTextShadow(settings.text_shadow ?? true);
       setTextOutline(settings.text_outline ?? false);
@@ -62,10 +68,13 @@ export function WelcomeScreenManagement() {
     await updateSettings.mutateAsync({
       organization_id: organization.id,
       welcome_text: welcomeText,
+      sub_text: subText,
       background_type: backgroundType,
       background_value: backgroundValue,
       text_color: textColor,
+      sub_text_color: subTextColor,
       font_size: fontSize,
+      sub_text_size: subTextSize,
       font_family: fontFamily,
       text_shadow: textShadow,
       text_outline: textOutline,
@@ -162,7 +171,7 @@ export function WelcomeScreenManagement() {
 
             <TabsContent value="content" className="space-y-4">
               <div>
-                <Label htmlFor="welcomeText">Welcome Message</Label>
+                <Label htmlFor="welcomeText">Main Welcome Text</Label>
                 <Textarea
                   id="welcomeText"
                   value={welcomeText}
@@ -171,7 +180,21 @@ export function WelcomeScreenManagement() {
                   className="mt-2"
                 />
                 <p className="text-sm text-muted-foreground mt-1">
-                  The main welcome message displayed on the screen
+                  The main welcome message displayed prominently
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="subText">Sub Text (Optional)</Label>
+                <Textarea
+                  id="subText"
+                  value={subText}
+                  onChange={(e) => setSubText(e.target.value)}
+                  placeholder="A subtitle or additional message..."
+                  className="mt-2"
+                />
+                <p className="text-sm text-muted-foreground mt-1">
+                  Secondary text displayed below the main message
                 </p>
               </div>
 
@@ -279,47 +302,94 @@ export function WelcomeScreenManagement() {
             </TabsContent>
 
             <TabsContent value="text" className="space-y-4">
-              <div>
-                <Label>Text Color</Label>
-                <div className="flex items-center gap-4 mt-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        className="w-[100px] h-10 p-1"
-                        style={{ backgroundColor: textColor }}
-                      >
-                        <div className="w-full h-full rounded border-2 border-white/20" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-3" side="bottom">
-                      <HexColorPicker color={textColor} onChange={setTextColor} />
-                      <Input
-                        value={textColor}
-                        onChange={(e) => setTextColor(e.target.value)}
-                        placeholder="#FFFFFF"
-                        className="mt-3 h-8"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <span className="text-sm">{textColor}</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Main Text Color</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-[80px] h-10 p-1"
+                          style={{ backgroundColor: textColor }}
+                        >
+                          <div className="w-full h-full rounded border-2 border-white/20" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3" side="bottom">
+                        <HexColorPicker color={textColor} onChange={setTextColor} />
+                        <Input
+                          value={textColor}
+                          onChange={(e) => setTextColor(e.target.value)}
+                          placeholder="#FFFFFF"
+                          className="mt-3 h-8"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-xs">{textColor}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Sub Text Color</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button 
+                          variant="outline" 
+                          className="w-[80px] h-10 p-1"
+                          style={{ backgroundColor: subTextColor }}
+                        >
+                          <div className="w-full h-full rounded border-2 border-white/20" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3" side="bottom">
+                        <HexColorPicker color={subTextColor} onChange={setSubTextColor} />
+                        <Input
+                          value={subTextColor}
+                          onChange={(e) => setSubTextColor(e.target.value)}
+                          placeholder="#FFFFFF"
+                          className="mt-3 h-8"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-xs">{subTextColor}</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label>Font Size</Label>
-                <Select value={fontSize} onValueChange={(value: typeof fontSize) => setFontSize(value)}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="text-4xl">Extra Large (4xl)</SelectItem>
-                    <SelectItem value="text-5xl">Huge (5xl)</SelectItem>
-                    <SelectItem value="text-6xl">Massive (6xl)</SelectItem>
-                    <SelectItem value="text-7xl">Gigantic (7xl)</SelectItem>
-                    <SelectItem value="text-8xl">Enormous (8xl)</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Main Text Size</Label>
+                  <Select value={fontSize} onValueChange={(value: typeof fontSize) => setFontSize(value)}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text-4xl">Extra Large (4xl)</SelectItem>
+                      <SelectItem value="text-5xl">Huge (5xl)</SelectItem>
+                      <SelectItem value="text-6xl">Massive (6xl)</SelectItem>
+                      <SelectItem value="text-7xl">Gigantic (7xl)</SelectItem>
+                      <SelectItem value="text-8xl">Enormous (8xl)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Sub Text Size</Label>
+                  <Select value={subTextSize} onValueChange={(value: typeof subTextSize) => setSubTextSize(value)}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="text-lg">Large (lg)</SelectItem>
+                      <SelectItem value="text-xl">Extra Large (xl)</SelectItem>
+                      <SelectItem value="text-2xl">2X Large (2xl)</SelectItem>
+                      <SelectItem value="text-3xl">3X Large (3xl)</SelectItem>
+                      <SelectItem value="text-4xl">4X Large (4xl)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -344,7 +414,7 @@ export function WelcomeScreenManagement() {
                     checked={textShadow}
                     onCheckedChange={setTextShadow}
                   />
-                  <Label htmlFor="text-shadow">Text Shadow (for better readability)</Label>
+                  <Label htmlFor="text-shadow">Enhanced Text Shadow (for better readability)</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">

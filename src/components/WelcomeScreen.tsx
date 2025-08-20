@@ -26,8 +26,11 @@ export function WelcomeScreen() {
 
   // Default settings if none configured
   const welcomeText = settings?.welcome_text || "Welcome!";
+  const subText = settings?.sub_text || "";
   const textColor = settings?.text_color || "#FFFFFF";
+  const subTextColor = settings?.sub_text_color || "#FFFFFF";
   const fontSize = settings?.font_size || "text-6xl";
+  const subTextSize = settings?.sub_text_size || "text-2xl";
   const fontFamily = settings?.font_family || "font-sans";
   const textShadow = settings?.text_shadow ?? true;
   const textOutline = settings?.text_outline ?? false;
@@ -78,11 +81,11 @@ export function WelcomeScreen() {
     }
   };
 
-  // Text styling classes
+  // Text styling classes - enhanced shadow
   const getTextStyling = () => {
     let classes = '';
-    if (textShadow) classes += ' drop-shadow-2xl';
-    if (textOutline) classes += ' [text-shadow:_1px_1px_0_rgb(0_0_0_/_50%),_-1px_-1px_0_rgb(0_0_0_/_50%),_1px_-1px_0_rgb(0_0_0_/_50%),_-1px_1px_0_rgb(0_0_0_/_50%)]';
+    if (textShadow) classes += ' [text-shadow:_0_4px_12px_rgba(0,0,0,0.8),_0_2px_6px_rgba(0,0,0,0.6)]';
+    if (textOutline) classes += ' [text-shadow:_2px_2px_0_rgb(0_0_0_/_80%),_-2px_-2px_0_rgb(0_0_0_/_80%),_2px_-2px_0_rgb(0_0_0_/_80%),_-2px_2px_0_rgb(0_0_0_/_80%)]';
     return classes;
   };
 
@@ -127,18 +130,18 @@ export function WelcomeScreen() {
         ${getAnimationClass()}
       `}>
         <h1 
-          className={`${fontSize} ${fontFamily} font-bold mb-4 ${getTextStyling()}`}
+          className={`${fontSize} ${fontFamily} font-bold mb-6 ${getTextStyling()}`}
           style={{ color: textColor }}
         >
           {welcomeText}
         </h1>
         
-        {organization?.tagline && (
+        {subText && (
           <p 
-            className={`text-xl md:text-2xl opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
-            style={{ color: textColor }}
+            className={`${subTextSize} ${fontFamily} opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
+            style={{ color: subTextColor }}
           >
-            {organization.tagline}
+            {subText}
           </p>
         )}
       </div>
