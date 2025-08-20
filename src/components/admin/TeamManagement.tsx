@@ -78,23 +78,23 @@ export function TeamManagement() {
         throw membersError;
       }
       
-      // Get emails separately since they might be in profiles
+      // Get emails and last_login data from profiles
       const userIds = members.map(member => member.user_id);
       
-      // Fetch emails from profiles or auth (as fallback)
+      // Fetch user data from profiles including last_login
       const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('user_id, email')
-        .in('user_id', userIds);
+        .select('user_id, email, last_login')
+        .in('user_id', userIds)
+        .eq('organization_id', organization.id);
 
-      // For now, we'll use a placeholder for last login since accessing auth analytics requires special setup
-      // This would need to be implemented with proper analytics tracking in a real application
+      // Combine membership data with profile data
       const membersWithEmails = members.map(member => {
         const profile = profiles?.find(p => p.user_id === member.user_id);
         return {
           ...member,
           email: profile?.email || 'no-email@company.com',
-          last_login: null // Would need auth analytics integration to populate this
+          last_login: profile?.last_login || null
         };
       });
 
