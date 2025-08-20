@@ -79,8 +79,8 @@ export function WelcomeScreenManagement() {
       }
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `welcome-bg-${organization?.id}.${fileExt}`;
-      const filePath = `welcome-backgrounds/${fileName}`;
+      const fileName = `welcome-bg-${organization?.id}-${Date.now()}.${fileExt}`;
+      const filePath = `welcome-backgrounds/${organization?.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
