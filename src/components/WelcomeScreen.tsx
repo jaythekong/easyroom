@@ -65,26 +65,29 @@ export function WelcomeScreen() {
   const getAnimationClass = () => {
     if (!animationEnabled || animationSpeed === 0) return '';
     
-    const speedClass = animationSpeed === 1 ? 'very-slow' :
-                      animationSpeed === 2 ? 'slow' :
-                      animationSpeed === 4 ? 'fast' :
-                      animationSpeed === 5 ? 'very-fast' : 'normal';
+    let speedSuffix = '';
+    if (animationSpeed === 1) speedSuffix = '-very-slow';
+    else if (animationSpeed === 2) speedSuffix = '-slow';
+    else if (animationSpeed === 3) speedSuffix = '-normal';
+    else if (animationSpeed === 4) speedSuffix = '-fast';
+    else if (animationSpeed === 5) speedSuffix = '-very-fast';
+    else speedSuffix = '-normal'; // fallback
     
     switch (animationType) {
       case 'floating':
-        return `animate-float-${speedClass}`;
+        return `animate-float${speedSuffix}`;
       case 'pulse':
-        return animationSpeed === 1 ? 'animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
-               animationSpeed === 2 ? 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
-               animationSpeed === 4 ? 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
-               animationSpeed === 5 ? 'animate-[pulse_0.5s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
-               'animate-pulse';
+        if (animationSpeed === 1) return 'animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]';
+        if (animationSpeed === 2) return 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]';
+        if (animationSpeed === 4) return 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]';
+        if (animationSpeed === 5) return 'animate-[pulse_0.5s_cubic-bezier(0.4,0,0.6,1)_infinite]';
+        return 'animate-pulse';
       case 'fade':
-        return `animate-fade-${speedClass}`;
+        return `animate-fade${speedSuffix}`;
       case 'slide':
-        return `animate-slide-${speedClass}`;
+        return `animate-slide${speedSuffix}`;
       default:
-        return `animate-float-${speedClass}`;
+        return `animate-float${speedSuffix}`;
     }
   };
 
@@ -113,6 +116,19 @@ export function WelcomeScreen() {
     }
   };
 
+  // Helper function for drift animation classes
+  const getDriftClass = () => {
+    if (animationSpeed === 1) return 'animate-drift-very-slow';
+    if (animationSpeed === 2) return 'animate-drift-slow';
+    if (animationSpeed === 4) return 'animate-drift-fast';
+    if (animationSpeed === 5) return 'animate-drift-very-fast';
+    return 'animate-drift-normal';
+  };
+
+  // Debug: log the animation class being applied
+  const animationClass = getAnimationClass();
+  console.log('Animation debug:', { animationEnabled, animationSpeed, animationType, animationClass });
+
   return (
     <div 
       className="min-h-screen flex items-center justify-center relative overflow-hidden"
@@ -121,23 +137,11 @@ export function WelcomeScreen() {
       {/* Animated overlay */}
       {animationEnabled && animationSpeed > 0 && (
         <div className="absolute inset-0 opacity-20">
-          <div className={`absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift-${
-            animationSpeed === 1 ? 'very-slow' :
-            animationSpeed === 2 ? 'slow' :
-            animationSpeed === 4 ? 'fast' :
-            animationSpeed === 5 ? 'very-fast' : 'normal'}`} 
+          <div className={`absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl ${getDriftClass()}`} 
                style={{ animationDelay: '0s' }} />
-          <div className={`absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-${
-            animationSpeed === 1 ? 'very-slow' :
-            animationSpeed === 2 ? 'slow' :
-            animationSpeed === 4 ? 'fast' :
-            animationSpeed === 5 ? 'very-fast' : 'normal'}-reverse`} 
+          <div className={`absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl ${getDriftClass()}-reverse`} 
                style={{ animationDelay: '5s' }} />
-          <div className={`absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift-${
-            animationSpeed === 1 ? 'very-slow' :
-            animationSpeed === 2 ? 'slow' :
-            animationSpeed === 4 ? 'fast' :
-            animationSpeed === 5 ? 'very-fast' : 'normal'}`} 
+          <div className={`absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl ${getDriftClass()}`} 
                style={{ animationDelay: '10s' }} />
         </div>
       )}
