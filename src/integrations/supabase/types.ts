@@ -646,6 +646,59 @@ export type Database = {
           },
         ]
       }
+      welcome_screen_settings: {
+        Row: {
+          animation_enabled: boolean
+          animation_type: string
+          background_type: string
+          background_value: string
+          created_at: string
+          font_size: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          text_color: string
+          updated_at: string
+          welcome_text: string
+        }
+        Insert: {
+          animation_enabled?: boolean
+          animation_type?: string
+          background_type?: string
+          background_value?: string
+          created_at?: string
+          font_size?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          text_color?: string
+          updated_at?: string
+          welcome_text?: string
+        }
+        Update: {
+          animation_enabled?: boolean
+          animation_type?: string
+          background_type?: string
+          background_value?: string
+          created_at?: string
+          font_size?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          text_color?: string
+          updated_at?: string
+          welcome_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "welcome_screen_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -28,6 +28,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminAuth from "./pages/SuperAdminAuth";
 import AuthCallback from "./pages/AuthCallback";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
+import { WelcomeScreen } from "./components/WelcomeScreen";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const App = () => (
                         <AdminDashboard />
                       </OrganizationLayout>
                     } />
+                    <Route path="welcome" element={<WelcomeScreen />} />
                   </Routes>
                 </OrganizationProvider>
               } />
