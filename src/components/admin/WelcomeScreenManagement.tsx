@@ -27,8 +27,13 @@ export function WelcomeScreenManagement() {
   const [backgroundValue, setBackgroundValue] = useState("linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))");
   const [textColor, setTextColor] = useState("#FFFFFF");
   const [fontSize, setFontSize] = useState<'text-4xl' | 'text-5xl' | 'text-6xl' | 'text-7xl' | 'text-8xl'>('text-6xl');
+  const [fontFamily, setFontFamily] = useState<'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern'>('font-sans');
+  const [textShadow, setTextShadow] = useState(true);
+  const [textOutline, setTextOutline] = useState(false);
+  const [logoPosition, setLogoPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-bottom'>('bottom-right');
   const [animationEnabled, setAnimationEnabled] = useState(true);
   const [animationType, setAnimationType] = useState<'floating' | 'pulse' | 'fade' | 'slide'>('floating');
+  const [animationSpeed, setAnimationSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
   const [isActive, setIsActive] = useState(true);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 

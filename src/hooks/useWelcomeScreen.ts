@@ -10,8 +10,13 @@ export interface WelcomeScreenSettings {
   background_value: string;
   text_color: string;
   font_size: 'text-4xl' | 'text-5xl' | 'text-6xl' | 'text-7xl' | 'text-8xl';
+  font_family: 'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern';
+  text_shadow: boolean;
+  text_outline: boolean;
+  logo_position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-bottom';
   animation_enabled: boolean;
   animation_type: 'floating' | 'pulse' | 'fade' | 'slide';
+  animation_speed: 'slow' | 'normal' | 'fast';
   is_active: boolean;
 }
 

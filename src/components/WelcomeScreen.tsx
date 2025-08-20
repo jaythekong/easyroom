@@ -28,8 +28,13 @@ export function WelcomeScreen() {
   const welcomeText = settings?.welcome_text || "Welcome!";
   const textColor = settings?.text_color || "#FFFFFF";
   const fontSize = settings?.font_size || "text-6xl";
+  const fontFamily = settings?.font_family || "font-sans";
+  const textShadow = settings?.text_shadow ?? true;
+  const textOutline = settings?.text_outline ?? false;
+  const logoPosition = settings?.logo_position || "bottom-right";
   const animationEnabled = settings?.animation_enabled ?? true;
   const animationType = settings?.animation_type || "floating";
+  const animationSpeed = settings?.animation_speed || "normal";
   const backgroundType = settings?.background_type || "gradient";
   const backgroundValue = settings?.background_value || "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))";
 
@@ -52,21 +57,49 @@ export function WelcomeScreen() {
     }
   };
 
-  // Animation classes
+  // Animation classes with speed control
   const getAnimationClass = () => {
     if (!animationEnabled) return '';
     
+    const speedMultiplier = animationSpeed === 'slow' ? 2 : animationSpeed === 'fast' ? 0.5 : 1;
+    
     switch (animationType) {
       case 'floating':
-        return 'animate-[float_6s_ease-in-out_infinite]';
+        return `animate-[float_${6 * speedMultiplier}s_ease-in-out_infinite]`;
       case 'pulse':
-        return 'animate-pulse';
+        return animationSpeed === 'slow' ? 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 
+               animationSpeed === 'fast' ? 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 'animate-pulse';
       case 'fade':
-        return 'animate-[fade_4s_ease-in-out_infinite_alternate]';
+        return `animate-[fade_${4 * speedMultiplier}s_ease-in-out_infinite_alternate]`;
       case 'slide':
-        return 'animate-[slide_8s_ease-in-out_infinite_alternate]';
+        return `animate-[slide_${8 * speedMultiplier}s_ease-in-out_infinite_alternate]`;
       default:
-        return 'animate-[float_6s_ease-in-out_infinite]';
+        return `animate-[float_${6 * speedMultiplier}s_ease-in-out_infinite]`;
+    }
+  };
+
+  // Text styling classes
+  const getTextStyling = () => {
+    let classes = '';
+    if (textShadow) classes += ' drop-shadow-2xl';
+    if (textOutline) classes += ' [text-shadow:_1px_1px_0_rgb(0_0_0_/_50%),_-1px_-1px_0_rgb(0_0_0_/_50%),_1px_-1px_0_rgb(0_0_0_/_50%),_-1px_1px_0_rgb(0_0_0_/_50%)]';
+    return classes;
+  };
+
+  // Logo position classes
+  const getLogoPositionClass = () => {
+    switch (logoPosition) {
+      case 'bottom-left':
+        return 'absolute bottom-8 left-8';
+      case 'top-right':
+        return 'absolute top-8 right-8';
+      case 'top-left':
+        return 'absolute top-8 left-8';
+      case 'center-bottom':
+        return 'absolute bottom-8 left-1/2 transform -translate-x-1/2';
+      case 'bottom-right':
+      default:
+        return 'absolute bottom-8 right-8';
     }
   };
 
@@ -78,11 +111,11 @@ export function WelcomeScreen() {
       {/* Animated overlay */}
       {animationEnabled && (
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-[drift_20s_ease-in-out_infinite]" 
+          <div className={`absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-[drift_${20 * (animationSpeed === 'slow' ? 2 : animationSpeed === 'fast' ? 0.5 : 1)}s_ease-in-out_infinite]`} 
                style={{ animationDelay: '0s' }} />
-          <div className="absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-[drift_25s_ease-in-out_infinite_reverse]" 
+          <div className={`absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-[drift_${25 * (animationSpeed === 'slow' ? 2 : animationSpeed === 'fast' ? 0.5 : 1)}s_ease-in-out_infinite_reverse]`} 
                style={{ animationDelay: '5s' }} />
-          <div className="absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-[drift_18s_ease-in-out_infinite]" 
+          <div className={`absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-[drift_${18 * (animationSpeed === 'slow' ? 2 : animationSpeed === 'fast' ? 0.5 : 1)}s_ease-in-out_infinite]`} 
                style={{ animationDelay: '10s' }} />
         </div>
       )}
@@ -94,7 +127,7 @@ export function WelcomeScreen() {
         ${getAnimationClass()}
       `}>
         <h1 
-          className={`${fontSize} font-bold mb-4 drop-shadow-2xl`}
+          className={`${fontSize} ${fontFamily} font-bold mb-4 ${getTextStyling()}`}
           style={{ color: textColor }}
         >
           {welcomeText}
@@ -102,7 +135,7 @@ export function WelcomeScreen() {
         
         {organization?.tagline && (
           <p 
-            className="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto leading-relaxed"
+            className={`text-xl md:text-2xl opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
             style={{ color: textColor }}
           >
             {organization.tagline}
@@ -112,7 +145,7 @@ export function WelcomeScreen() {
 
       {/* Organization branding */}
       {organization?.logo_url && (
-        <div className="absolute bottom-8 right-8 opacity-60">
+        <div className={`${getLogoPositionClass()} opacity-60`}>
           <img 
             src={organization.logo_url} 
             alt={organization.name}
