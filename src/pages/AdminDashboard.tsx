@@ -1,6 +1,6 @@
 
 import { memo } from "react";
-import { Plus, Settings, Users, Calendar, ArrowLeft, MessageSquare } from "lucide-react";
+import { Plus, Settings, Users, Calendar, ArrowLeft, MessageSquare, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { TelegramNotifications } from "@/components/admin/TelegramNotifications";
 import { TickerManagement } from "@/components/admin/TickerManagement";
 import { WelcomeScreenManagement } from "@/components/admin/WelcomeScreenManagement";
+import { Analytics } from "@/components/admin/Analytics";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Link } from "react-router-dom";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
@@ -56,7 +57,7 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
               Users
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+              <BarChart3 className="h-4 w-4" />
               Analytics
             </TabsTrigger>
             <TabsTrigger value="telegram" className="flex items-center gap-2">
@@ -102,19 +103,7 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Analytics & Reports</CardTitle>
-                <CardDescription>
-                  View detailed analytics and generate reports
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Analytics features coming soon...
-                </p>
-              </CardContent>
-            </Card>
+            <Analytics />
           </TabsContent>
 
           <TabsContent value="telegram" className="space-y-6">
