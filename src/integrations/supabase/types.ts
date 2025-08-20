@@ -649,7 +649,7 @@ export type Database = {
       welcome_screen_settings: {
         Row: {
           animation_enabled: boolean
-          animation_speed: string | null
+          animation_speed: number | null
           animation_type: string
           background_type: string
           background_value: string
@@ -672,7 +672,7 @@ export type Database = {
         }
         Insert: {
           animation_enabled?: boolean
-          animation_speed?: string | null
+          animation_speed?: number | null
           animation_type?: string
           background_type?: string
           background_value?: string
@@ -695,7 +695,7 @@ export type Database = {
         }
         Update: {
           animation_enabled?: boolean
-          animation_speed?: string | null
+          animation_speed?: number | null
           animation_type?: string
           background_type?: string
           background_value?: string

@@ -251,182 +251,67 @@ All colors MUST be HSL.
     100% { transform: translateX(-100%); }
   }
 
-  /* Welcome Screen Animations */
+  /* Welcome Screen Animations with 0-5 speed scale */
   @keyframes float {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
-  }
-
-  @keyframes float-slow {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
-  }
-
-  @keyframes float-fast {
-    0%, 100% {
-      transform: translateY(0px);
-    }
-    50% {
-      transform: translateY(-20px);
-    }
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
   }
 
   @keyframes drift {
-    0%, 100% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    33% {
-      transform: translate(30px, -30px) rotate(120deg);
-    }
-    66% {
-      transform: translate(-20px, 20px) rotate(240deg);
-    }
-  }
-
-  @keyframes drift-slow {
-    0%, 100% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    33% {
-      transform: translate(30px, -30px) rotate(120deg);
-    }
-    66% {
-      transform: translate(-20px, 20px) rotate(240deg);
-    }
-  }
-
-  @keyframes drift-fast {
-    0%, 100% {
-      transform: translate(0px, 0px) rotate(0deg);
-    }
-    33% {
-      transform: translate(30px, -30px) rotate(120deg);
-    }
-    66% {
-      transform: translate(-20px, 20px) rotate(240deg);
-    }
+    0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+    33% { transform: translate(30px, -30px) rotate(120deg); }
+    66% { transform: translate(-20px, 20px) rotate(240deg); }
   }
 
   @keyframes fade {
-    0%, 100% {
-      opacity: 0.6;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes fade-slow {
-    0%, 100% {
-      opacity: 0.6;
-    }
-    50% {
-      opacity: 1;
-    }
-  }
-
-  @keyframes fade-fast {
-    0%, 100% {
-      opacity: 0.6;
-    }
-    50% {
-      opacity: 1;
-    }
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
   }
 
   @keyframes slide {
-    0%, 100% {
-      transform: translateX(0px);
-    }
-    50% {
-      transform: translateX(20px);
-    }
+    0%, 100% { transform: translateX(0px); }
+    50% { transform: translateX(20px); }
   }
 
-  @keyframes slide-slow {
-    0%, 100% {
-      transform: translateX(0px);
-    }
-    50% {
-      transform: translateX(20px);
-    }
-  }
+  /* Speed 1 - Very Slow */
+  .animate-float-very-slow { animation: float 20s ease-in-out infinite; }
+  .animate-fade-very-slow { animation: fade 16s ease-in-out infinite; }
+  .animate-slide-very-slow { animation: slide 32s ease-in-out infinite; }
+  .animate-drift-very-slow { animation: drift 80s ease-in-out infinite; }
+  .animate-drift-very-slow-reverse { animation: drift 100s ease-in-out infinite reverse; }
 
-  @keyframes slide-fast {
-    0%, 100% {
-      transform: translateX(0px);
-    }
-    50% {
-      transform: translateX(20px);
-    }
-  }
+  /* Speed 2 - Slow */
+  .animate-float-slow { animation: float 12s ease-in-out infinite; }
+  .animate-fade-slow { animation: fade 8s ease-in-out infinite; }
+  .animate-slide-slow { animation: slide 16s ease-in-out infinite; }
+  .animate-drift-slow { animation: drift 40s ease-in-out infinite; }
+  .animate-drift-slow-reverse { animation: drift 50s ease-in-out infinite reverse; }
 
-  /* Animation Classes */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
+  /* Speed 3 - Normal */
+  .animate-float-normal { animation: float 6s ease-in-out infinite; }
+  .animate-fade-normal { animation: fade 4s ease-in-out infinite; }
+  .animate-slide-normal { animation: slide 8s ease-in-out infinite; }
+  .animate-drift-normal { animation: drift 20s ease-in-out infinite; }
+  .animate-drift-normal-reverse { animation: drift 25s ease-in-out infinite reverse; }
 
-  .animate-float-slow {
-    animation: float-slow 12s ease-in-out infinite;
-  }
+  /* Speed 4 - Fast */
+  .animate-float-fast { animation: float 3s ease-in-out infinite; }
+  .animate-fade-fast { animation: fade 2s ease-in-out infinite; }
+  .animate-slide-fast { animation: slide 4s ease-in-out infinite; }
+  .animate-drift-fast { animation: drift 10s ease-in-out infinite; }
+  .animate-drift-fast-reverse { animation: drift 12s ease-in-out infinite reverse; }
 
-  .animate-float-fast {
-    animation: float-fast 3s ease-in-out infinite;
-  }
+  /* Speed 5 - Very Fast */
+  .animate-float-very-fast { animation: float 1.5s ease-in-out infinite; }
+  .animate-fade-very-fast { animation: fade 1s ease-in-out infinite; }
+  .animate-slide-very-fast { animation: slide 2s ease-in-out infinite; }
+  .animate-drift-very-fast { animation: drift 5s ease-in-out infinite; }
+  .animate-drift-very-fast-reverse { animation: drift 6s ease-in-out infinite reverse; }
 
-  .animate-fade-custom {
-    animation: fade 4s ease-in-out infinite;
-  }
-
-  .animate-fade-slow {
-    animation: fade-slow 8s ease-in-out infinite;
-  }
-
-  .animate-fade-fast {
-    animation: fade-fast 2s ease-in-out infinite;
-  }
-
-  .animate-slide-custom {
-    animation: slide 8s ease-in-out infinite;
-  }
-
-  .animate-slide-slow {
-    animation: slide-slow 16s ease-in-out infinite;
-  }
-
-  .animate-slide-fast {
-    animation: slide-fast 4s ease-in-out infinite;
-  }
-
-  .animate-drift {
-    animation: drift 20s ease-in-out infinite;
-  }
-
-  .animate-drift-slow {
-    animation: drift-slow 40s ease-in-out infinite;
-  }
-
-  .animate-drift-fast {
-    animation: drift-fast 10s ease-in-out infinite;
-  }
-
-  .animate-drift-reverse {
-    animation: drift 25s ease-in-out infinite reverse;
-  }
-
-  .animate-drift-slow-reverse {
-    animation: drift-slow 50s ease-in-out infinite reverse;
-  }
-
-  .animate-drift-fast-reverse {
-    animation: drift-fast 12s ease-in-out infinite reverse;
-  }
+  /* Legacy classes for compatibility */
+  .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-fade-custom { animation: fade 4s ease-in-out infinite; }
+  .animate-slide-custom { animation: slide 8s ease-in-out infinite; }
+  .animate-drift { animation: drift 20s ease-in-out infinite; }
+  .animate-drift-reverse { animation: drift 25s ease-in-out infinite reverse; }
 }

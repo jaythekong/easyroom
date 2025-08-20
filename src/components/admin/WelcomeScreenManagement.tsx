@@ -37,7 +37,7 @@ export function WelcomeScreenManagement() {
   const [logoPosition, setLogoPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-bottom'>('bottom-right');
   const [animationEnabled, setAnimationEnabled] = useState(true);
   const [animationType, setAnimationType] = useState<'floating' | 'pulse' | 'fade' | 'slide'>('floating');
-  const [animationSpeed, setAnimationSpeed] = useState<'slow' | 'normal' | 'fast'>('normal');
+  const [animationSpeed, setAnimationSpeed] = useState<number>(3);
   const [isActive, setIsActive] = useState(true);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
@@ -59,7 +59,7 @@ export function WelcomeScreenManagement() {
       setLogoPosition(settings.logo_position || "bottom-right");
       setAnimationEnabled(settings.animation_enabled ?? true);
       setAnimationType(settings.animation_type || "floating");
-      setAnimationSpeed(settings.animation_speed || "normal");
+      setAnimationSpeed(settings.animation_speed || 3);
       setIsActive(settings.is_active ?? true);
     }
   }, [settings]);
@@ -595,16 +595,19 @@ export function WelcomeScreenManagement() {
                 )}
 
                 {animationEnabled && (
-                  <div className="space-y-2">
-                    <Label htmlFor="animation-speed">Animation Speed</Label>
-                    <Select value={animationSpeed} onValueChange={(value: 'slow' | 'normal' | 'fast') => setAnimationSpeed(value)}>
-                      <SelectTrigger>
+                  <div>
+                    <Label>Animation Speed (0 = Static, 5 = Very Fast)</Label>
+                    <Select value={animationSpeed.toString()} onValueChange={(value) => setAnimationSpeed(parseInt(value))}>
+                      <SelectTrigger className="mt-2">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="slow">Slow</SelectItem>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="fast">Fast</SelectItem>
+                        <SelectItem value="0">0 - Static (No Animation)</SelectItem>
+                        <SelectItem value="1">1 - Very Slow</SelectItem>
+                        <SelectItem value="2">2 - Slow</SelectItem>
+                        <SelectItem value="3">3 - Normal</SelectItem>
+                        <SelectItem value="4">4 - Fast</SelectItem>
+                        <SelectItem value="5">5 - Very Fast</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

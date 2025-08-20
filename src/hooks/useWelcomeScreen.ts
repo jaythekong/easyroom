@@ -20,7 +20,7 @@ export interface WelcomeScreenSettings {
   logo_position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-bottom';
   animation_enabled: boolean;
   animation_type: 'floating' | 'pulse' | 'fade' | 'slide';
-  animation_speed: 'slow' | 'normal' | 'fast';
+  animation_speed: number; // 0-5 scale where 0 is static
   is_active: boolean;
 }
 

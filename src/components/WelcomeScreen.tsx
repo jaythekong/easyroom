@@ -38,7 +38,7 @@ export function WelcomeScreen() {
   const logoPosition = settings?.logo_position || "bottom-right";
   const animationEnabled = settings?.animation_enabled ?? true;
   const animationType = settings?.animation_type || "floating";
-  const animationSpeed = settings?.animation_speed || "normal";
+  const animationSpeed = settings?.animation_speed || 3;
   const backgroundType = settings?.background_type || "gradient";
   const backgroundValue = settings?.background_value || "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))";
 
@@ -63,27 +63,28 @@ export function WelcomeScreen() {
 
   // Animation classes with speed control
   const getAnimationClass = () => {
-    if (!animationEnabled) return '';
+    if (!animationEnabled || animationSpeed === 0) return '';
+    
+    const speedClass = animationSpeed === 1 ? 'very-slow' :
+                      animationSpeed === 2 ? 'slow' :
+                      animationSpeed === 4 ? 'fast' :
+                      animationSpeed === 5 ? 'very-fast' : 'normal';
     
     switch (animationType) {
       case 'floating':
-        return animationSpeed === 'slow' ? 'animate-float-slow' : 
-               animationSpeed === 'fast' ? 'animate-float-fast' : 
-               'animate-float';
+        return `animate-float-${speedClass}`;
       case 'pulse':
-        return animationSpeed === 'slow' ? 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 
-               animationSpeed === 'fast' ? 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]' : 
+        return animationSpeed === 1 ? 'animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
+               animationSpeed === 2 ? 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
+               animationSpeed === 4 ? 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
+               animationSpeed === 5 ? 'animate-[pulse_0.5s_cubic-bezier(0.4,0,0.6,1)_infinite]' :
                'animate-pulse';
       case 'fade':
-        return animationSpeed === 'slow' ? 'animate-fade-slow' : 
-               animationSpeed === 'fast' ? 'animate-fade-fast' : 
-               'animate-fade-custom';
+        return `animate-fade-${speedClass}`;
       case 'slide':
-        return animationSpeed === 'slow' ? 'animate-slide-slow' : 
-               animationSpeed === 'fast' ? 'animate-slide-fast' : 
-               'animate-slide-custom';
+        return `animate-slide-${speedClass}`;
       default:
-        return 'animate-float';
+        return `animate-float-${speedClass}`;
     }
   };
 
@@ -118,19 +119,25 @@ export function WelcomeScreen() {
       style={getBackgroundStyle()}
     >
       {/* Animated overlay */}
-      {animationEnabled && (
+      {animationEnabled && animationSpeed > 0 && (
         <div className="absolute inset-0 opacity-20">
-          <div className={animationSpeed === 'slow' ? 'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift-slow' : 
-                          animationSpeed === 'fast' ? 'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift-fast' : 
-                          'absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift'} 
+          <div className={`absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-drift-${
+            animationSpeed === 1 ? 'very-slow' :
+            animationSpeed === 2 ? 'slow' :
+            animationSpeed === 4 ? 'fast' :
+            animationSpeed === 5 ? 'very-fast' : 'normal'}`} 
                style={{ animationDelay: '0s' }} />
-          <div className={animationSpeed === 'slow' ? 'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-slow-reverse' : 
-                          animationSpeed === 'fast' ? 'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-fast-reverse' : 
-                          'absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-reverse'} 
+          <div className={`absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl animate-drift-${
+            animationSpeed === 1 ? 'very-slow' :
+            animationSpeed === 2 ? 'slow' :
+            animationSpeed === 4 ? 'fast' :
+            animationSpeed === 5 ? 'very-fast' : 'normal'}-reverse`} 
                style={{ animationDelay: '5s' }} />
-          <div className={animationSpeed === 'slow' ? 'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift-slow' : 
-                          animationSpeed === 'fast' ? 'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift-fast' : 
-                          'absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift'} 
+          <div className={`absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-drift-${
+            animationSpeed === 1 ? 'very-slow' :
+            animationSpeed === 2 ? 'slow' :
+            animationSpeed === 4 ? 'fast' :
+            animationSpeed === 5 ? 'very-fast' : 'normal'}`} 
                style={{ animationDelay: '10s' }} />
         </div>
       )}
