@@ -345,6 +345,12 @@ export function WelcomeScreenManagement() {
               <Eye className="h-4 w-4 mr-2" />
               Preview
             </Button>
+            <Button variant="outline" asChild>
+              <a href={`/${organization?.slug}/welcome`} target="_blank" rel="noopener noreferrer">
+                <Monitor className="h-4 w-4 mr-2" />
+                Open Welcome Screen
+              </a>
+            </Button>
             <Button onClick={handleSave} disabled={updateSettings.isPending}>
               <Save className="h-4 w-4 mr-2" />
               {updateSettings.isPending ? "Saving..." : "Save Settings"}

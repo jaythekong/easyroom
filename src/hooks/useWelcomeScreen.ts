@@ -42,7 +42,9 @@ export function useUpdateWelcomeScreenSettings() {
     mutationFn: async (settings: Partial<WelcomeScreenSettings> & { organization_id: string }) => {
       const { data, error } = await supabase
         .from('welcome_screen_settings')
-        .upsert(settings)
+        .upsert(settings, {
+          onConflict: 'organization_id'
+        })
         .select()
         .single();
 
