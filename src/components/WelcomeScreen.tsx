@@ -61,34 +61,56 @@ export function WelcomeScreen() {
     }
   };
 
-  // Animation classes with speed control
-  const getAnimationClass = () => {
-    if (!animationEnabled || animationSpeed === 0) return '';
+  // Animation system - using inline styles for guaranteed functionality
+  const getAnimationStyle = () => {
+    if (!animationEnabled || animationSpeed === 0) return {};
     
-    let speedSuffix = '';
-    if (animationSpeed === 1) speedSuffix = '-very-slow';
-    else if (animationSpeed === 2) speedSuffix = '-slow';
-    else if (animationSpeed === 3) speedSuffix = '-normal';
-    else if (animationSpeed === 4) speedSuffix = '-fast';
-    else if (animationSpeed === 5) speedSuffix = '-very-fast';
-    else speedSuffix = '-normal'; // fallback
+    // Calculate duration based on speed (0-5 scale)
+    const baseDuration = 6; // seconds for normal speed (3)
+    const speedMultiplier = animationSpeed === 1 ? 4 : 
+                           animationSpeed === 2 ? 2 : 
+                           animationSpeed === 4 ? 0.5 : 
+                           animationSpeed === 5 ? 0.25 : 1;
+    const duration = baseDuration * speedMultiplier;
     
     switch (animationType) {
       case 'floating':
-        return `animate-float${speedSuffix}`;
+        return {
+          animation: `floatAnimation ${duration}s ease-in-out infinite`
+        };
       case 'pulse':
-        if (animationSpeed === 1) return 'animate-[pulse_8s_cubic-bezier(0.4,0,0.6,1)_infinite]';
-        if (animationSpeed === 2) return 'animate-[pulse_4s_cubic-bezier(0.4,0,0.6,1)_infinite]';
-        if (animationSpeed === 4) return 'animate-[pulse_1s_cubic-bezier(0.4,0,0.6,1)_infinite]';
-        if (animationSpeed === 5) return 'animate-[pulse_0.5s_cubic-bezier(0.4,0,0.6,1)_infinite]';
-        return 'animate-pulse';
+        return {
+          animation: `pulseAnimation ${duration}s ease-in-out infinite`
+        };
       case 'fade':
-        return `animate-fade${speedSuffix}`;
+        return {
+          animation: `fadeAnimation ${duration}s ease-in-out infinite`
+        };
       case 'slide':
-        return `animate-slide${speedSuffix}`;
+        return {
+          animation: `slideAnimation ${duration}s ease-in-out infinite`
+        };
       default:
-        return `animate-float${speedSuffix}`;
+        return {
+          animation: `floatAnimation ${duration}s ease-in-out infinite`
+        };
     }
+  };
+
+  const getDriftAnimationStyle = (delay: string, reverse = false) => {
+    if (!animationEnabled || animationSpeed === 0) return {};
+    
+    const baseDuration = 20; // seconds for drift
+    const speedMultiplier = animationSpeed === 1 ? 4 : 
+                           animationSpeed === 2 ? 2 : 
+                           animationSpeed === 4 ? 0.5 : 
+                           animationSpeed === 5 ? 0.25 : 1;
+    const duration = baseDuration * speedMultiplier;
+    
+    return {
+      animation: `driftAnimation ${duration}s ease-in-out infinite ${reverse ? 'reverse' : ''}`,
+      animationDelay: delay
+    };
   };
 
   // Text styling classes - enhanced shadow
@@ -116,70 +138,93 @@ export function WelcomeScreen() {
     }
   };
 
-  // Helper function for drift animation classes
-  const getDriftClass = () => {
-    if (animationSpeed === 1) return 'animate-drift-very-slow';
-    if (animationSpeed === 2) return 'animate-drift-slow';
-    if (animationSpeed === 4) return 'animate-drift-fast';
-    if (animationSpeed === 5) return 'animate-drift-very-fast';
-    return 'animate-drift-normal';
-  };
-
-  // Debug: log the animation class being applied
-  const animationClass = getAnimationClass();
-  console.log('Animation debug:', { animationEnabled, animationSpeed, animationType, animationClass });
-
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={getBackgroundStyle()}
-    >
-      {/* Animated overlay */}
-      {animationEnabled && animationSpeed > 0 && (
-        <div className="absolute inset-0 opacity-20">
-          <div className={`absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl ${getDriftClass()}`} 
-               style={{ animationDelay: '0s' }} />
-          <div className={`absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl ${getDriftClass()}-reverse`} 
-               style={{ animationDelay: '5s' }} />
-          <div className={`absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl ${getDriftClass()}`} 
-               style={{ animationDelay: '10s' }} />
-        </div>
-      )}
+    <>
+      {/* Add keyframes to head */}
+      <style>
+        {`
+          @keyframes floatAnimation {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+          }
+          @keyframes pulseAnimation {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+          }
+          @keyframes fadeAnimation {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+          }
+          @keyframes slideAnimation {
+            0%, 100% { transform: translateX(0px); }
+            50% { transform: translateX(10px); }
+          }
+          @keyframes driftAnimation {
+            0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+          }
+        `}
+      </style>
+      
+      <div 
+        className="min-h-screen flex items-center justify-center relative overflow-hidden"
+        style={getBackgroundStyle()}
+      >
+        {/* Animated overlay */}
+        {animationEnabled && animationSpeed > 0 && (
+          <div className="absolute inset-0 opacity-20">
+            <div 
+              className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full blur-3xl" 
+              style={getDriftAnimationStyle('0s')}
+            />
+            <div 
+              className="absolute top-1/2 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl" 
+              style={getDriftAnimationStyle('5s', true)}
+            />
+            <div 
+              className="absolute bottom-0 left-1/3 w-72 h-72 bg-white/10 rounded-full blur-3xl" 
+              style={getDriftAnimationStyle('10s')}
+            />
+          </div>
+        )}
 
-      {/* Welcome text */}
-      <div className={`
-        text-center z-10 px-8 transition-all duration-1000 transform
-        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}
-        ${getAnimationClass()}
-      `}>
-        <h1 
-          className={`${fontSize} ${fontFamily} font-bold mb-6 ${getTextStyling()}`}
-          style={{ color: textColor }}
+        {/* Welcome text */}
+        <div 
+          className={`text-center z-10 px-8 transition-all duration-1000 transform ${
+            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+          }`}
+          style={getAnimationStyle()}
         >
-          {welcomeText}
-        </h1>
-        
-        {subText && (
-          <p 
-            className={`${subTextSize} ${subFontFamily} opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
-            style={{ color: subTextColor }}
+          <h1 
+            className={`${fontSize} ${fontFamily} font-bold mb-6 ${getTextStyling()}`}
+            style={{ color: textColor }}
           >
-            {subText}
-          </p>
+            {welcomeText}
+          </h1>
+          
+          {subText && (
+            <p 
+              className={`${subTextSize} ${subFontFamily} opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
+              style={{ color: subTextColor }}
+            >
+              {subText}
+            </p>
+          )}
+        </div>
+
+        {/* Organization branding */}
+        {organization?.logo_url && (
+          <div className={`${getLogoPositionClass()} opacity-60`}>
+            <img 
+              src={organization.logo_url} 
+              alt={organization.name}
+              className="h-16 w-16 object-contain filter drop-shadow-lg"
+            />
+          </div>
         )}
       </div>
-
-      {/* Organization branding */}
-      {organization?.logo_url && (
-        <div className={`${getLogoPositionClass()} opacity-60`}>
-          <img 
-            src={organization.logo_url} 
-            alt={organization.name}
-            className="h-16 w-16 object-contain filter drop-shadow-lg"
-          />
-        </div>
-      )}
-    </div>
+    </>
   );
 }
 
