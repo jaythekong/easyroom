@@ -397,18 +397,107 @@ export function WelcomeScreenManagement() {
               </div>
 
               {backgroundType === 'gradient' && (
-                <div>
-                  <Label htmlFor="gradientValue">CSS Gradient</Label>
-                  <Input
-                    id="gradientValue"
-                    value={backgroundValue}
-                    onChange={(e) => setBackgroundValue(e.target.value)}
-                    placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                    className="mt-2"
-                  />
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Use CSS gradient syntax or design system variables
-                  </p>
+                <div className="space-y-4">
+                  <div>
+                    <Label>Preset Gradients</Label>
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #667eea 0%, #764ba2 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" }}
+                      >
+                        <span className="text-white text-xs">Purple Blue</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #f093fb 0%, #f5576c 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" }}
+                      >
+                        <span className="text-white text-xs">Pink Red</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" }}
+                      >
+                        <span className="text-white text-xs">Blue Cyan</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" }}
+                      >
+                        <span className="text-white text-xs">Green Mint</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #fa709a 0%, #fee140 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)" }}
+                      >
+                        <span className="text-white text-xs">Pink Yellow</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)" }}
+                      >
+                        <span className="text-gray-700 text-xs">Soft White</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)" }}
+                      >
+                        <span className="text-gray-700 text-xs">Rose White</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)" }}
+                      >
+                        <span className="text-gray-700 text-xs">Blue White</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setBackgroundValue("linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)")}
+                        className="h-12 p-1"
+                        style={{ background: "linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)" }}
+                      >
+                        <span className="text-gray-700 text-xs">Lavender Cream</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="gradientValue">Custom CSS Gradient</Label>
+                    <Input
+                      id="gradientValue"
+                      value={backgroundValue}
+                      onChange={(e) => setBackgroundValue(e.target.value)}
+                      placeholder="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      className="mt-2"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Use CSS gradient syntax or select from presets above
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -474,148 +563,6 @@ export function WelcomeScreenManagement() {
               )}
             </TabsContent>
 
-            <TabsContent value="text" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Main Text Color</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="w-[80px] h-10 p-1"
-                          style={{ backgroundColor: textColor }}
-                        >
-                          <div className="w-full h-full rounded border-2 border-white/20" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-3" side="bottom">
-                        <HexColorPicker color={textColor} onChange={setTextColor} />
-                        <Input
-                          value={textColor}
-                          onChange={(e) => setTextColor(e.target.value)}
-                          placeholder="#FFFFFF"
-                          className="mt-3 h-8"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <span className="text-xs">{textColor}</span>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Sub Text Color</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          className="w-[80px] h-10 p-1"
-                          style={{ backgroundColor: subTextColor }}
-                        >
-                          <div className="w-full h-full rounded border-2 border-white/20" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-3" side="bottom">
-                        <HexColorPicker color={subTextColor} onChange={setSubTextColor} />
-                        <Input
-                          value={subTextColor}
-                          onChange={(e) => setSubTextColor(e.target.value)}
-                          placeholder="#FFFFFF"
-                          className="mt-3 h-8"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <span className="text-xs">{subTextColor}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Main Text Size</Label>
-                  <Select value={fontSize} onValueChange={(value: typeof fontSize) => setFontSize(value)}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text-4xl">Extra Large (4xl)</SelectItem>
-                      <SelectItem value="text-5xl">Huge (5xl)</SelectItem>
-                      <SelectItem value="text-6xl">Massive (6xl)</SelectItem>
-                      <SelectItem value="text-7xl">Gigantic (7xl)</SelectItem>
-                      <SelectItem value="text-8xl">Enormous (8xl)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Sub Text Size</Label>
-                  <Select value={subTextSize} onValueChange={(value: typeof subTextSize) => setSubTextSize(value)}>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="text-lg">Large (lg)</SelectItem>
-                      <SelectItem value="text-xl">Extra Large (xl)</SelectItem>
-                      <SelectItem value="text-2xl">2X Large (2xl)</SelectItem>
-                      <SelectItem value="text-3xl">3X Large (3xl)</SelectItem>
-                      <SelectItem value="text-4xl">4X Large (4xl)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="font-family">Font Style</Label>
-                <Select value={fontFamily} onValueChange={(value: 'font-sans' | 'font-cursive' | 'font-elegant' | 'font-modern') => setFontFamily(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="font-sans">Sans Serif (Default)</SelectItem>
-                    <SelectItem value="font-cursive">Cursive (Dancing Script)</SelectItem>
-                    <SelectItem value="font-elegant">Elegant (Playfair Display)</SelectItem>
-                    <SelectItem value="font-modern">Modern (Poppins)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="text-shadow"
-                    checked={textShadow}
-                    onCheckedChange={setTextShadow}
-                  />
-                  <Label htmlFor="text-shadow">Enhanced Text Shadow (for better readability)</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="text-outline"
-                    checked={textOutline}
-                    onCheckedChange={setTextOutline}
-                  />
-                  <Label htmlFor="text-outline">Text Outline (for complex backgrounds)</Label>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="logo-position">Logo Position</Label>
-                <Select value={logoPosition} onValueChange={(value: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-bottom') => setLogoPosition(value)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                    <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                    <SelectItem value="top-right">Top Right</SelectItem>
-                    <SelectItem value="top-left">Top Left</SelectItem>
-                    <SelectItem value="center-bottom">Center Bottom</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </TabsContent>
 
             <TabsContent value="animation" className="space-y-4">
               <div className="flex items-center space-x-2">
