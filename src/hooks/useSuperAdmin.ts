@@ -215,41 +215,34 @@ export function useImpersonateAdmin() {
       });
 
       if (error) throw error;
-      return data;
+      return { ...data as any, organizationId };
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       toast({
         title: "Impersonation Started",
         description: `Now acting as admin for organization. Mode: ${variables.mode}`,
       });
       
-      // Get the organization slug and redirect to the correct dashboard
-      const redirectToOrgDashboard = async () => {
-        try {
-          // Refresh the session to pick up the impersonation metadata
-          await supabase.auth.refreshSession();
+      // Get the organization slug and redirect
+      try {
+        const { data: orgData, error } = await supabase
+          .from('organizations')
+          .select('slug')
+          .eq('id', variables.organizationId)
+          .single();
           
-          const { data: orgData, error } = await supabase
-            .from('organizations')
-            .select('slug')
-            .eq('id', variables.organizationId)
-            .single();
-            
-          if (orgData && !error) {
-            // Force a hard redirect to ensure the impersonated session is used
-            window.location.href = `/${orgData.slug}`;
-          } else {
-            console.error('Failed to get organization slug:', error);
-            window.location.reload();
-          }
-        } catch (error) {
-          console.error('Error during impersonation redirect:', error);
+        if (orgData && !error) {
+          // Force redirect to the organization dashboard
+          window.location.href = `/${orgData.slug}`;
+        } else {
+          console.error('Failed to get organization slug:', error);
+          // Fallback: just reload to pick up the new session
           window.location.reload();
         }
-      };
-      
-      // Small delay to ensure the backend metadata update is complete
-      setTimeout(redirectToOrgDashboard, 1500);
+      } catch (error) {
+        console.error('Error during impersonation redirect:', error);
+        window.location.reload();
+      }
     },
     onError: (error) => {
       toast({

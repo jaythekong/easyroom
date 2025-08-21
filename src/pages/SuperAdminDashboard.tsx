@@ -68,14 +68,9 @@ function SuperAdminDashboardContent({ user }: { user: any }) {
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
                 <SidebarTrigger className="md:hidden" />
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                    <Crown className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold">Dashboard</h1>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
+                <div>
+                  <h1 className="text-xl font-bold">Dashboard</h1>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
