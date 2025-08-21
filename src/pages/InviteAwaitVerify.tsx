@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Building2, AlertCircle, ExternalLink, Copy } from "lucide-react";
+import { Loader2, Mail, Building2, AlertCircle, ExternalLink, Copy, Zap, Sparkles } from "lucide-react";
 
 interface OrganizationData {
   id: string;
@@ -236,14 +236,14 @@ export default function InviteAwaitVerify() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
+      <Card className="w-full max-w-md border-0 shadow-xl shadow-primary/20">
+        <CardContent className="p-8 text-center space-y-8">
           {/* Organization Logo and Branding */}
           {organizationData && (
             <div className="flex flex-col items-center space-y-4">
               <div className="flex items-center space-x-3">
-                <Avatar className="h-12 w-12">
+                <Avatar className="h-12 w-12 ring-2 ring-primary/20">
                   <AvatarImage src={organizationData.logo_url} alt={organizationData.name} />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     <Building2 className="h-6 w-6" />
@@ -256,59 +256,61 @@ export default function InviteAwaitVerify() {
                   )}
                 </div>
               </div>
-              <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
             </div>
           )}
           
-          <div className="flex justify-center">
-            <div className="p-4 rounded-full bg-primary/10 relative">
-              <Mail className="h-12 w-12 text-primary animate-pulse" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full animate-ping" />
+          {/* Exciting Icon with Animations */}
+          <div className="relative">
+            <div className="absolute inset-0 animate-ping">
+              <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-primary/20 to-primary/40" />
+            </div>
+            <div className="relative w-20 h-20 mx-auto rounded-full bg-gradient-to-r from-primary to-primary-glow flex items-center justify-center">
+              <Mail className="h-10 w-10 text-white animate-bounce" />
+              <Sparkles className="absolute -top-2 -right-2 h-6 w-6 text-yellow-400 animate-pulse" />
             </div>
           </div>
           
-          <div>
-            <CardTitle className="text-2xl">Almost there!</CardTitle>
-            <CardDescription className="mt-4 space-y-3">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-2">
-                <div className="flex items-center gap-2 text-primary font-medium">
-                  <Mail className="h-4 w-4" />
-                  Check your email now
-                </div>
-                <p className="text-sm">
-                  We've sent a confirmation link to{" "}
-                  <span className="font-medium text-foreground">{email}</span>
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Click the link in your email to complete your invitation and access the workspace.
-                </p>
-              </div>
-            </CardDescription>
+          {/* Exciting Title */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <Zap className="h-6 w-6 text-yellow-500 animate-pulse" />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                You're almost in!
+              </h1>
+              <Zap className="h-6 w-6 text-yellow-500 animate-pulse" />
+            </div>
+            <p className="text-lg text-muted-foreground">One final step...</p>
           </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-6">
-          {/* Email confirmation emphasis */}
-          <div className="text-center space-y-4">
-            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 rounded-lg p-6">
-              <Mail className="h-8 w-8 text-primary mx-auto mb-3" />
-              <h3 className="font-semibold text-lg mb-2">Email Confirmation Required</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">
-                Please check your email inbox and click the confirmation link to complete your invitation. 
-                This step is required to verify your email address and grant you access to the workspace.
+          
+          {/* Clear Email CTA */}
+          <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border-2 border-primary/30 rounded-xl p-6 space-y-4">
+            <div className="flex items-center justify-center gap-3">
+              <div className="p-2 rounded-full bg-primary/20">
+                <Mail className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold">Check your email!</h2>
+            </div>
+            
+            <div className="space-y-2">
+              <p className="font-medium text-foreground">
+                📧 {email}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Click the magic link we just sent you
               </p>
             </div>
           </div>
           
+          {/* Minimal Footer */}
+          <div className="text-xs text-muted-foreground opacity-70">
+            ✨ This page will redirect automatically once you click the link
+          </div>
+          
           {showResendOption && (
-            <div className="text-center text-sm text-muted-foreground space-y-2 border-t pt-4">
-              <p>Didn't get it? Check your spam folder or contact support.</p>
+            <div className="text-center text-sm text-muted-foreground space-y-2 pt-4 border-t border-primary/10">
+              <p>📬 Still waiting? Check your spam folder!</p>
             </div>
           )}
-          
-          <div className="text-center text-xs text-muted-foreground">
-            This page will automatically redirect once you confirm your email
-          </div>
         </CardContent>
       </Card>
     </div>
