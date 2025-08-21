@@ -30,6 +30,7 @@ import SuperAdminSystem from "./pages/SuperAdminSystem";
 import SuperAdminSettings from "./pages/SuperAdminSettings";
 import SuperAdminAuth from "./pages/SuperAdminAuth";
 import AuthCallback from "./pages/AuthCallback";
+import ImpersonationHandler from "./pages/ImpersonationHandler";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 
@@ -64,6 +65,7 @@ const App = () => (
         <Route path="/super-admin/system" element={<SuperAdminSystem />} />
         <Route path="/super-admin/settings" element={<SuperAdminSettings />} />
         <Route path="/super-admin/auth" element={<SuperAdminAuth />} />
+        <Route path="/impersonation-handler" element={<ImpersonationHandler />} />
                 
                 {/* Invite routes - MUST be before organization routes */}
                 <Route path="/invite/:shortCode" element={<InviteRedirect />} />

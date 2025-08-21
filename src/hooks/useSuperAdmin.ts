@@ -215,7 +215,7 @@ export function useImpersonateAdmin() {
       });
 
       if (error) throw error;
-      return { ...data as any, organizationId };
+      return data as any;
     },
     onSuccess: async (data, variables) => {
       toast({
@@ -223,25 +223,33 @@ export function useImpersonateAdmin() {
         description: `Now acting as admin for organization. Mode: ${variables.mode}`,
       });
       
-      // Get the organization slug and redirect
       try {
-        const { data: orgData, error } = await supabase
+        // Get the organization slug for redirection
+        const { data: orgData, error: orgError } = await supabase
           .from('organizations')
           .select('slug')
-          .eq('id', variables.organizationId)
+          .eq('id', data.organization_id)
           .single();
           
-        if (orgData && !error) {
-          // Force redirect to the organization dashboard
-          window.location.href = `/${orgData.slug}`;
-        } else {
-          console.error('Failed to get organization slug:', error);
-          // Fallback: just reload to pick up the new session
-          window.location.reload();
+        if (!orgData || orgError) {
+          throw new Error('Failed to get organization slug');
         }
+        
+        // Redirect to the impersonation handler with the necessary data
+        const params = new URLSearchParams({
+          target_user_id: data.target_user_id,
+          org_slug: orgData.slug,
+          mode: variables.mode || 'view_only'
+        });
+        
+        window.location.href = `/impersonation-handler?${params.toString()}`;
       } catch (error) {
-        console.error('Error during impersonation redirect:', error);
-        window.location.reload();
+        console.error('Error during impersonation setup:', error);
+        toast({
+          title: "Impersonation Failed",
+          description: "Failed to start impersonation session.",
+          variant: "destructive",
+        });
       }
     },
     onError: (error) => {
@@ -264,11 +272,20 @@ export function useEndImpersonation() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      // Restore original session
+    onSuccess: async () => {
+      // Restore original session if available
       const originalSession = sessionStorage.getItem('original_super_admin_session');
       if (originalSession) {
-        sessionStorage.removeItem('original_super_admin_session');
+        try {
+          const sessionData = JSON.parse(originalSession);
+          await supabase.auth.setSession({
+            access_token: sessionData.access_token,
+            refresh_token: sessionData.refresh_token
+          });
+          sessionStorage.removeItem('original_super_admin_session');
+        } catch (error) {
+          console.error('Failed to restore original session:', error);
+        }
       }
       
       toast({
