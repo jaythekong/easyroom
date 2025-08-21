@@ -104,7 +104,11 @@ const App = () => (
                         <AdminDashboard />
                       </OrganizationLayout>
                     } />
-                    <Route path="welcome" element={<WelcomeScreen />} />
+                    <Route path="welcome" element={
+                      <OrganizationLayout requireAuth={false} requireAdmin={false}>
+                        <WelcomeScreen />
+                      </OrganizationLayout>
+                    } />
                   </Routes>
                 </OrganizationProvider>
               } />

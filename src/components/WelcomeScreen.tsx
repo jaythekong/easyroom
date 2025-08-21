@@ -4,21 +4,32 @@ import { useWelcomeScreenSettings } from "@/hooks/useWelcomeScreen";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { useOrganizationBySlug } from "@/hooks/useOrganization";
 import { generateWiFiQRCode, getQRPositionClasses } from "@/lib/qrUtils";
+import { WelcomeScreenErrorBoundary } from "./WelcomeScreenErrorBoundary";
 import { Loader2 } from "lucide-react";
 
-export function WelcomeScreen() {
+function WelcomeScreenContent() {
+  console.log('[WelcomeScreen] Component loading...');
+  
   const { orgSlug } = useParams();
+  console.log('[WelcomeScreen] orgSlug:', orgSlug);
+  
   const { data: organization } = useOrganizationBySlug(orgSlug);
+  console.log('[WelcomeScreen] organization:', organization);
+  
   const { data: settings, isLoading } = useWelcomeScreenSettings(organization?.id);
+  console.log('[WelcomeScreen] settings:', settings, 'isLoading:', isLoading);
+  
   const { organization: orgContext } = useOrganizationTheme();
   const [isVisible, setIsVisible] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('[WelcomeScreen] Setting visible to true');
     setIsVisible(true);
   }, []);
 
   if (isLoading) {
+    console.log('[WelcomeScreen] Loading state...');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
         <Loader2 className="h-12 w-12 animate-spin text-white" />
@@ -27,6 +38,7 @@ export function WelcomeScreen() {
   }
 
   // Default settings if none configured
+  console.log('[WelcomeScreen] Processing settings...');
   const welcomeText = settings?.welcome_text || "Welcome!";
   const subText = settings?.sub_text || "";
   const textColor = settings?.text_color || "#FFFFFF";
@@ -52,10 +64,15 @@ export function WelcomeScreen() {
   const wifiHidden = settings?.wifi_hidden ?? false;
   const qrPosition = settings?.qr_position || 'bottom-left';
   const qrSize = settings?.qr_size || 'medium';
+  
+  console.log('[WelcomeScreen] WiFi settings:', { wifiEnabled, wifiSsid, qrPosition, qrSize });
 
   // Generate WiFi QR code when settings change
   useEffect(() => {
+    console.log('[WelcomeScreen] WiFi QR effect triggered:', { wifiEnabled, wifiSsid });
+    
     if (wifiEnabled && wifiSsid) {
+      console.log('[WelcomeScreen] Generating WiFi QR code...');
       // Add a small delay to prevent rapid regeneration
       const timeoutId = setTimeout(() => {
         generateWiFiQRCode({
@@ -64,15 +81,19 @@ export function WelcomeScreen() {
           security: wifiSecurity,
           hidden: wifiHidden
         }, qrSize)
-          .then(setQrCodeDataUrl)
+          .then((dataUrl) => {
+            console.log('[WelcomeScreen] WiFi QR code generated successfully');
+            setQrCodeDataUrl(dataUrl);
+          })
           .catch((error) => {
-            console.error('Failed to generate WiFi QR code:', error);
+            console.error('[WelcomeScreen] Failed to generate WiFi QR code:', error);
             setQrCodeDataUrl(null);
           });
       }, 100);
       
       return () => clearTimeout(timeoutId);
     } else {
+      console.log('[WelcomeScreen] Clearing QR code data');
       setQrCodeDataUrl(null);
     }
   }, [wifiEnabled, wifiSsid, wifiPassword, wifiSecurity, wifiHidden, qrSize]);
@@ -282,9 +303,10 @@ export function WelcomeScreen() {
   );
 }
 
-// Add custom keyframes to index.css if not already present
-declare global {
-  interface CSSStyleDeclaration {
-    '--animation-delay'?: string;
-  }
+export function WelcomeScreen() {
+  return (
+    <WelcomeScreenErrorBoundary>
+      <WelcomeScreenContent />
+    </WelcomeScreenErrorBoundary>
+  );
 }
