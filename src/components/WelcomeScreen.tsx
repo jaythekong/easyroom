@@ -4,41 +4,23 @@ import { useWelcomeScreenSettings } from "@/hooks/useWelcomeScreen";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { useOrganizationBySlug } from "@/hooks/useOrganization";
 import { generateWiFiQRCode, getQRPositionClasses } from "@/lib/qrUtils";
-import { WelcomeScreenErrorBoundary } from "./WelcomeScreenErrorBoundary";
 import { Loader2 } from "lucide-react";
 
-function WelcomeScreenContent() {
-  console.log('[WelcomeScreen] Component loading...');
-  
+export function WelcomeScreen() {
+  // All hooks must be called unconditionally at the top level
   const { orgSlug } = useParams();
-  console.log('[WelcomeScreen] orgSlug:', orgSlug);
-  
   const { data: organization } = useOrganizationBySlug(orgSlug);
-  console.log('[WelcomeScreen] organization:', organization);
-  
   const { data: settings, isLoading } = useWelcomeScreenSettings(organization?.id);
-  console.log('[WelcomeScreen] settings:', settings, 'isLoading:', isLoading);
-  
   const { organization: orgContext } = useOrganizationTheme();
   const [isVisible, setIsVisible] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
 
+  // Effect to set visibility
   useEffect(() => {
-    console.log('[WelcomeScreen] Setting visible to true');
     setIsVisible(true);
   }, []);
 
-  if (isLoading) {
-    console.log('[WelcomeScreen] Loading state...');
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
-        <Loader2 className="h-12 w-12 animate-spin text-white" />
-      </div>
-    );
-  }
-
-  // Default settings if none configured
-  console.log('[WelcomeScreen] Processing settings...');
+  // Default settings processing (always run, never conditional)
   const welcomeText = settings?.welcome_text || "Welcome!";
   const subText = settings?.sub_text || "";
   const textColor = settings?.text_color || "#FFFFFF";
@@ -64,16 +46,10 @@ function WelcomeScreenContent() {
   const wifiHidden = settings?.wifi_hidden ?? false;
   const qrPosition = settings?.qr_position || 'bottom-left';
   const qrSize = settings?.qr_size || 'medium';
-  
-  console.log('[WelcomeScreen] WiFi settings:', { wifiEnabled, wifiSsid, qrPosition, qrSize });
 
-  // Generate WiFi QR code when settings change
+  // WiFi QR code generation effect
   useEffect(() => {
-    console.log('[WelcomeScreen] WiFi QR effect triggered:', { wifiEnabled, wifiSsid });
-    
     if (wifiEnabled && wifiSsid) {
-      console.log('[WelcomeScreen] Generating WiFi QR code...');
-      // Add a small delay to prevent rapid regeneration
       const timeoutId = setTimeout(() => {
         generateWiFiQRCode({
           ssid: wifiSsid,
@@ -81,24 +57,29 @@ function WelcomeScreenContent() {
           security: wifiSecurity,
           hidden: wifiHidden
         }, qrSize)
-          .then((dataUrl) => {
-            console.log('[WelcomeScreen] WiFi QR code generated successfully');
-            setQrCodeDataUrl(dataUrl);
-          })
+          .then(setQrCodeDataUrl)
           .catch((error) => {
-            console.error('[WelcomeScreen] Failed to generate WiFi QR code:', error);
+            console.error('Failed to generate WiFi QR code:', error);
             setQrCodeDataUrl(null);
           });
       }, 100);
       
       return () => clearTimeout(timeoutId);
     } else {
-      console.log('[WelcomeScreen] Clearing QR code data');
       setQrCodeDataUrl(null);
     }
   }, [wifiEnabled, wifiSsid, wifiPassword, wifiSecurity, wifiHidden, qrSize]);
 
-  // Generate background style
+  // Loading state check (after all hooks)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-primary">
+        <Loader2 className="h-12 w-12 animate-spin text-white" />
+      </div>
+    );
+  }
+
+  // Helper functions
   const getBackgroundStyle = () => {
     switch (backgroundType) {
       case 'gradient':
@@ -113,116 +94,102 @@ function WelcomeScreenContent() {
           backgroundRepeat: 'no-repeat'
         };
       default:
-        return { background: 'var(--gradient-primary)' };
+        return { background: backgroundValue };
     }
   };
 
-  // Animation system - using inline styles for guaranteed functionality
   const getAnimationStyle = () => {
     if (!animationEnabled || animationSpeed === 0) return {};
     
-    // Calculate duration based on speed (0-5 scale)
-    const baseDuration = 6; // seconds for normal speed (3)
-    const speedMultiplier = animationSpeed === 1 ? 4 : 
-                           animationSpeed === 2 ? 2 : 
-                           animationSpeed === 4 ? 0.5 : 
-                           animationSpeed === 5 ? 0.25 : 1;
-    const duration = baseDuration * speedMultiplier;
-    
-    switch (animationType) {
-      case 'floating':
-        return {
-          animation: `floatAnimation ${duration}s ease-in-out infinite`
-        };
-      case 'pulse':
-        return {
-          animation: `pulseAnimation ${duration}s ease-in-out infinite`
-        };
-      case 'fade':
-        return {
-          animation: `fadeAnimation ${duration}s ease-in-out infinite`
-        };
-      case 'slide':
-        return {
-          animation: `slideAnimation ${duration}s ease-in-out infinite`
-        };
-      default:
-        return {
-          animation: `floatAnimation ${duration}s ease-in-out infinite`
-        };
-    }
-  };
-
-  const getDriftAnimationStyle = (delay: string, reverse = false) => {
-    if (!animationEnabled || animationSpeed === 0) return {};
-    
-    const baseDuration = 20; // seconds for drift
-    const speedMultiplier = animationSpeed === 1 ? 4 : 
-                           animationSpeed === 2 ? 2 : 
-                           animationSpeed === 4 ? 0.5 : 
-                           animationSpeed === 5 ? 0.25 : 1;
-    const duration = baseDuration * speedMultiplier;
+    const duration = 6 - animationSpeed; // Higher speed = lower duration
+    const delay = Math.random() * 2; // Random delay between 0-2s
     
     return {
-      animation: `driftAnimation ${duration}s ease-in-out infinite ${reverse ? 'reverse' : ''}`,
-      animationDelay: delay
+      animationDuration: `${duration}s`,
+      animationDelay: `${delay}s`,
+      animationIterationCount: 'infinite',
+      animationTimingFunction: 'ease-in-out',
+      animationName: animationType
     };
   };
 
-  // Text styling classes - enhanced shadow
+  const getDriftAnimationStyle = (delay = '0s', reverse = false) => {
+    if (!animationEnabled || animationSpeed === 0) return {};
+    
+    const duration = 8 - animationSpeed;
+    const direction = reverse ? 'reverse' : 'normal';
+    
+    return {
+      animationDuration: `${duration}s`,
+      animationDelay: delay,
+      animationIterationCount: 'infinite',
+      animationTimingFunction: 'ease-in-out',
+      animationDirection: direction,
+      animationName: 'drift'
+    };
+  };
+
   const getTextStyling = () => {
     let classes = '';
-    if (textShadow) classes += ' [text-shadow:_0_4px_12px_rgba(0,0,0,0.8),_0_2px_6px_rgba(0,0,0,0.6)]';
-    if (textOutline) classes += ' [text-shadow:_2px_2px_0_rgb(0_0_0_/_80%),_-2px_-2px_0_rgb(0_0_0_/_80%),_2px_-2px_0_rgb(0_0_0_/_80%),_-2px_2px_0_rgb(0_0_0_/_80%)]';
+    if (textShadow) classes += ' drop-shadow-lg';
+    if (textOutline) classes += ' text-outline';
     return classes;
   };
 
-  // Logo position classes
   const getLogoPositionClass = () => {
-    switch (logoPosition) {
-      case 'bottom-left':
-        return 'absolute bottom-8 left-8';
-      case 'top-right':
-        return 'absolute top-8 right-8';
-      case 'top-left':
-        return 'absolute top-8 left-8';
-      case 'center-bottom':
-        return 'absolute bottom-8 left-1/2 transform -translate-x-1/2';
-      case 'bottom-right':
-      default:
-        return 'absolute bottom-8 right-8';
-    }
+    const positions = {
+      'bottom-right': 'absolute bottom-8 right-8',
+      'bottom-left': 'absolute bottom-8 left-8',
+      'top-right': 'absolute top-8 right-8',
+      'top-left': 'absolute top-8 left-8',
+      'center-bottom': 'absolute bottom-8 left-1/2 transform -translate-x-1/2'
+    };
+    return positions[logoPosition as keyof typeof positions] || positions['bottom-right'];
   };
 
   return (
-    <>
-      {/* Add keyframes to head */}
+    <div className="relative">
       <style>
         {`
-          @keyframes floatAnimation {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+          @keyframes floating {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-10px) rotate(1deg); }
+            66% { transform: translateY(5px) rotate(-1deg); }
           }
-          @keyframes pulseAnimation {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.8; transform: scale(1.02); }
+          
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
           }
-          @keyframes fadeAnimation {
+          
+          @keyframes fade {
             0%, 100% { opacity: 0.8; }
             50% { opacity: 1; }
           }
-          @keyframes slideAnimation {
+          
+          @keyframes slide {
             0%, 100% { transform: translateX(0px); }
-            50% { transform: translateX(10px); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
           }
-          @keyframes driftAnimation {
-            0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
-            33% { transform: translate(30px, -30px) rotate(120deg); }
-            66% { transform: translate(-20px, 20px) rotate(240deg); }
+          
+          @keyframes drift {
+            0%, 100% { transform: translate(0px, 0px) scale(1); }
+            25% { transform: translate(20px, -30px) scale(1.1); }
+            50% { transform: translate(-15px, 20px) scale(0.9); }
+            75% { transform: translate(30px, 10px) scale(1.05); }
+          }
+          
+          .text-outline {
+            text-shadow: 
+              -1px -1px 0 rgba(0,0,0,0.5),
+              1px -1px 0 rgba(0,0,0,0.5),
+              -1px 1px 0 rgba(0,0,0,0.5),
+              1px 1px 0 rgba(0,0,0,0.5);
           }
         `}
       </style>
-      
+
       <div 
         className="min-h-screen flex items-center justify-center relative overflow-hidden"
         style={getBackgroundStyle()}
@@ -261,7 +228,7 @@ function WelcomeScreenContent() {
           
           {subText && (
             <p 
-              className={`${subTextSize} ${subFontFamily} opacity-90 max-w-2xl mx-auto leading-relaxed ${getTextStyling()}`}
+              className={`${subTextSize} ${subFontFamily} ${getTextStyling()}`}
               style={{ color: subTextColor }}
             >
               {subText}
@@ -299,14 +266,6 @@ function WelcomeScreenContent() {
           </div>
         )}
       </div>
-    </>
-  );
-}
-
-export function WelcomeScreen() {
-  return (
-    <WelcomeScreenErrorBoundary>
-      <WelcomeScreenContent />
-    </WelcomeScreenErrorBoundary>
+    </div>
   );
 }
