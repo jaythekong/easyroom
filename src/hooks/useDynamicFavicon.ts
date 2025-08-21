@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
-import { useOrganization } from '@/contexts/OrganizationContext';
 
-export function useDynamicFavicon() {
-  const { organization } = useOrganization();
+interface Organization {
+  logo_url?: string;
+}
 
+export function useDynamicFavicon(organization?: Organization | null) {
   useEffect(() => {
     const updateFavicon = () => {
       const faviconLink = document.getElementById('favicon') as HTMLLinkElement;

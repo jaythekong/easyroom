@@ -55,7 +55,7 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   const membershipQuery = useUserMembership(orgQuery.data?.id);
 
   // Update favicon when organization changes
-  useDynamicFavicon();
+  useDynamicFavicon(orgQuery.data);
 
   // Enhanced context value with multi-org support
   const contextValue = useMemo(() => ({
