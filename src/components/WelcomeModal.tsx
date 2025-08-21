@@ -183,19 +183,9 @@ export function WelcomeModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">
-              {steps[currentStep].title}
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="p-1 h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="text-lg font-semibold">
+            {steps[currentStep].title}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
