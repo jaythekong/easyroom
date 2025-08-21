@@ -397,26 +397,46 @@ export const useOrganizationMembers = (organizationId: string | null) => {
     queryFn: async () => {
       if (!organizationId) return [];
       
-      // Query user_organization_memberships first, then join with user_profiles
+      // Query user_profiles directly since super admin should see all
       const { data, error } = await supabase
-        .from('user_organization_memberships')
-        .select(`
-          role,
-          user_profiles!inner(*)
-        `)
+        .from('user_profiles')
+        .select('*')
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching organization members:', error);
-        throw error;
+        // If RLS blocks it, try user_organization_memberships approach
+        const { data: membershipData, error: membershipError } = await supabase
+          .from('user_organization_memberships')
+          .select(`
+            user_id,
+            role,
+            created_at
+          `)
+          .eq('organization_id', organizationId);
+
+        if (membershipError) {
+          console.error('Error fetching memberships:', membershipError);
+          throw membershipError;
+        }
+
+        // Get user details from auth.users if possible, or return minimal data
+        return membershipData?.map(membership => ({
+          id: membership.user_id,
+          user_id: membership.user_id,
+          organization_id: organizationId,
+          role: membership.role,
+          email: 'Hidden (RLS)',
+          display_name: `User ${membership.user_id.slice(0, 8)}`,
+          created_at: membership.created_at,
+          avatar_url: null,
+          bio: null,
+          last_login: null
+        })) || [];
       }
 
-      // Transform the data to flatten the structure
-      return data?.map(item => ({
-        ...item.user_profiles as any,
-        role: item.role
-      })) || [];
+      return data || [];
     },
     enabled: !!organizationId,
   });
