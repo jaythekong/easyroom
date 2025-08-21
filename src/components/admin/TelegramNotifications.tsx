@@ -17,6 +17,7 @@ interface Organization {
   id: string;
   name: string;
   telegram_bot_token?: string;
+  telegram_bot_username?: string;
   welcome_message?: string;
 }
 
@@ -227,7 +228,9 @@ export function TelegramNotifications() {
     );
   }
 
-  const hasChanges = telegramBotToken !== originalTelegramBotToken || welcomeMessage !== originalWelcomeMessage;
+  const hasChanges = telegramBotToken !== originalTelegramBotToken || 
+                   welcomeMessage !== originalWelcomeMessage ||
+                   (botInfo?.username && botInfo.username !== organization.telegram_bot_username);
 
   return (
     <div className="space-y-6">
