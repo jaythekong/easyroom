@@ -174,7 +174,7 @@ function NavItem({ item, isCollapsed }: NavItemProps) {
 }
 
 export function SuperAdminSidebar() {
-  const { state } = useSidebar();
+  const { state, open, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   return (
@@ -183,16 +183,19 @@ export function SuperAdminSidebar() {
       collapsible="icon"
     >
       <div className="border-b border-border/50 p-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-            <Crown className="h-5 w-5 text-primary" />
-          </div>
-          {!isCollapsed && (
-            <div>
-              <h2 className="font-bold text-lg">Super Admin</h2>
-              <p className="text-xs text-muted-foreground">Platform Control</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+              <Crown className="h-5 w-5 text-primary" />
             </div>
-          )}
+            {!isCollapsed && (
+              <div>
+                <h2 className="font-bold text-lg">Super Admin</h2>
+                <p className="text-xs text-muted-foreground">Platform Control</p>
+              </div>
+            )}
+          </div>
+          <SidebarTrigger className="h-8 w-8" />
         </div>
       </div>
 
@@ -252,12 +255,7 @@ export function SuperAdminSidebar() {
         </div>
       </SidebarContent>
 
-      {/* Floating toggle trigger for collapsed state */}
-      {isCollapsed && (
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-          <SidebarTrigger className="bg-background border shadow-md" />
-        </div>
-      )}
+      {/* Remove the floating toggle as SidebarTrigger is now in header */}
     </Sidebar>
   );
 }

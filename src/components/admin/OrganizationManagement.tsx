@@ -9,10 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { Search, Eye, Pause, Play, Building2, Trash2, UserCheck, MoreHorizontal } from "lucide-react";
+import { Search, Eye, Pause, Play, Building2, Trash2, UserCheck, MoreHorizontal, Users, Crown, Mail } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
+import { TeamMembersModal } from "./TeamMembersModal";
 import type { PlatformOrganization } from "@/hooks/useSuperAdmin";
 
 export function OrganizationManagement() {
@@ -22,6 +23,7 @@ export function OrganizationManagement() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
   const [statusAction, setStatusAction] = useState<'suspend' | 'reactivate' | null>(null);
   const [reason, setReason] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
@@ -84,8 +86,23 @@ export function OrganizationManagement() {
     setNewAdminEmail("");
   };
 
+  const handleViewTeam = (org: PlatformOrganization) => {
+    setSelectedOrg(org);
+    setShowTeamModal(true);
+  };
+
+  const handleCloseModals = () => {
+    setShowStatusModal(false);
+    setShowDeleteModal(false);
+    setShowTransferModal(false);
+    setShowTeamModal(false);
+    setSelectedOrg(null);
+    setReason("");
+    setNewAdminEmail("");
+  };
+
   return (
-    <>
+    <div className="space-y-6">
       <Card className="glass-card border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
         <CardHeader className="space-y-3 pb-4">
           <div className="flex items-center gap-2">
@@ -122,30 +139,59 @@ export function OrganizationManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Slug</TableHead>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>Admin</TableHead>
+                    <TableHead>Members</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Created</TableHead>
-                    <TableHead>Users</TableHead>
-                    <TableHead>Rooms</TableHead>
-                    <TableHead>Bookings</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data?.organizations.map((org) => (
+                  {data?.organizations?.map((org) => (
                     <TableRow key={org.id}>
-                      <TableCell className="font-medium">{org.name}</TableCell>
-                      <TableCell className="font-mono text-sm">{org.slug}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <Building2 className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{org.name}</div>
+                            <div className="text-sm text-muted-foreground">{org.slug}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Crown className="h-4 w-4 text-yellow-500" />
+                          <div>
+                            <div className="font-medium text-sm">
+                              {"Admin not loaded"}
+                            </div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {"Contact info not available"}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewTeam(org)}
+                          className="h-8"
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          {org.user_count || 0}
+                        </Button>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={org.status === 'active' ? 'default' : 'destructive'}>
                           {org.status}
                         </Badge>
                       </TableCell>
                       <TableCell>{format(new Date(org.created_at), 'MMM d, yyyy')}</TableCell>
-                      <TableCell>{org.user_count}</TableCell>
-                      <TableCell>{org.room_count}</TableCell>
-                      <TableCell>{org.booking_count}</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Button
@@ -233,9 +279,17 @@ export function OrganizationManagement() {
       {/* Organization Detail Drawer */}
       <OrganizationDetailDrawer
         organization={selectedOrg}
-        open={!!selectedOrg && !showStatusModal}
+        open={!!selectedOrg && !showStatusModal && !showTeamModal}
         onClose={() => setSelectedOrg(null)}
         onStatusChange={handleStatusChange}
+      />
+
+      {/* Team Members Modal */}
+      <TeamMembersModal
+        organizationId={selectedOrg?.id || null}
+        organizationName={selectedOrg?.name || ""}
+        isOpen={showTeamModal}
+        onClose={handleCloseModals}
       />
 
       {/* Status Change Confirmation Modal */}
@@ -345,6 +399,6 @@ export function OrganizationManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

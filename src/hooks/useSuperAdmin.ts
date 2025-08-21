@@ -15,9 +15,13 @@ export interface PlatformOrganization {
   slug: string;
   status: string;
   created_at: string;
-  user_count?: number;
-  room_count?: number;
-  booking_count?: number;
+  user_count: number;
+  room_count: number;
+  booking_count: number;
+  admin_name?: string;
+  admin_email?: string;
+  admin_id?: string;
+  member_count?: number;
 }
 
 export interface AuditLogEntry {
@@ -372,3 +376,30 @@ export function useTransferOwnership() {
     },
   });
 }
+
+// Get organization members
+export const useOrganizationMembers = (organizationId: string | null) => {
+  return useQuery({
+    queryKey: ['organizationMembers', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select(`
+          *,
+          user_organization_memberships!inner(role)
+        `)
+        .eq('organization_id', organizationId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching organization members:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    enabled: !!organizationId,
+  });
+};
