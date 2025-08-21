@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2, Send, Eye } from "lucide-react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2, Send, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -53,12 +53,15 @@ export function TeamManagement() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [invitationsPage, setInvitationsPage] = useState(1);
+  const [totalInvitations, setTotalInvitations] = useState(0);
+  const invitationsPerPage = 5;
 
   useEffect(() => {
     if (organization?.id) {
       fetchTeamData();
     }
-  }, [organization?.id]);
+  }, [organization?.id, invitationsPage]);
 
   const fetchTeamData = async () => {
     if (!organization?.id) return;
@@ -102,7 +105,19 @@ export function TeamManagement() {
 
       setTeamMembers(membersWithEmails);
 
-      // Fetch pending invitations for this organization (latest first)
+      // Get total count of pending invitations
+      const { count: totalCount } = await supabase
+        .from('invitations')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', organization.id)
+        .eq('status', 'pending')
+        .is('accepted_at', null)
+        .is('revoked_at', null)
+        .gt('expires_at', new Date().toISOString());
+
+      setTotalInvitations(totalCount || 0);
+
+      // Fetch pending invitations for this organization (latest first, paginated)
       const { data: invites, error: invitesError } = await supabase
         .from('invitations')
         .select('*')
@@ -111,7 +126,8 @@ export function TeamManagement() {
         .is('accepted_at', null)
         .is('revoked_at', null)
         .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range((invitationsPage - 1) * invitationsPerPage, invitationsPage * invitationsPerPage - 1);
 
       if (invitesError) {
         console.error('Invites query error:', invitesError);
@@ -152,6 +168,7 @@ export function TeamManagement() {
       setInviteEmail("");
       setInviteRole("member");
       setIsInviteDialogOpen(false);
+      setInvitationsPage(1); // Reset to first page when new invite is added
       fetchTeamData();
     } catch (error: any) {
       toast({
@@ -204,6 +221,7 @@ export function TeamManagement() {
 
       setIsLinkDialogOpen(false);
       setLinkRecipientName("");
+      setInvitationsPage(1); // Reset to first page when new invite is added
       fetchTeamData();
     } catch (error: any) {
       console.error('Generate invite link error:', error);
@@ -764,6 +782,39 @@ export function TeamManagement() {
                 ))}
               </TableBody>
             </Table>
+            
+            {/* Pagination Controls */}
+            {totalInvitations > invitationsPerPage && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="text-sm text-muted-foreground">
+                  Showing {Math.min((invitationsPage - 1) * invitationsPerPage + 1, totalInvitations)} to{' '}
+                  {Math.min(invitationsPage * invitationsPerPage, totalInvitations)} of {totalInvitations} invitations
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setInvitationsPage(prev => Math.max(1, prev - 1))}
+                    disabled={invitationsPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {invitationsPage} of {Math.ceil(totalInvitations / invitationsPerPage)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setInvitationsPage(prev => Math.min(Math.ceil(totalInvitations / invitationsPerPage), prev + 1))}
+                    disabled={invitationsPage >= Math.ceil(totalInvitations / invitationsPerPage)}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
