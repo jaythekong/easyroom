@@ -58,7 +58,7 @@ export function useSuperAdminCheck() {
   return {
     isSuperAdmin,
     user,
-    loading: !user && !session
+    loading: false // Always return false for loading since we already have session data
   };
 }
 
