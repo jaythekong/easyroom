@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PasswordStrength } from "@/components/ui/password-strength";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, UserPlus, AlertCircle, Building2, Eye, EyeOff } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, Building2, Eye, EyeOff, LogIn } from "lucide-react";
 
 interface InviteData {
   email: string;
@@ -42,6 +43,8 @@ export default function InviteSignup() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [activeTab, setActiveTab] = useState("signup");
 
   useEffect(() => {
     if (token) {
@@ -52,6 +55,7 @@ export default function InviteSignup() {
   const fetchInviteData = async () => {
     if (!token) {
       console.log('[InviteSignup] No token provided');
+      setIsLoading(false);
       return;
     }
 
@@ -64,15 +68,26 @@ export default function InviteSignup() {
 
       console.log('[InviteSignup] RPC response:', { data, error });
 
-      if (error) {
-        console.error('[InviteSignup] RPC error:', error);
+      if (error || !data) {
+        console.error('[InviteSignup] RPC error or no data:', error);
+        // Still set a fallback organization data to show the signup form
+        setOrganizationData({
+          id: '',
+          name: 'Organization',
+          slug: '',
+          logo_url: '',
+          primary_color: '#3B82F6',
+          tagline: 'Room Booking System'
+        });
+        setInviteData({
+          email: '',
+          role: 'member',
+          organization_id: '',
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        });
         setError("Invalid or expired invitation link");
-        return;
-      }
-
-      if (!data) {
-        console.log('[InviteSignup] No data returned from RPC');
-        setError("Invalid or expired invitation link");
+        setActiveTab("signin"); // Default to sign in for expired links
+        setIsLoading(false);
         return;
       }
 
@@ -105,7 +120,24 @@ export default function InviteSignup() {
       // All invites are now link invites (email is always NULL)
       setEmail(""); // User will need to enter their email
     } catch (error) {
+      console.error('Fetch invite data error:', error);
+      // Still show signup form even on error
+      setOrganizationData({
+        id: '',
+        name: 'Organization',
+        slug: '',
+        logo_url: '',
+        primary_color: '#3B82F6',
+        tagline: 'Room Booking System'
+      });
+      setInviteData({
+        email: '',
+        role: 'member',
+        organization_id: '',
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      });
       setError("Failed to load invitation details");
+      setActiveTab("signin");
     } finally {
       setIsLoading(false);
     }
@@ -181,8 +213,34 @@ export default function InviteSignup() {
     return `${h} ${s} ${newL}%`;
   };
 
+  const handleSignIn = async () => {
+    if (!email || !password) return;
+
+    setIsSigningIn(true);
+    setError("");
+
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password,
+      });
+
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // Navigate to organization page
+        navigate(`/${organizationData?.slug}`);
+      }
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      setError(error.message || "Failed to sign in");
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
   const handleSignup = async () => {
-    if (!inviteData || !password || !email) return;
+    if (!password || !email) return;
 
     if (password.length < 8) {
       setError("Password must be 8+ chars");
@@ -232,26 +290,7 @@ export default function InviteSignup() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardContent className="flex flex-col items-center justify-center p-8 text-center space-y-4">
-            <AlertCircle className="h-12 w-12 text-destructive" />
-            <div>
-              <h2 className="text-lg font-semibold">Invalid Invitation</h2>
-              <p className="text-muted-foreground mt-2">{error}</p>
-            </div>
-            <Button onClick={() => navigate("/")} variant="outline">
-              Go to Login
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!inviteData) {
+  if (!inviteData || !organizationData) {
     return null;
   }
 
@@ -289,104 +328,191 @@ export default function InviteSignup() {
           </div>
           
           <div>
-            <CardTitle className="text-2xl">Join the Team</CardTitle>
-            <CardDescription className="mt-2">
-              You've been invited as a{" "}
-              <span className="font-medium capitalize text-primary">{inviteData.role}</span>
-            </CardDescription>
+            <CardTitle className="text-2xl">
+              {error ? "Access Organization" : "Join the Team"}
+            </CardTitle>
+            {!error && (
+              <CardDescription className="mt-2">
+                You've been invited as a{" "}
+                <span className="font-medium capitalize text-primary">{inviteData.role}</span>
+              </CardDescription>
+            )}
+            {error && (
+              <CardDescription className="mt-2">
+                Sign in to an existing account or create a new one
+              </CardDescription>
+            )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <div className="relative">
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Create a password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pr-10"
-              />
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin" className="flex items-center gap-2">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </TabsTrigger>
+              <TabsTrigger value="signup" className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4" />
+                Sign Up
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="signin" className="space-y-4 mt-6">
+              <div>
+                <Label htmlFor="signin-email">Email</Label>
+                <Input
+                  id="signin-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="signin-password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="signin-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+                  {error}
+                </div>
+              )}
+
               <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={handleSignIn}
+                disabled={isSigningIn || !password || !email}
+                className="w-full"
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                {isSigningIn ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing In...
+                  </>
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  "Sign In"
                 )}
               </Button>
-            </div>
-            {password && <PasswordStrength password={password} />}
-          </div>
+            </TabsContent>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="pr-10"
-              />
+            <TabsContent value="signup" className="space-y-4 mt-6">
+              <div>
+                <Label htmlFor="signup-email">Email</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="signup-password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="signup-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+                {password && <PasswordStrength password={password} />}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="signup-confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="signup-confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pr-10"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
+                  {error}
+                </div>
+              )}
+
               <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                onClick={handleSignup}
+                disabled={isSigningUp || !password || !confirmPassword || !email}
+                className="w-full"
               >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" />
+                {isSigningUp ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending Confirmation Email...
+                  </>
                 ) : (
-                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  "Create Account & Join Team"
                 )}
               </Button>
-            </div>
-          </div>
 
-          {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-lg">
-              {error}
-            </div>
-          )}
-
-          <Button
-            onClick={handleSignup}
-            disabled={isSigningUp || !password || !confirmPassword || !email}
-            className="w-full"
-          >
-            {isSigningUp ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending Confirmation Email...
-              </>
-            ) : (
-              "Create Account & Join Team"
-            )}
-          </Button>
-
-          <div className="text-center text-sm text-muted-foreground">
-            Invitation expires on {new Date(inviteData.expires_at).toLocaleDateString()}
-          </div>
+              {!error && (
+                <div className="text-center text-sm text-muted-foreground">
+                  Invitation expires on {new Date(inviteData.expires_at).toLocaleDateString()}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
