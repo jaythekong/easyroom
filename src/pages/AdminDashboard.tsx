@@ -1,6 +1,6 @@
 
 import { memo } from "react";
-import { Plus, Settings, Users, ArrowLeft, MessageSquare, BarChart3, Heart, Mail } from "lucide-react";
+import { Plus, Settings, Users, ArrowLeft, MessageSquare, BarChart3, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +10,6 @@ import { TeamManagement } from "@/components/admin/TeamManagement";
 import { OrganizationSettings } from "@/components/admin/OrganizationSettings";
 import { TelegramNotifications } from "@/components/admin/TelegramNotifications";
 import { TickerManagement } from "@/components/admin/TickerManagement";
-import { InvitationManagement } from "@/components/admin/InvitationManagement";
 import { WelcomeScreenManagement } from "@/components/admin/WelcomeScreenManagement";
 import { Analytics } from "@/components/admin/Analytics";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -44,14 +43,10 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
         <AdminStats />
 
         <Tabs defaultValue="rooms" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="rooms" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Rooms
-            </TabsTrigger>
-            <TabsTrigger value="invitations" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Invitations
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -81,10 +76,6 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
 
           <TabsContent value="rooms" className="space-y-6">
             <RoomManagement />
-          </TabsContent>
-
-          <TabsContent value="invitations" className="space-y-6">
-            <InvitationManagement />
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
