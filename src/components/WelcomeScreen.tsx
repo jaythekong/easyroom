@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { useWelcomeScreenSettings } from "@/hooks/useWelcomeScreen";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
 import { useOrganizationBySlug } from "@/hooks/useOrganization";
+import { generateWiFiQRCode, getQRPositionClasses } from "@/lib/qrUtils";
 import { Loader2 } from "lucide-react";
 
 export function WelcomeScreen() {
@@ -11,6 +12,7 @@ export function WelcomeScreen() {
   const { data: settings, isLoading } = useWelcomeScreenSettings(organization?.id);
   const { organization: orgContext } = useOrganizationTheme();
   const [isVisible, setIsVisible] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
@@ -41,6 +43,34 @@ export function WelcomeScreen() {
   const animationSpeed = settings?.animation_speed || 3;
   const backgroundType = settings?.background_type || "gradient";
   const backgroundValue = settings?.background_value || "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)))";
+  
+  // WiFi QR Code settings
+  const wifiEnabled = settings?.wifi_enabled ?? false;
+  const wifiSsid = settings?.wifi_ssid || "";
+  const wifiPassword = settings?.wifi_password || "";
+  const wifiSecurity = settings?.wifi_security || 'WPA';
+  const wifiHidden = settings?.wifi_hidden ?? false;
+  const qrPosition = settings?.qr_position || 'bottom-left';
+  const qrSize = settings?.qr_size || 'medium';
+
+  // Generate WiFi QR code when settings change
+  useEffect(() => {
+    if (wifiEnabled && wifiSsid) {
+      generateWiFiQRCode({
+        ssid: wifiSsid,
+        password: wifiPassword,
+        security: wifiSecurity,
+        hidden: wifiHidden
+      }, qrSize)
+        .then(setQrCodeDataUrl)
+        .catch((error) => {
+          console.error('Failed to generate WiFi QR code:', error);
+          setQrCodeDataUrl(null);
+        });
+    } else {
+      setQrCodeDataUrl(null);
+    }
+  }, [wifiEnabled, wifiSsid, wifiPassword, wifiSecurity, wifiHidden, qrSize]);
 
   // Generate background style
   const getBackgroundStyle = () => {
@@ -213,9 +243,28 @@ export function WelcomeScreen() {
           )}
         </div>
 
+        {/* WiFi QR Code */}
+        {wifiEnabled && qrCodeDataUrl && (
+          <div className={`${getQRPositionClasses(qrPosition)} z-20`}>
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-2xl border border-white/20">
+              <div className="text-center">
+                <img 
+                  src={qrCodeDataUrl} 
+                  alt="WiFi QR Code"
+                  className="rounded-lg shadow-lg mx-auto"
+                />
+                <div className="mt-3 text-sm text-gray-700">
+                  <p className="font-semibold">{wifiSsid}</p>
+                  <p className="text-xs opacity-70">Scan to connect to WiFi</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Organization branding */}
         {organization?.logo_url && (
-          <div className={`${getLogoPositionClass()} opacity-60`}>
+          <div className={`${getLogoPositionClass()} opacity-60 ${wifiEnabled && qrCodeDataUrl && logoPosition === qrPosition ? 'z-10' : 'z-20'}`}>
             <img 
               src={organization.logo_url} 
               alt={organization.name}

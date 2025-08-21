@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Monitor, Type, Palette, Play, Save, Eye, Upload } from "lucide-react";
+import { Monitor, Type, Palette, Play, Save, Eye, Upload, Wifi, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,15 @@ export function WelcomeScreenManagement() {
   const [animationSpeed, setAnimationSpeed] = useState<number>(3);
   const [isActive, setIsActive] = useState(true);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  
+  // WiFi QR Code settings
+  const [wifiEnabled, setWifiEnabled] = useState(false);
+  const [wifiSsid, setWifiSsid] = useState("");
+  const [wifiPassword, setWifiPassword] = useState("");
+  const [wifiSecurity, setWifiSecurity] = useState<'WPA' | 'WEP' | 'nopass'>('WPA');
+  const [wifiHidden, setWifiHidden] = useState(false);
+  const [qrPosition, setQrPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-top' | 'center-bottom'>('bottom-left');
+  const [qrSize, setQrSize] = useState<'small' | 'medium' | 'large'>('medium');
 
   // Load settings when they change
   useEffect(() => {
@@ -61,6 +70,15 @@ export function WelcomeScreenManagement() {
       setAnimationType(settings.animation_type || "floating");
       setAnimationSpeed(settings.animation_speed || 3);
       setIsActive(settings.is_active ?? true);
+      
+      // WiFi QR Code settings
+      setWifiEnabled(settings.wifi_enabled ?? false);
+      setWifiSsid(settings.wifi_ssid || "");
+      setWifiPassword(settings.wifi_password || "");
+      setWifiSecurity(settings.wifi_security || 'WPA');
+      setWifiHidden(settings.wifi_hidden ?? false);
+      setQrPosition(settings.qr_position || 'bottom-left');
+      setQrSize(settings.qr_size || 'medium');
     }
   }, [settings]);
 
@@ -86,6 +104,14 @@ export function WelcomeScreenManagement() {
       animation_type: animationType,
       animation_speed: animationSpeed,
       is_active: isActive,
+      // WiFi QR Code settings
+      wifi_enabled: wifiEnabled,
+      wifi_ssid: wifiSsid,
+      wifi_password: wifiPassword,
+      wifi_security: wifiSecurity,
+      wifi_hidden: wifiHidden,
+      qr_position: qrPosition,
+      qr_size: qrSize,
     });
   };
 
@@ -165,9 +191,10 @@ export function WelcomeScreenManagement() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="content" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="content">Content & Text Style</TabsTrigger>
               <TabsTrigger value="background">Background</TabsTrigger>
+              <TabsTrigger value="wifi">WiFi QR Code</TabsTrigger>
               <TabsTrigger value="animation">Animation</TabsTrigger>
             </TabsList>
 
@@ -563,6 +590,127 @@ export function WelcomeScreenManagement() {
               )}
             </TabsContent>
 
+            <TabsContent value="wifi" className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="wifiEnabled"
+                  checked={wifiEnabled}
+                  onCheckedChange={setWifiEnabled}
+                />
+                <Label htmlFor="wifiEnabled">Enable WiFi QR Code</Label>
+              </div>
+
+              {wifiEnabled && (
+                <div className="space-y-4">
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <Wifi className="h-5 w-5" />
+                      WiFi Network Details
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="wifiSsid">Network Name (SSID)</Label>
+                        <Input
+                          id="wifiSsid"
+                          value={wifiSsid}
+                          onChange={(e) => setWifiSsid(e.target.value)}
+                          placeholder="MyOfficeWiFi"
+                          className="mt-2"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="wifiPassword">Password</Label>
+                        <Input
+                          id="wifiPassword"
+                          type="password"
+                          value={wifiPassword}
+                          onChange={(e) => setWifiPassword(e.target.value)}
+                          placeholder="Enter WiFi password"
+                          className="mt-2"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      <div>
+                        <Label>Security Type</Label>
+                        <Select value={wifiSecurity} onValueChange={(value: typeof wifiSecurity) => setWifiSecurity(value)}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="WPA">WPA/WPA2</SelectItem>
+                            <SelectItem value="WEP">WEP</SelectItem>
+                            <SelectItem value="nopass">No Password</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Hidden Network</Label>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Switch
+                            id="wifiHidden"
+                            checked={wifiHidden}
+                            onCheckedChange={setWifiHidden}
+                          />
+                          <Label htmlFor="wifiHidden" className="text-sm">Network is hidden</Label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                      <QrCode className="h-5 w-5" />
+                      QR Code Display Settings
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>QR Code Position</Label>
+                        <Select value={qrPosition} onValueChange={(value: typeof qrPosition) => setQrPosition(value)}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                            <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                            <SelectItem value="top-right">Top Right</SelectItem>
+                            <SelectItem value="top-left">Top Left</SelectItem>
+                            <SelectItem value="center-top">Center Top</SelectItem>
+                            <SelectItem value="center-bottom">Center Bottom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>QR Code Size</Label>
+                        <Select value={qrSize} onValueChange={(value: typeof qrSize) => setQrSize(value)}>
+                          <SelectTrigger className="mt-2">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="small">Small (120px)</SelectItem>
+                            <SelectItem value="medium">Medium (180px)</SelectItem>
+                            <SelectItem value="large">Large (240px)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Preview:</strong> Guests can scan this QR code to automatically connect to your WiFi network. 
+                        The QR code will appear on the welcome screen when enabled.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
 
             <TabsContent value="animation" className="space-y-4">
               <div className="flex items-center space-x-2">

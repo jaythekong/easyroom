@@ -22,6 +22,14 @@ export interface WelcomeScreenSettings {
   animation_type: 'floating' | 'pulse' | 'fade' | 'slide';
   animation_speed: number; // 0-5 scale where 0 is static
   is_active: boolean;
+  // WiFi QR Code settings
+  wifi_enabled?: boolean;
+  wifi_ssid?: string;
+  wifi_password?: string;
+  wifi_security?: 'WPA' | 'WEP' | 'nopass';
+  wifi_hidden?: boolean;
+  qr_position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center-top' | 'center-bottom';
+  qr_size?: 'small' | 'medium' | 'large';
 }
 
 export function useWelcomeScreenSettings(organizationId: string | undefined) {
