@@ -24,22 +24,26 @@ export default function InviteRedirect() {
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(shortCode);
         
         if (isUUID) {
-          console.log('[InviteRedirect] Detected UUID, redirecting directly');
+          console.log('[InviteRedirect] Detected UUID, tracking open and redirecting directly');
+          // Track the open for UUID tokens too
+          try {
+            await supabase.rpc('track_invitation_open', {
+              invitation_token: shortCode
+            });
+          } catch (trackError) {
+            console.warn('[InviteRedirect] Failed to track UUID token open:', trackError);
+          }
           // Direct token access
           navigate(`/invite?token=${shortCode}`);
           return;
         }
 
-        // Short code lookup
-        console.log('[InviteRedirect] Looking up short code in database:', shortCode.toUpperCase());
+        // Short code lookup with tracking
+        console.log('[InviteRedirect] Looking up short code and tracking open:', shortCode.toUpperCase());
         
-        const { data, error } = await supabase
-          .from('invitations')
-          .select('invite_token')
-          .eq('short_code', shortCode.toUpperCase())
-          .single();
-
-        // Note: open count tracking is handled by get_invitation_details function
+        const { data, error } = await supabase.rpc('track_invitation_open', {
+          invitation_short_code: shortCode.toUpperCase()
+        });
 
         if (error || !data) {
           console.error('[InviteRedirect] Invalid short code or error:', error, 'data:', data);
@@ -47,10 +51,31 @@ export default function InviteRedirect() {
           return;
         }
 
+        // The tracking response should contain the invitation details
+        const inviteData = data as any;
+        
+        // First try to get invite_token directly from tracking response
+        let inviteToken = inviteData.invite_token;
+        
+        // If not available, get it from the database using the invitation ID
+        if (!inviteToken && inviteData.id) {
+          const { data: tokenData } = await supabase
+            .from('invitations')
+            .select('invite_token')
+            .eq('id', inviteData.id)
+            .single();
+          inviteToken = tokenData?.invite_token;
+        }
+
+        if (!inviteToken) {
+          console.error('[InviteRedirect] Could not get invite token');
+          navigate("/");
+          return;
+        }
+
         // Redirect to full invite URL
-        console.log('[InviteRedirect] Found invite token, redirecting to:', `/invite?token=${data.invite_token}`);
-        console.log('[InviteRedirect] Full redirect URL will be:', `${window.location.origin}/invite?token=${data.invite_token}`);
-        navigate(`/invite?token=${data.invite_token}`);
+        console.log('[InviteRedirect] Found invite token, redirecting to:', `/invite?token=${inviteToken}`);
+        navigate(`/invite?token=${inviteToken}`);
       } catch (error) {
         console.error('[InviteRedirect] Error handling invite redirect:', error);
         navigate("/");
