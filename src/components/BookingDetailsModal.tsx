@@ -86,21 +86,7 @@ export function BookingDetailsModal({
     
     setLoading(true);
     try {
-      // Security check: only allow canceling own bookings unless admin
-      const deleteQuery = supabase
-        .from('bookings')
-        .delete()
-        .eq('id', booking.id);
-
-      if (userRole !== 'admin') {
-        deleteQuery.eq('user_id', user?.id);
-      }
-
-      const { error } = await deleteQuery;
-
-      if (error) throw error;
-
-      // Send Telegram notification for cancellation
+      // Send Telegram notification BEFORE deleting the booking
       try {
         // Get user's organization ID for notification
         const { data: profile } = await supabase
@@ -122,6 +108,20 @@ export function BookingDetailsModal({
         console.error('Failed to send Telegram notification:', notificationError);
         // Don't block the cancellation if notification fails
       }
+
+      // Now delete the booking - Security check: only allow canceling own bookings unless admin
+      const deleteQuery = supabase
+        .from('bookings')
+        .delete()
+        .eq('id', booking.id);
+
+      if (userRole !== 'admin') {
+        deleteQuery.eq('user_id', user?.id);
+      }
+
+      const { error } = await deleteQuery;
+
+      if (error) throw error;
 
       toast({
         title: "Booking Cancelled",
