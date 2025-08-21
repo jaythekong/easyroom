@@ -49,7 +49,7 @@ export function WelcomeModal({
               <span className="font-medium text-primary">Important: Bookmark This Page</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              Save this URL for easy access: <code className="bg-muted px-1 rounded text-xs">/{orgSlug}</code>
+              Save this URL for easy access: <code className="bg-muted px-1 rounded text-xs">{window.location.origin}/{orgSlug}</code>
             </p>
           </div>
         </div>

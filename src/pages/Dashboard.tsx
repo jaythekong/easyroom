@@ -9,7 +9,7 @@ import { OrganizationClock } from "@/components/OrganizationClock";
 import { WelcomeModal } from "@/components/WelcomeModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building, User } from "lucide-react";
+import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building, User, HelpCircle } from "lucide-react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -436,6 +436,15 @@ export default function Dashboard() {
                   {getTimeBasedGreeting()}, {userDisplayName}! ☀️
                 </h2>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowWelcomeModal(true)}
+                className="flex items-center gap-2 text-sm"
+              >
+                <HelpCircle className="h-4 w-4" />
+                Help
+              </Button>
             </div>
           </div>
 
