@@ -281,46 +281,17 @@ export default function InviteAwaitVerify() {
         </CardHeader>
         
         <CardContent className="space-y-6">
-
-          {/* Organization Access Section */}
-          {slug && (
-            <div className="border-t pt-6 space-y-4">
-              <div className="text-center">
-                <h4 className="font-medium text-sm text-muted-foreground mb-3">
-                  Quick Access to Your Organization
-                </h4>
-                <div className="space-y-3">
-                  <Button
-                    onClick={handleGoToOrg}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Go to {organizationData?.name || 'Organization'}
-                  </Button>
-                  
-                  <div className="bg-muted/50 rounded-lg p-3 space-y-2">
-                    <p className="text-xs text-muted-foreground">
-                      Save this link for future access:
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-background border rounded px-2 py-1 text-xs font-mono text-center">
-                        {window.location.origin}/{slug}
-                      </div>
-                      <Button
-                        onClick={handleCopyOrgUrl}
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                      >
-                        <Copy className={`h-3 w-3 ${orgUrlCopied ? 'text-primary' : ''}`} />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {/* Email confirmation emphasis */}
+          <div className="text-center space-y-4">
+            <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 rounded-lg p-6">
+              <Mail className="h-8 w-8 text-primary mx-auto mb-3" />
+              <h3 className="font-semibold text-lg mb-2">Email Confirmation Required</h3>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                Please check your email inbox and click the confirmation link to complete your invitation. 
+                This step is required to verify your email address and grant you access to the workspace.
+              </p>
             </div>
-          )}
+          </div>
           
           {showResendOption && (
             <div className="text-center text-sm text-muted-foreground space-y-2 border-t pt-4">
