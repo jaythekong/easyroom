@@ -397,13 +397,14 @@ export const useOrganizationMembers = (organizationId: string | null) => {
     queryFn: async () => {
       if (!organizationId) return [];
       
+      // Query user_organization_memberships first, then join with user_profiles
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('user_organization_memberships')
         .select(`
-          *,
-          user_organization_memberships!inner(role, organization_id)
+          role,
+          user_profiles!inner(*)
         `)
-        .eq('user_organization_memberships.organization_id', organizationId)
+        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -411,7 +412,11 @@ export const useOrganizationMembers = (organizationId: string | null) => {
         throw error;
       }
 
-      return data;
+      // Transform the data to flatten the structure
+      return data?.map(item => ({
+        ...item.user_profiles as any,
+        role: item.role
+      })) || [];
     },
     enabled: !!organizationId,
   });

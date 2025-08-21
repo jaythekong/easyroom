@@ -107,9 +107,9 @@ export function TeamMembersModal({ organizationId, organizationName, isOpen, onC
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`flex items-center gap-1 w-fit ${getRoleColor((member as any).user_organization_memberships?.[0]?.role || 'member')}`}>
-                        {getRoleIcon((member as any).user_organization_memberships?.[0]?.role || 'member')}
-                        {(member as any).user_organization_memberships?.[0]?.role || 'member'}
+                      <Badge className={`flex items-center gap-1 w-fit ${getRoleColor(member.role || 'member')}`}>
+                        {getRoleIcon(member.role || 'member')}
+                        {member.role || 'member'}
                       </Badge>
                     </TableCell>
                     <TableCell>
