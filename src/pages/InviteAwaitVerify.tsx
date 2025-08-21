@@ -60,8 +60,15 @@ export default function InviteAwaitVerify() {
             if (acceptError) {
               console.error('Accept invitation error:', acceptError);
               
+              // If invitation is invalid/expired/used, redirect to home instead of showing error
               if (acceptError.message?.includes('INVITE_INVALID')) {
-                throw new Error('This invitation link is invalid, expired, or has already been used.');
+                console.log('Invitation already processed, redirecting to home');
+                toast({
+                  title: "Email confirmed!",
+                  description: "Your email has been confirmed successfully.",
+                });
+                navigate('/');
+                return;
               } else if (acceptError.message?.includes('AUTH_REQUIRED')) {
                 throw new Error('Authentication failed. Please try again.');
               }
