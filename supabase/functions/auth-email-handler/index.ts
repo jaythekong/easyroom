@@ -5,9 +5,12 @@ import { Resend } from "npm:resend@4.0.0";
 const resend = new Resend(Deno.env.get('RESEND_API_KEY') as string);
 const hookSecret = Deno.env.get('AUTH_EMAIL_HOOK_SECRET') as string;
 
+// Enhanced CORS headers with improved security
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://easyroom.asia',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 interface AuthEmailData {
