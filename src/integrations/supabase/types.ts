@@ -170,6 +170,7 @@ export type Database = {
           last_resent_at: string | null
           open_count: number | null
           organization_id: string
+          recipient_name: string | null
           resend_count: number | null
           revoked_at: string | null
           revoked_by: string | null
@@ -191,6 +192,7 @@ export type Database = {
           last_resent_at?: string | null
           open_count?: number | null
           organization_id: string
+          recipient_name?: string | null
           resend_count?: number | null
           revoked_at?: string | null
           revoked_by?: string | null
@@ -212,6 +214,7 @@ export type Database = {
           last_resent_at?: string | null
           open_count?: number | null
           organization_id?: string
+          recipient_name?: string | null
           resend_count?: number | null
           revoked_at?: string | null
           revoked_by?: string | null
@@ -663,6 +666,8 @@ export type Database = {
           is_active: boolean
           logo_position: string | null
           organization_id: string
+          qr_position: string | null
+          qr_size: string | null
           sub_font_family: string | null
           sub_text: string | null
           sub_text_color: string | null
@@ -672,6 +677,11 @@ export type Database = {
           text_shadow: boolean | null
           updated_at: string
           welcome_text: string
+          wifi_enabled: boolean | null
+          wifi_hidden: boolean | null
+          wifi_password: string | null
+          wifi_security: string | null
+          wifi_ssid: string | null
         }
         Insert: {
           animation_enabled?: boolean
@@ -686,6 +696,8 @@ export type Database = {
           is_active?: boolean
           logo_position?: string | null
           organization_id: string
+          qr_position?: string | null
+          qr_size?: string | null
           sub_font_family?: string | null
           sub_text?: string | null
           sub_text_color?: string | null
@@ -695,6 +707,11 @@ export type Database = {
           text_shadow?: boolean | null
           updated_at?: string
           welcome_text?: string
+          wifi_enabled?: boolean | null
+          wifi_hidden?: boolean | null
+          wifi_password?: string | null
+          wifi_security?: string | null
+          wifi_ssid?: string | null
         }
         Update: {
           animation_enabled?: boolean
@@ -709,6 +726,8 @@ export type Database = {
           is_active?: boolean
           logo_position?: string | null
           organization_id?: string
+          qr_position?: string | null
+          qr_size?: string | null
           sub_font_family?: string | null
           sub_text?: string | null
           sub_text_color?: string | null
@@ -718,6 +737,11 @@ export type Database = {
           text_shadow?: boolean | null
           updated_at?: string
           welcome_text?: string
+          wifi_enabled?: boolean | null
+          wifi_hidden?: boolean | null
+          wifi_password?: string | null
+          wifi_security?: string | null
+          wifi_ssid?: string | null
         }
         Relationships: [
           {
