@@ -829,6 +829,14 @@ export type Database = {
         Args: { impersonation_mode?: string; target_org_id: string }
         Returns: Json
       }
+      log_invitation_access_attempt: {
+        Args: {
+          access_granted?: boolean
+          attempted_short_code?: string
+          attempted_token?: string
+        }
+        Returns: undefined
+      }
       log_invitation_event: {
         Args: {
           action: string
