@@ -18,6 +18,10 @@ interface WelcomeModalProps {
   onConnectTelegram: () => void;
   organizationName: string;
   orgSlug: string;
+  organization?: {
+    telegram_bot_token?: string;
+    telegram_bot_username?: string;
+  };
 }
 
 export function WelcomeModal({ 
@@ -25,9 +29,15 @@ export function WelcomeModal({
   onClose, 
   onConnectTelegram, 
   organizationName,
-  orgSlug 
+  orgSlug,
+  organization 
 }: WelcomeModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  
+  // Check if Telegram is configured
+  const isTelegramConfigured = Boolean(
+    organization?.telegram_bot_token && organization?.telegram_bot_username
+  );
 
   const steps = [
     {
@@ -133,13 +143,17 @@ export function WelcomeModal({
             onClick={onConnectTelegram} 
             className="w-full"
             size="lg"
+            disabled={!isTelegramConfigured}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
-            Connect to Telegram
+            {isTelegramConfigured ? "Connect to Telegram" : "Telegram Not Configured"}
           </Button>
           
           <p className="text-xs text-muted-foreground text-center">
-            You can always connect later from the main dashboard
+            {isTelegramConfigured 
+              ? "You can always connect later from the main dashboard"
+              : "Contact your admin to configure Telegram notifications"
+            }
           </p>
         </div>
       )
