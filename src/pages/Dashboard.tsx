@@ -6,13 +6,14 @@ import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
 import { UserMenu } from "@/components/UserMenu";
 import { OrganizationClock } from "@/components/OrganizationClock";
+import { WelcomeModal } from "@/components/WelcomeModal";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Clock, Users, Settings, Grid3X3, CalendarDays, Building, User } from "lucide-react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useOrganizationTheme } from "@/hooks/useOrganizationTheme";
@@ -46,6 +47,7 @@ export default function Dashboard() {
   const { organization, userRole } = useOrganization();
   useOrganizationTheme(); // Apply organization theme
   const { orgSlug } = useParams<{ orgSlug: string }>();
+  const [searchParams] = useSearchParams();
   
   // Use the organization-aware hook for rooms
   const { data: rooms = [], isLoading: roomsLoading, error: roomsError } = useRooms();
@@ -66,6 +68,10 @@ export default function Dashboard() {
     organizationTotal: 0,
     loading: true
   });
+
+  // Welcome modal state
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  
   const { toast } = useToast();
 
   // Memoize user ID to prevent unnecessary re-fetches
@@ -103,6 +109,16 @@ export default function Dashboard() {
       fetchUserProfile();
     }
   }, [userId, organization?.id, fetchUserProfile]);
+
+  // Check if user should see welcome modal
+  useEffect(() => {
+    const isNewUser = searchParams.get('welcome') === 'true';
+    const hasSeenWelcome = localStorage.getItem(`welcome_seen_${organization?.id}`);
+    
+    if (isNewUser && !hasSeenWelcome && organization?.id) {
+      setShowWelcomeModal(true);
+    }
+  }, [searchParams, organization?.id]);
 
   // Show error toast if rooms fail to load
   useEffect(() => {
@@ -356,6 +372,23 @@ export default function Dashboard() {
     }
   };
 
+  // Welcome modal handlers
+  const handleCloseWelcomeModal = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem(`welcome_seen_${organization?.id}`, 'true');
+  };
+
+  const handleConnectTelegram = () => {
+    handleCloseWelcomeModal();
+    // Scroll to telegram banner or focus on it
+    setTimeout(() => {
+      const telegramBanner = document.querySelector('[data-telegram-banner]');
+      if (telegramBanner) {
+        telegramBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Horizontal Ticker */}
@@ -489,7 +522,9 @@ export default function Dashboard() {
         })()}
         
         {organization && (
-          <TelegramBanner organization={organization} />
+          <div data-telegram-banner>
+            <TelegramBanner organization={organization} />
+          </div>
         )}
 
         {/* Main Content with Tabs */}
@@ -650,6 +685,17 @@ export default function Dashboard() {
         initialStartTime={selectedTimeSlot || undefined}
         existingBooking={editingBooking}
       />
+
+      {/* Welcome Modal */}
+      {organization && (
+        <WelcomeModal
+          isOpen={showWelcomeModal}
+          onClose={handleCloseWelcomeModal}
+          onConnectTelegram={handleConnectTelegram}
+          organizationName={organization.name}
+          orgSlug={orgSlug || ''}
+        />
+      )}
     </div>
   );
 }

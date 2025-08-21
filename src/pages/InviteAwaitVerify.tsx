@@ -62,12 +62,12 @@ export default function InviteAwaitVerify() {
               
               // If invitation is invalid/expired/used, redirect to home instead of showing error
               if (acceptError.message?.includes('INVITE_INVALID')) {
-                console.log('Invitation already processed, redirecting to home');
+                console.log('Invitation already processed, redirecting to home with welcome');
                 toast({
                   title: "Email confirmed!",
                   description: "Your email has been confirmed successfully.",
                 });
-                navigate('/');
+                navigate(`/${organizationData?.slug || slug}?welcome=true`);
                 return;
               } else if (acceptError.message?.includes('AUTH_REQUIRED')) {
                 throw new Error('Authentication failed. Please try again.');
@@ -81,8 +81,8 @@ export default function InviteAwaitVerify() {
               description: `You've successfully joined ${organizationData?.name || 'the organization'}`,
             });
 
-            // Navigate to the organization
-            navigate(`/${slug}`);
+            // Navigate to the organization with welcome parameter
+            navigate(`/${slug}?welcome=true`);
 
           } catch (error: any) {
             console.error('Complete invite error:', error);
