@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2, Send, Eye } from "lucide-react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2, Send, Eye, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +31,8 @@ interface Invitation {
   expires_at: string;
   created_at: string;
   accepted_at?: string;
+  revoked_at?: string;
+  revoked_by?: string;
   short_code?: string;
   open_count?: number;
   last_opened_at?: string;
@@ -55,6 +58,7 @@ export function TeamManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [pastInvitations, setPastInvitations] = useState<Invitation[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
@@ -123,15 +127,32 @@ export function TeamManagement() {
         throw invitesError;
       }
 
-      // Get invited_by user emails for the invitations
-      const invitedByIds = invites?.map(invite => invite.invited_by).filter(Boolean) || [];
+      // Fetch past invitations (accepted, expired, or revoked)
+      const { data: pastInvites, error: pastInvitesError } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('organization_id', organization.id)
+        .or('accepted_at.not.is.null,revoked_at.not.is.null,expires_at.lt.' + new Date().toISOString())
+        .order('created_at', { ascending: false });
+
+      if (pastInvitesError) {
+        console.error('Past invites query error:', pastInvitesError);
+        throw pastInvitesError;
+      }
+
+      // Get invited_by user emails for all invitations
+      const allInvitedByIds = [
+        ...(invites?.map(invite => invite.invited_by).filter(Boolean) || []),
+        ...(pastInvites?.map(invite => invite.invited_by).filter(Boolean) || [])
+      ];
+      const uniqueInvitedByIds = [...new Set(allInvitedByIds)];
       let invitedByEmails: { [key: string]: string } = {};
       
-      if (invitedByIds.length > 0) {
+      if (uniqueInvitedByIds.length > 0) {
         const { data: invitedByProfiles } = await supabase
           .from('user_profiles')
           .select('user_id, email')
-          .in('user_id', invitedByIds)
+          .in('user_id', uniqueInvitedByIds)
           .eq('organization_id', organization.id);
         
         invitedByProfiles?.forEach(profile => {
@@ -145,7 +166,13 @@ export function TeamManagement() {
         invited_by_email: invitedByEmails[invite.invited_by] || 'Unknown'
       })) || [];
 
+      const pastInvitesWithCreatorInfo = pastInvites?.map(invite => ({
+        ...invite,
+        invited_by_email: invitedByEmails[invite.invited_by] || 'Unknown'
+      })) || [];
+
       setInvitations(invitesWithCreatorInfo);
+      setPastInvitations(pastInvitesWithCreatorInfo);
     } catch (error) {
       console.error('Error fetching team data:', error);
       toast({
@@ -679,148 +706,273 @@ export function TeamManagement() {
         </CardContent>
       </Card>
 
-      {/* Pending Invitations */}
-      {invitations.length > 0 && (
+      {/* Invitations */}
+      {(invitations.length > 0 || pastInvitations.length > 0) && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Pending Invitations</CardTitle>
-              <CardDescription>Manage outstanding team invitations</CardDescription>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              Showing {Math.min(itemsPerPage, invitations.length)} of {invitations.length} invitations
-            </div>
+          <CardHeader>
+            <CardTitle>Invitations</CardTitle>
+            <CardDescription>Manage team invitations and track their status</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name/Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Created By</TableHead>
-                  <TableHead>Opens</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invitations
-                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                  .map((invite) => (
-                    <TableRow key={invite.id}>
-                      <TableCell className="font-medium">
-                        <div className="space-y-1">
-                          {invite.recipient_name && (
-                            <div className="font-medium">{invite.recipient_name}</div>
-                          )}
-                          <div className={invite.recipient_name ? "text-sm text-muted-foreground" : ""}>
-                            {invite.email ? 
-                              invite.email : 
-                              <span className="italic">Link invite</span>
-                            }
-                          </div>
+            <Tabs defaultValue="pending" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pending" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Pending ({invitations.length})
+                </TabsTrigger>
+                <TabsTrigger value="past" className="flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Past ({pastInvitations.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="pending" className="space-y-4">
+                {invitations.length > 0 ? (
+                  <>
+                    <div className="text-sm text-muted-foreground">
+                      Showing {Math.min(itemsPerPage, invitations.length)} of {invitations.length} pending invitations
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name/Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Created By</TableHead>
+                          <TableHead>Opens</TableHead>
+                          <TableHead>Expires</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invitations
+                          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                          .map((invite) => (
+                            <TableRow key={invite.id}>
+                              <TableCell className="font-medium">
+                                <div className="space-y-1">
+                                  {invite.recipient_name && (
+                                    <div className="font-medium">{invite.recipient_name}</div>
+                                  )}
+                                  <div className={invite.recipient_name ? "text-sm text-muted-foreground" : ""}>
+                                    {invite.email ? 
+                                      invite.email : 
+                                      <span className="italic">Link invite</span>
+                                    }
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
+                                  {invite.role}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="text-sm text-muted-foreground">
+                                    {invite.invited_by_email}
+                                  </div>
+                                  <div className="text-xs">
+                                    {new Date(invite.created_at).toLocaleDateString()}
+                                  </div>
+                                  {(invite.resend_count || 0) > 0 && (
+                                    <div className="text-xs text-muted-foreground">
+                                      Resent {invite.resend_count} time{invite.resend_count !== 1 ? 's' : ''}
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Eye className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-sm">{invite.open_count || 0}</span>
+                                  {invite.last_opened_at && (
+                                    <span className="text-xs text-muted-foreground ml-1">
+                                      (last: {new Date(invite.last_opened_at).toLocaleDateString()})
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {new Date(invite.expires_at).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => copyInviteLink(invite)}
+                                    className="flex items-center gap-1"
+                                    title="Copy invite link"
+                                  >
+                                    {copiedToken === invite.invite_token ? (
+                                      <Check className="h-4 w-4" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => resendInvite(invite.id)}
+                                    className="flex items-center gap-1"
+                                    title="Resend invitation"
+                                  >
+                                    <Send className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => revokeInvite(invite.id)}
+                                    className="text-destructive hover:text-destructive"
+                                    title="Revoke invitation"
+                                  >
+                                    <UserX className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                    
+                    {/* Pagination for pending */}
+                    {invitations.length > itemsPerPage && (
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-muted-foreground">
+                          Page {currentPage} of {Math.ceil(invitations.length / itemsPerPage)}
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
-                          {invite.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-sm text-muted-foreground">
-                            {invite.invited_by_email}
-                          </div>
-                          <div className="text-xs">
-                            {new Date(invite.created_at).toLocaleDateString()}
-                          </div>
-                          {(invite.resend_count || 0) > 0 && (
-                            <div className="text-xs text-muted-foreground">
-                              Resent {invite.resend_count} time{invite.resend_count !== 1 ? 's' : ''}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Eye className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-sm">{invite.open_count || 0}</span>
-                          {invite.last_opened_at && (
-                            <span className="text-xs text-muted-foreground ml-1">
-                              (last: {new Date(invite.last_opened_at).toLocaleDateString()})
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(invite.expires_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center gap-2">
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => copyInviteLink(invite)}
-                            className="flex items-center gap-1"
-                            title="Copy invite link"
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
                           >
-                            {copiedToken === invite.invite_token ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
+                            Previous
                           </Button>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            onClick={() => resendInvite(invite.id)}
-                            className="flex items-center gap-1"
-                            title="Resend invitation"
+                            onClick={() => setCurrentPage(prev => Math.min(Math.ceil(invitations.length / itemsPerPage), prev + 1))}
+                            disabled={currentPage === Math.ceil(invitations.length / itemsPerPage)}
                           >
-                            <Send className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => revokeInvite(invite.id)}
-                            className="text-destructive hover:text-destructive"
-                            title="Revoke invitation"
-                          >
-                            <UserX className="h-4 w-4" />
+                            Next
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-            
-            {/* Pagination */}
-            {invitations.length > itemsPerPage && (
-              <div className="flex items-center justify-between mt-4">
-                <div className="text-sm text-muted-foreground">
-                  Page {currentPage} of {Math.ceil(invitations.length / itemsPerPage)}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(Math.ceil(invitations.length / itemsPerPage), prev + 1))}
-                    disabled={currentPage === Math.ceil(invitations.length / itemsPerPage)}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No pending invitations
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="past" className="space-y-4">
+                {pastInvitations.length > 0 ? (
+                  <>
+                    <div className="text-sm text-muted-foreground">
+                      Showing {pastInvitations.length} past invitation{pastInvitations.length !== 1 ? 's' : ''}
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name/Email</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created By</TableHead>
+                          <TableHead>Opens</TableHead>
+                          <TableHead>Date</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pastInvitations.map((invite) => {
+                          const getInviteStatus = () => {
+                            if (invite.accepted_at) return { label: 'Accepted', variant: 'default' as const, icon: CheckCircle };
+                            if (invite.revoked_at) return { label: 'Revoked', variant: 'destructive' as const, icon: XCircle };
+                            if (new Date(invite.expires_at) < new Date()) return { label: 'Expired', variant: 'secondary' as const, icon: Clock };
+                            return { label: 'Unknown', variant: 'secondary' as const, icon: Clock };
+                          };
+                          
+                          const status = getInviteStatus();
+                          const StatusIcon = status.icon;
+                          
+                          return (
+                            <TableRow key={invite.id}>
+                              <TableCell className="font-medium">
+                                <div className="space-y-1">
+                                  {invite.recipient_name && (
+                                    <div className="font-medium">{invite.recipient_name}</div>
+                                  )}
+                                  <div className={invite.recipient_name ? "text-sm text-muted-foreground" : ""}>
+                                    {invite.email ? 
+                                      invite.email : 
+                                      <span className="italic">Link invite</span>
+                                    }
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
+                                  {invite.role}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <StatusIcon className="h-4 w-4" />
+                                  <Badge variant={status.variant}>
+                                    {status.label}
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="text-sm text-muted-foreground">
+                                    {invite.invited_by_email}
+                                  </div>
+                                  <div className="text-xs">
+                                    {new Date(invite.created_at).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1">
+                                  <Eye className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-sm">{invite.open_count || 0}</span>
+                                  {invite.last_opened_at && (
+                                    <span className="text-xs text-muted-foreground ml-1">
+                                      (last: {new Date(invite.last_opened_at).toLocaleDateString()})
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">
+                                  {invite.accepted_at && (
+                                    <div>Accepted: {new Date(invite.accepted_at).toLocaleDateString()}</div>
+                                  )}
+                                  {invite.revoked_at && (
+                                    <div>Revoked: {new Date(invite.revoked_at).toLocaleDateString()}</div>
+                                  )}
+                                  {!invite.accepted_at && !invite.revoked_at && (
+                                    <div>Expired: {new Date(invite.expires_at).toLocaleDateString()}</div>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No past invitations found
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       )}
