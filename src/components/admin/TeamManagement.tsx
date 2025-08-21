@@ -35,6 +35,7 @@ interface Invitation {
   last_opened_at?: string;
   resend_count?: number;
   status?: string;
+  recipient_name?: string;
 }
 
 export function TeamManagement() {
@@ -46,11 +47,15 @@ export function TeamManagement() {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
+  const [inviteName, setInviteName] = useState("");
   const [linkRole, setLinkRole] = useState("member");
+  const [linkName, setLinkName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   useEffect(() => {
     if (organization?.id) {
@@ -137,6 +142,7 @@ export function TeamManagement() {
           role: inviteRole as 'admin' | 'member',
           invited_by: user.id,
           organization_id: organization.id,
+          recipient_name: inviteName || null,
         });
 
       if (error) throw error;
@@ -148,6 +154,7 @@ export function TeamManagement() {
 
       setInviteEmail("");
       setInviteRole("member");
+      setInviteName("");
       setIsInviteDialogOpen(false);
       fetchTeamData();
     } catch (error: any) {
@@ -173,13 +180,14 @@ export function TeamManagement() {
           role: linkRole as 'admin' | 'member',
           invited_by: user.id,
           organization_id: organization.id,
+          recipient_name: linkName || null,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      const inviteUrl = `${window.location.origin}/invite/${data.short_code || data.invite_token}`;
+      const inviteUrl = `${window.location.origin}/invite/${data.invite_token}`;
       await navigator.clipboard.writeText(inviteUrl);
       
       toast({
@@ -187,6 +195,7 @@ export function TeamManagement() {
         description: "Link copied to clipboard - share it with your team member",
       });
 
+      setLinkName("");
       setIsLinkDialogOpen(false);
       fetchTeamData();
     } catch (error: any) {
@@ -202,7 +211,7 @@ export function TeamManagement() {
   };
 
   const copyInviteLink = async (invite: Invitation) => {
-    const inviteUrl = `${window.location.origin}/invite/${invite.short_code || invite.invite_token}`;
+    const inviteUrl = `${window.location.origin}/invite/${invite.invite_token}`;
     await navigator.clipboard.writeText(inviteUrl);
     setCopiedToken(invite.invite_token);
     toast({
@@ -477,6 +486,16 @@ export function TeamManagement() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
+                    <Label htmlFor="linkName">Recipient Name (Optional)</Label>
+                    <Input
+                      id="linkName"
+                      type="text"
+                      placeholder="John Doe"
+                      value={linkName}
+                      onChange={(e) => setLinkName(e.target.value)}
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="linkRole">Role</Label>
                     <Select value={linkRole} onValueChange={setLinkRole}>
                       <SelectTrigger>
@@ -517,6 +536,16 @@ export function TeamManagement() {
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Recipient Name (Optional)</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      placeholder="John Doe"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                    />
+                  </div>
                   <div>
                     <Label htmlFor="email">Email Address</Label>
                     <Input
@@ -627,15 +656,20 @@ export function TeamManagement() {
       {/* Pending Invitations */}
       {invitations.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Pending Invitations</CardTitle>
-            <CardDescription>Manage outstanding team invitations</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Pending Invitations</CardTitle>
+              <CardDescription>Manage outstanding team invitations</CardDescription>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Showing {Math.min(itemsPerPage, invitations.length)} of {invitations.length} invitations
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Name/Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Sent</TableHead>
                   <TableHead>Opens</TableHead>
@@ -644,82 +678,118 @@ export function TeamManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invitations.map((invite) => (
-                  <TableRow key={invite.id}>
-                    <TableCell className="font-medium">
-                      {invite.email ? 
-                        invite.email : 
-                        <span className="italic text-muted-foreground">Link invite</span>
-                      }
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
-                        {invite.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div>{new Date(invite.created_at).toLocaleDateString()}</div>
-                        {(invite.resend_count || 0) > 0 && (
-                          <div className="text-xs text-muted-foreground">
-                            Resent {invite.resend_count} time{invite.resend_count !== 1 ? 's' : ''}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Eye className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm">{invite.open_count || 0}</span>
-                        {invite.last_opened_at && (
-                          <span className="text-xs text-muted-foreground ml-1">
-                            (last: {new Date(invite.last_opened_at).toLocaleDateString()})
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(invite.expires_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => copyInviteLink(invite)}
-                          className="flex items-center gap-1"
-                          title="Copy invite link"
-                        >
-                          {copiedToken === invite.invite_token ? (
-                            <Check className="h-4 w-4" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
+                {invitations
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((invite) => (
+                    <TableRow key={invite.id}>
+                      <TableCell className="font-medium">
+                        <div className="space-y-1">
+                          {invite.recipient_name && (
+                            <div className="font-medium">{invite.recipient_name}</div>
                           )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => resendInvite(invite.id)}
-                          className="flex items-center gap-1"
-                          title="Resend invitation"
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => revokeInvite(invite.id)}
-                          className="text-destructive hover:text-destructive"
-                          title="Revoke invitation"
-                        >
-                          <UserX className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          <div className={invite.recipient_name ? "text-sm text-muted-foreground" : ""}>
+                            {invite.email ? 
+                              invite.email : 
+                              <span className="italic">Link invite</span>
+                            }
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
+                          {invite.role}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div>{new Date(invite.created_at).toLocaleDateString()}</div>
+                          {(invite.resend_count || 0) > 0 && (
+                            <div className="text-xs text-muted-foreground">
+                              Resent {invite.resend_count} time{invite.resend_count !== 1 ? 's' : ''}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Eye className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm">{invite.open_count || 0}</span>
+                          {invite.last_opened_at && (
+                            <span className="text-xs text-muted-foreground ml-1">
+                              (last: {new Date(invite.last_opened_at).toLocaleDateString()})
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(invite.expires_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => copyInviteLink(invite)}
+                            className="flex items-center gap-1"
+                            title="Copy invite link"
+                          >
+                            {copiedToken === invite.invite_token ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => resendInvite(invite.id)}
+                            className="flex items-center gap-1"
+                            title="Resend invitation"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => revokeInvite(invite.id)}
+                            className="text-destructive hover:text-destructive"
+                            title="Revoke invitation"
+                          >
+                            <UserX className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
+            
+            {/* Pagination */}
+            {invitations.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Page {currentPage} of {Math.ceil(invitations.length / itemsPerPage)}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(Math.ceil(invitations.length / itemsPerPage), prev + 1))}
+                    disabled={currentPage === Math.ceil(invitations.length / itemsPerPage)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
