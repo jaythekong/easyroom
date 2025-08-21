@@ -9,17 +9,73 @@ export function DemoHandler() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
+  const [demoConfig, setDemoConfig] = useState<{ orgSlug: string; userEmail: string } | null>(null);
+
+  // Fetch demo configuration
+  useEffect(() => {
+    const fetchDemoConfig = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('demo_configuration')
+          .select(`
+            demo_user_id,
+            organizations (
+              slug
+            )
+          `)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (error) {
+          logger.error('Failed to fetch demo config:', error);
+          return;
+        }
+
+        if (data) {
+          // Get user email from auth.users
+          const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(data.demo_user_id);
+          
+          if (authError || !authUser.user) {
+            logger.error('Failed to fetch demo user:', authError);
+            return;
+          }
+
+          setDemoConfig({
+            orgSlug: data.organizations?.slug || 'kjil',
+            userEmail: authUser.user.email || 'soliyak@gmail.com'
+          });
+        } else {
+          // Fallback to hardcoded values if no config exists
+          setDemoConfig({
+            orgSlug: 'kjil',
+            userEmail: 'soliyak@gmail.com'
+          });
+        }
+      } catch (error) {
+        logger.error('Error fetching demo config:', error);
+        // Fallback to hardcoded values
+        setDemoConfig({
+          orgSlug: 'kjil',
+          userEmail: 'soliyak@gmail.com'
+        });
+      }
+    };
+
+    fetchDemoConfig();
+  }, []);
 
   useEffect(() => {
+    if (!demoConfig) return;
+
     const handleDemoAuth = async () => {
-      // If already authenticated as demo user, redirect to kjil
-      if (user && user.email === 'soliyak@gmail.com') {
-        navigate('/kjil?demo=true');
+      // If already authenticated as demo user, redirect to demo org
+      if (user && user.email === demoConfig.userEmail) {
+        navigate(`/${demoConfig.orgSlug}?demo=true`);
         return;
       }
 
       // If authenticated as different user, sign out first
-      if (user && user.email !== 'soliyak@gmail.com') {
+      if (user && user.email !== demoConfig.userEmail) {
         await supabase.auth.signOut();
       }
 
@@ -28,8 +84,8 @@ export function DemoHandler() {
         setIsAuthenticating(true);
         try {
           const { error } = await supabase.auth.signInWithPassword({
-            email: 'soliyak@gmail.com',
-            password: 'Demo@2024!',
+            email: demoConfig.userEmail,
+            password: 'Demo@2024!', // This should be made configurable too
           });
 
           if (error) {
@@ -38,8 +94,8 @@ export function DemoHandler() {
             navigate('/auth?message=Demo temporarily unavailable');
           } else {
             logger.debug('Demo authentication successful');
-            // Add demo flag to URL and navigate to kjil
-            navigate('/kjil?demo=true');
+            // Add demo flag to URL and navigate to demo org
+            navigate(`/${demoConfig.orgSlug}?demo=true`);
           }
         } catch (error) {
           logger.error('Demo authentication error:', error);
@@ -51,7 +107,7 @@ export function DemoHandler() {
     };
 
     handleDemoAuth();
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, demoConfig]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

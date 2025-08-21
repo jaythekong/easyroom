@@ -110,6 +110,12 @@ const communicationNavItems = [
 
 const toolsNavItems = [
   {
+    title: "Demo Configuration",
+    url: "/super-admin/demo-config",
+    icon: UserCheck,
+    description: "Configure demo account settings"
+  },
+  {
     title: "Global Settings",
     url: "/super-admin/settings",
     icon: Settings,
