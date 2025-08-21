@@ -48,20 +48,20 @@ export function DemoHandler() {
             enabled: data.demo_enabled ?? true
           });
         } else {
-          // Fallback to hardcoded values if no config exists
+          // No config exists - demo is disabled
           setDemoConfig({
             orgSlug: 'kjil',
             userEmail: 'soliyak@gmail.com',
-            enabled: true
+            enabled: false
           });
         }
       } catch (error) {
         logger.error('Error fetching demo config:', error);
-        // Fallback to hardcoded values
+        // Error fetching - demo is disabled for safety
         setDemoConfig({
           orgSlug: 'kjil',
           userEmail: 'soliyak@gmail.com',
-          enabled: true
+          enabled: false
         });
       }
     };
