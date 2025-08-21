@@ -1,6 +1,6 @@
 
 import { memo } from "react";
-import { Plus, Settings, Users, Calendar, ArrowLeft, MessageSquare, BarChart3 } from "lucide-react";
+import { Plus, Settings, Users, ArrowLeft, MessageSquare, BarChart3, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,14 +43,10 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
         <AdminStats />
 
         <Tabs defaultValue="rooms" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="rooms" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Rooms
-            </TabsTrigger>
-            <TabsTrigger value="bookings" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Bookings
             </TabsTrigger>
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -69,7 +65,7 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
               Ticker
             </TabsTrigger>
             <TabsTrigger value="welcome" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
+              <Heart className="h-4 w-4" />
               Welcome Screen
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
@@ -80,22 +76,6 @@ const AdminDashboardContent = memo(function AdminDashboardContent() {
 
           <TabsContent value="rooms" className="space-y-6">
             <RoomManagement />
-          </TabsContent>
-
-          <TabsContent value="bookings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Booking Management</CardTitle>
-                <CardDescription>
-                  View and manage all meeting room bookings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Booking management features coming soon...
-                </p>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="users" className="space-y-6">
