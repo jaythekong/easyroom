@@ -47,9 +47,7 @@ export default function InviteRedirect() {
 
         if (error || !data) {
           console.error('[InviteRedirect] Invalid short code or error:', error, 'data:', data);
-          // Instead of going home, redirect to invite page with the original short code
-          // This allows users to still access sign in/sign up even for expired links
-          navigate(`/invite?token=${shortCode}`);
+          navigate("/");
           return;
         }
 
@@ -71,9 +69,7 @@ export default function InviteRedirect() {
 
         if (!inviteToken) {
           console.error('[InviteRedirect] Could not get invite token');
-          // Instead of going home, redirect to invite page with the original short code
-          // This allows users to still access sign in/sign up even for expired links
-          navigate(`/invite?token=${shortCode}`);
+          navigate("/");
           return;
         }
 
@@ -82,9 +78,7 @@ export default function InviteRedirect() {
         navigate(`/invite?token=${inviteToken}`);
       } catch (error) {
         console.error('[InviteRedirect] Error handling invite redirect:', error);
-        // Instead of going home, redirect to invite page with the original short code
-        // This allows users to still access sign in/sign up even for expired links  
-        navigate(`/invite?token=${shortCode}`);
+        navigate("/");
       }
     };
 
