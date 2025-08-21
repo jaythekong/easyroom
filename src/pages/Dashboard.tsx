@@ -113,9 +113,24 @@ export default function Dashboard() {
   // Check if user should see welcome modal
   useEffect(() => {
     const isNewUser = searchParams.get('welcome') === 'true';
-    const hasSeenWelcome = localStorage.getItem(`welcome_seen_${organization?.id}`);
     
-    if (isNewUser && !hasSeenWelcome && organization?.id) {
+    // Only proceed if organization is loaded
+    if (!organization?.id) {
+      console.log('[DEBUG] Welcome check: Organization not loaded yet');
+      return;
+    }
+    
+    const hasSeenWelcome = localStorage.getItem(`welcome_seen_${organization.id}`);
+    
+    console.log('[DEBUG] Welcome modal check:', {
+      isNewUser,
+      hasSeenWelcome,
+      organizationId: organization.id,
+      shouldShow: isNewUser && !hasSeenWelcome
+    });
+    
+    if (isNewUser && !hasSeenWelcome) {
+      console.log('[DEBUG] Showing welcome modal for new user');
       setShowWelcomeModal(true);
     }
   }, [searchParams, organization?.id]);
