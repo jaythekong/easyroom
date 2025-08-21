@@ -82,16 +82,26 @@ const AuthCallback = () => {
             logger.debug('Auth callback successful, user confirmed:', session.user.email);
             
             // Check for invitation completion first
-            if (redirectTo && redirectTo.includes('/invite/verify')) {
-              // Extract token and slug from the redirectTo URL
-              const urlObj = new URL(redirectTo, window.location.origin);
-              const token = urlObj.searchParams.get('token');
-              const slug = urlObj.searchParams.get('slug');
-              
-              if (token) {
-                logger.debug('Redirecting to complete invitation with token');
-                navigate(`/complete-invite?token=${token}`);
-                return;
+            if (redirectTo) {
+              // Handle both /invite/verify and direct invitation URLs
+              if (redirectTo.includes('/invite/verify') || redirectTo.includes('/invite?token=')) {
+                let token = null;
+                
+                if (redirectTo.includes('/invite/verify')) {
+                  // Extract token from verify URL
+                  const urlObj = new URL(redirectTo, window.location.origin);
+                  token = urlObj.searchParams.get('token');
+                } else if (redirectTo.includes('/invite?token=')) {
+                  // Extract token from direct invite URL
+                  const tokenMatch = redirectTo.match(/token=([^&]+)/);
+                  token = tokenMatch ? tokenMatch[1] : null;
+                }
+                
+                if (token) {
+                  logger.debug('Redirecting to complete invitation with token:', token);
+                  navigate(`/complete-invite?token=${token}`);
+                  return;
+                }
               }
             }
             
