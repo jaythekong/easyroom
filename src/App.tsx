@@ -33,6 +33,8 @@ import AuthCallback from "./pages/AuthCallback";
 import ImpersonationHandler from "./pages/ImpersonationHandler";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { DemoHandler } from "./components/DemoHandler";
+import { DemoLayout } from "./components/DemoLayout";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,7 @@ const App = () => (
               <ImpersonationBanner />
               <Routes>
                 {/* Global routes (no organization context) */}
+                <Route path="/demo" element={<DemoHandler />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/thank-you" element={<ThankYouPage />} />
