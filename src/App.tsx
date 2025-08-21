@@ -25,6 +25,9 @@ import { SelectOrg } from "./pages/SelectOrg";
 import ThankYouPage from "./pages/ThankYouPage";
 import FirstRoomOnboarding from "./pages/FirstRoomOnboarding";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminUsers from "./pages/SuperAdminUsers";
+import SuperAdminSystem from "./pages/SuperAdminSystem";
+import SuperAdminSettings from "./pages/SuperAdminSettings";
 import SuperAdminAuth from "./pages/SuperAdminAuth";
 import AuthCallback from "./pages/AuthCallback";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
@@ -56,8 +59,11 @@ const App = () => (
                 <Route path="/thank-you/:orgSlug" element={<ThankYouPage />} />
                 <Route path="/access-denied" element={<AccessDeniedPage />} />
                 <Route path="/select-org" element={<SelectOrg />} />
-                <Route path="/super-admin" element={<SuperAdminDashboard />} />
-                <Route path="/super-admin/auth" element={<SuperAdminAuth />} />
+        <Route path="/super-admin" element={<SuperAdminDashboard />} />
+        <Route path="/super-admin/users" element={<SuperAdminUsers />} />
+        <Route path="/super-admin/system" element={<SuperAdminSystem />} />
+        <Route path="/super-admin/settings" element={<SuperAdminSettings />} />
+        <Route path="/super-admin/auth" element={<SuperAdminAuth />} />
                 
                 {/* Invite routes - MUST be before organization routes */}
                 <Route path="/invite/:shortCode" element={<InviteRedirect />} />
