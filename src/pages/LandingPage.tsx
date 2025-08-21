@@ -48,10 +48,10 @@ const LandingPage = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto text-center max-w-4xl">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Multi-Tenant Room Booking Platform
+            Stop the Chaos. Start Booking.
           </h1>
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Each organization gets its own private workspace, with fully isolated data, branding, and permissions. Perfect for coworking spaces, campuses, NGOs, and corporate environments.
+            Tired of endless email threads and conflicting calendar invites just to book a meeting room? EasyRoom is the simple, secure, and smart way to manage your office spaces and teams, all in one platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/auth">
@@ -68,31 +68,37 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Key Highlights */}
+      {/* Problem Section */}
       <section className="py-20 px-4 bg-muted/50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">🔑 Built for Multi-Tenant Use</h2>
-            <p className="text-xl text-muted-foreground">Each organization gets its own private workspace, with fully isolated data, branding, and permissions</p>
+            <h2 className="text-4xl font-bold mb-4">The Problem: When Booking Becomes a Burden</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">Your team shouldn't have to navigate a maze of calendars and spreadsheets just to find an open room. Double-bookings, no-shows, and confusion about room amenities lead to lost time, frustration, and wasted resources.</p>
+            <p className="text-lg font-medium text-primary mt-6">We believe that booking a space should be as easy as sending a message.</p>
+          </div>
+          
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">The Solution: Effortless Room Management</h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">EasyRoom is a modern room booking platform built for the way your team works. We handle all the complexities of scheduling, so you can focus on getting things done.</p>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8 mb-20">
             <div className="bg-background p-8 rounded-2xl shadow-sm text-center">
-              <Lock className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-3">Complete Data Isolation</h3>
-              <p className="text-muted-foreground">Each organization's data is completely separate. No cross-contamination, ever.</p>
+              <Clock className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3">Real-Time Booking</h3>
+              <p className="text-muted-foreground">Instantly see what's available and book in seconds, with intelligent conflict prevention built-in.</p>
             </div>
             
             <div className="bg-background p-8 rounded-2xl shadow-sm text-center">
               <Palette className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-3">White-Label Ready</h3>
-              <p className="text-muted-foreground">Custom logos, colors, and branding for each organization. Make it yours.</p>
+              <h3 className="text-2xl font-bold mb-3">Make It Your Own</h3>
+              <p className="text-muted-foreground">Customize your portal with your company's logo, colors, and branding. It feels like your own app, not a clunky third-party tool.</p>
             </div>
             
             <div className="bg-background p-8 rounded-2xl shadow-sm text-center">
-              <Zap className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-3">Lightning Fast</h3>
-              <p className="text-muted-foreground">Real-time updates, instant bookings, and zero lag. Built for speed.</p>
+              <MessageCircle className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3">Stay in Sync</h3>
+              <p className="text-muted-foreground">Get real-time updates and notifications right where you work, with our seamless Telegram integration.</p>
             </div>
           </div>
         </div>
@@ -102,11 +108,35 @@ const LandingPage = () => {
       <section id="features" className="py-20 px-4">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">🚀 Powerful Features</h2>
+            <h2 className="text-4xl font-bold mb-4">Features Designed for Your Team</h2>
             <p className="text-xl text-muted-foreground">Everything you need to manage rooms efficiently</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <UserCheck className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Simple, Secure Onboarding</h3>
+              <p className="text-muted-foreground">Skip the email chains. Invite your entire team with a single secure link. Users can join in seconds and get started immediately.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Globe className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Multi-Location & Multi-Team Ready</h3>
+              <p className="text-muted-foreground">Whether you have one office or a dozen across different continents, EasyRoom's multi-tenant architecture keeps all your spaces, data, and teams organized and secure.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <BarChart3 className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Powerful Admin Tools</h3>
+              <p className="text-muted-foreground">Get a complete overview of your space utilization with our analytics dashboard. Manage room availability, track user activity, and optimize your office with actionable insights.</p>
+            </div>
+            
+            <div className="bg-background p-8 rounded-2xl shadow-sm border">
+              <Shield className="h-12 w-12 text-primary mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Unwavering Security and Privacy</h3>
+              <p className="text-muted-foreground">Unlike other platforms, security is not an afterthought. Your data is completely isolated from every other company using EasyRoom. Our system is built with enterprise-grade security from the ground up.</p>
+            </div>
+            
             <div className="bg-background p-8 rounded-2xl shadow-sm border">
               <Calendar className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">Smart Booking System</h3>
@@ -117,30 +147,6 @@ const LandingPage = () => {
               <Users className="h-12 w-12 text-primary mb-4" />
               <h3 className="text-xl font-semibold mb-2">Team Management</h3>
               <p className="text-muted-foreground">Invite members, assign roles, and control access levels with granular permissions.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm border">
-              <Shield className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Advanced Security</h3>
-              <p className="text-muted-foreground">Role-based access control, audit logs, and enterprise-grade security features.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm border">
-              <Bell className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Smart Notifications</h3>
-              <p className="text-muted-foreground">Email alerts, Telegram integration, and real-time updates keep everyone informed.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm border">
-              <BarChart3 className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Analytics & Insights</h3>
-              <p className="text-muted-foreground">Track room utilization, booking patterns, and optimize your space usage.</p>
-            </div>
-            
-            <div className="bg-background p-8 rounded-2xl shadow-sm border">
-              <Settings className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Room Management</h3>
-              <p className="text-muted-foreground">Add amenities, set capacity, manage maintenance schedules, and configure availability.</p>
             </div>
             
             <div className="bg-background p-8 rounded-2xl shadow-sm border">
@@ -282,8 +288,8 @@ const LandingPage = () => {
       <section className="py-20 px-4 bg-muted/50">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">🎯 Enterprise Ready</h2>
-            <p className="text-xl text-muted-foreground">Advanced features for serious organizations</p>
+            <h2 className="text-4xl font-bold mb-4">🎯 Ready to Simplify Your Spaces?</h2>
+            <p className="text-xl text-muted-foreground">Start your free trial. No credit card required.</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-12 max-w-6xl mx-auto">
