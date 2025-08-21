@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePlatformOrganizations, useUpdateOrganizationStatus } from "@/hooks/useSuperAdmin";
+import { usePlatformOrganizations, useUpdateOrganizationStatus, useDeleteOrganization, useTransferOwnership } from "@/hooks/useSuperAdmin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Search, Eye, Pause, Play, Building2 } from "lucide-react";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
+import { Search, Eye, Pause, Play, Building2, Trash2, UserCheck, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
 import type { PlatformOrganization } from "@/hooks/useSuperAdmin";
@@ -18,11 +20,16 @@ export function OrganizationManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrg, setSelectedOrg] = useState<PlatformOrganization | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
   const [statusAction, setStatusAction] = useState<'suspend' | 'reactivate' | null>(null);
   const [reason, setReason] = useState("");
+  const [newAdminEmail, setNewAdminEmail] = useState("");
 
   const { data, isLoading } = usePlatformOrganizations(search, currentPage, 10);
   const { mutate: updateStatus, isPending: isUpdating } = useUpdateOrganizationStatus();
+  const { mutate: deleteOrganization, isPending: isDeleting } = useDeleteOrganization();
+  const { mutate: transferOwnership, isPending: isTransferring } = useTransferOwnership();
 
   const handleStatusChange = (org: PlatformOrganization, action: 'suspend' | 'reactivate') => {
     setSelectedOrg(org);
@@ -44,6 +51,37 @@ export function OrganizationManagement() {
     setShowStatusModal(false);
     setStatusAction(null);
     setReason("");
+  };
+
+  const handleDeleteOrganization = (org: PlatformOrganization) => {
+    setSelectedOrg(org);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteOrganization = () => {
+    if (!selectedOrg) return;
+    
+    deleteOrganization({ organizationId: selectedOrg.id });
+    setShowDeleteModal(false);
+    setSelectedOrg(null);
+  };
+
+  const handleTransferOwnership = (org: PlatformOrganization) => {
+    setSelectedOrg(org);
+    setShowTransferModal(true);
+    setNewAdminEmail("");
+  };
+
+  const confirmTransferOwnership = () => {
+    if (!selectedOrg || !newAdminEmail.trim()) return;
+    
+    transferOwnership({ 
+      organizationId: selectedOrg.id, 
+      newAdminEmail: newAdminEmail.trim() 
+    });
+    setShowTransferModal(false);
+    setSelectedOrg(null);
+    setNewAdminEmail("");
   };
 
   return (
@@ -134,6 +172,27 @@ export function OrganizationManagement() {
                               <Play className="h-4 w-4" />
                             </Button>
                           )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleTransferOwnership(org)}>
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Transfer Ownership
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteOrganization(org)}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Organization
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -212,6 +271,76 @@ export function OrganizationManagement() {
               disabled={isUpdating || (statusAction === 'suspend' && !reason.trim())}
             >
               {isUpdating ? 'Processing...' : `${statusAction === 'suspend' ? 'Suspend' : 'Reactivate'}`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Organization Confirmation Modal */}
+      <AlertDialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Organization</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete <strong>{selectedOrg?.name}</strong>?
+              <br /><br />
+              This action cannot be undone. All data including:
+              <ul className="mt-2 ml-4 list-disc text-sm">
+                <li>All rooms and bookings</li>
+                <li>All user memberships and profiles</li>
+                <li>All organization settings</li>
+                <li>All audit logs and invitations</li>
+              </ul>
+              will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteOrganization}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Organization'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Transfer Ownership Modal */}
+      <Dialog open={showTransferModal} onOpenChange={setShowTransferModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transfer Organization Ownership</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>
+              Transfer admin access for <strong>{selectedOrg?.name}</strong> to another user.
+            </p>
+            <div>
+              <Label htmlFor="newAdminEmail">New Admin Email Address</Label>
+              <Input
+                id="newAdminEmail"
+                type="email"
+                value={newAdminEmail}
+                onChange={(e) => setNewAdminEmail(e.target.value)}
+                placeholder="Enter email address..."
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                The user must have an existing account. If they're already a member, they'll be promoted to admin.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTransferModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmTransferOwnership}
+              disabled={isTransferring || !newAdminEmail.trim()}
+            >
+              {isTransferring ? 'Transferring...' : 'Transfer Ownership'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -748,6 +748,10 @@ export type Database = {
         Args: { invitation_token: string }
         Returns: Json
       }
+      delete_organization: {
+        Args: { org_id: string }
+        Returns: Json
+      }
       end_impersonation: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -853,6 +857,10 @@ export type Database = {
       }
       track_invitation_open: {
         Args: { invitation_short_code?: string; invitation_token?: string }
+        Returns: Json
+      }
+      transfer_organization_ownership: {
+        Args: { new_admin_email: string; org_id: string }
         Returns: Json
       }
     }

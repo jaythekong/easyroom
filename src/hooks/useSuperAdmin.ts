@@ -291,3 +291,84 @@ export function useEndImpersonation() {
     },
   });
 }
+
+export function useDeleteOrganization() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ organizationId }: { organizationId: string }) => {
+      const { data, error } = await supabase.rpc('delete_organization', {
+        org_id: organizationId
+      });
+      if (error) throw error;
+      return data as {
+        success: boolean;
+        organization_name: string;
+        organization_slug: string;
+        deleted_data_counts: any;
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['platform-organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
+      
+      toast({
+        title: "Organization Deleted",
+        description: `"${data.organization_name}" has been permanently deleted.`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Deletion Failed",
+        description: "Failed to delete organization. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Error deleting organization:', error);
+    },
+  });
+}
+
+export function useTransferOwnership() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ 
+      organizationId, 
+      newAdminEmail 
+    }: { 
+      organizationId: string; 
+      newAdminEmail: string;
+    }) => {
+      const { data, error } = await supabase.rpc('transfer_organization_ownership', {
+        org_id: organizationId,
+        new_admin_email: newAdminEmail
+      });
+      if (error) throw error;
+      return data as {
+        success: boolean;
+        organization_name: string;
+        new_admin_email: string;
+        was_existing_member: boolean;
+        total_admins: number;
+      };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['platform-organizations'] });
+      
+      toast({
+        title: "Ownership Transferred",
+        description: `Admin access granted to ${data.new_admin_email} for "${data.organization_name}".`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Transfer Failed",
+        description: "Failed to transfer ownership. Please check the email address and try again.",
+        variant: "destructive",
+      });
+      console.error('Error transferring ownership:', error);
+    },
+  });
+}
