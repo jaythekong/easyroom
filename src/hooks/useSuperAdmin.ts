@@ -401,9 +401,9 @@ export const useOrganizationMembers = (organizationId: string | null) => {
         .from('user_profiles')
         .select(`
           *,
-          user_organization_memberships!inner(role)
+          user_organization_memberships!inner(role, organization_id)
         `)
-        .eq('organization_id', organizationId)
+        .eq('user_organization_memberships.organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) {
