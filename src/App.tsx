@@ -68,7 +68,7 @@ const App = () => (
         <Route path="/impersonation-handler" element={<ImpersonationHandler />} />
                 
                 {/* Invite routes - MUST be before organization routes */}
-                <Route path="/invite/:token" element={<InviteRedirect />} />
+                <Route path="/invite/:shortCode" element={<InviteRedirect />} />
                 <Route path="/invite" element={<InviteSignup />} />
                 <Route path="/invite/verify" element={<InviteAwaitVerify />} />
                 <Route path="/complete-invite" element={<CompleteInvite />} />

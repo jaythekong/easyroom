@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2, Send, Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Mail, UserCheck, UserX, Copy, Check, Link2, KeyRound, Trash2, Send, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -35,7 +35,6 @@ interface Invitation {
   last_opened_at?: string;
   resend_count?: number;
   status?: string;
-  recipient_name?: string;
 }
 
 export function TeamManagement() {
@@ -48,20 +47,16 @@ export function TeamManagement() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [linkRole, setLinkRole] = useState("member");
-  const [linkRecipientName, setLinkRecipientName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
-  const [invitationsPage, setInvitationsPage] = useState(1);
-  const [totalInvitations, setTotalInvitations] = useState(0);
-  const invitationsPerPage = 5;
 
   useEffect(() => {
     if (organization?.id) {
       fetchTeamData();
     }
-  }, [organization?.id, invitationsPage]);
+  }, [organization?.id]);
 
   const fetchTeamData = async () => {
     if (!organization?.id) return;
@@ -105,19 +100,7 @@ export function TeamManagement() {
 
       setTeamMembers(membersWithEmails);
 
-      // Get total count of pending invitations
-      const { count: totalCount } = await supabase
-        .from('invitations')
-        .select('*', { count: 'exact', head: true })
-        .eq('organization_id', organization.id)
-        .eq('status', 'pending')
-        .is('accepted_at', null)
-        .is('revoked_at', null)
-        .gt('expires_at', new Date().toISOString());
-
-      setTotalInvitations(totalCount || 0);
-
-      // Fetch pending invitations for this organization (latest first, paginated)
+      // Fetch pending invitations for this organization
       const { data: invites, error: invitesError } = await supabase
         .from('invitations')
         .select('*')
@@ -125,9 +108,7 @@ export function TeamManagement() {
         .eq('status', 'pending')
         .is('accepted_at', null)
         .is('revoked_at', null)
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false })
-        .range((invitationsPage - 1) * invitationsPerPage, invitationsPage * invitationsPerPage - 1);
+        .gt('expires_at', new Date().toISOString());
 
       if (invitesError) {
         console.error('Invites query error:', invitesError);
@@ -168,7 +149,6 @@ export function TeamManagement() {
       setInviteEmail("");
       setInviteRole("member");
       setIsInviteDialogOpen(false);
-      setInvitationsPage(1); // Reset to first page when new invite is added
       fetchTeamData();
     } catch (error: any) {
       toast({
@@ -193,35 +173,21 @@ export function TeamManagement() {
           role: linkRole as 'admin' | 'member',
           invited_by: user.id,
           organization_id: organization.id,
-          recipient_name: linkRecipientName || null,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      // Wait a moment for the trigger to generate short_code, then refetch
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const { data: updatedData } = await supabase
-        .from('invitations')
-        .select('short_code, invite_token')
-        .eq('id', data.id)
-        .single();
-
-      // Use short_code if available, fallback to invite_token
-      const inviteCode = updatedData?.short_code || data.invite_token;
-      const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
+      const inviteUrl = `${window.location.origin}/invite/${data.short_code || data.invite_token}`;
       await navigator.clipboard.writeText(inviteUrl);
       
       toast({
         title: "Invite link created!",
-        description: `Link copied to clipboard${linkRecipientName ? ` for ${linkRecipientName}` : ' - share it with your team member'}`,
+        description: "Link copied to clipboard - share it with your team member",
       });
 
       setIsLinkDialogOpen(false);
-      setLinkRecipientName("");
-      setInvitationsPage(1); // Reset to first page when new invite is added
       fetchTeamData();
     } catch (error: any) {
       console.error('Generate invite link error:', error);
@@ -236,9 +202,7 @@ export function TeamManagement() {
   };
 
   const copyInviteLink = async (invite: Invitation) => {
-    // Use short_code if available, fallback to invite_token for consistency
-    const inviteCode = invite.short_code || invite.invite_token;
-    const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
+    const inviteUrl = `${window.location.origin}/invite/${invite.short_code || invite.invite_token}`;
     await navigator.clipboard.writeText(inviteUrl);
     setCopiedToken(invite.invite_token);
     toast({
@@ -513,16 +477,6 @@ export function TeamManagement() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="recipientName">Recipient Name (Optional)</Label>
-                    <Input
-                      id="recipientName"
-                      type="text"
-                      placeholder="e.g., John Smith"
-                      value={linkRecipientName}
-                      onChange={(e) => setLinkRecipientName(e.target.value)}
-                    />
-                  </div>
-                  <div>
                     <Label htmlFor="linkRole">Role</Label>
                     <Select value={linkRole} onValueChange={setLinkRole}>
                       <SelectTrigger>
@@ -537,10 +491,7 @@ export function TeamManagement() {
                   <div className="flex justify-end gap-2 pt-4">
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        setIsLinkDialogOpen(false);
-                        setLinkRecipientName("");
-                      }}
+                      onClick={() => setIsLinkDialogOpen(false)}
                     >
                       Cancel
                     </Button>
@@ -684,7 +635,7 @@ export function TeamManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Sent</TableHead>
                   <TableHead>Opens</TableHead>
@@ -696,23 +647,10 @@ export function TeamManagement() {
                 {invitations.map((invite) => (
                   <TableRow key={invite.id}>
                     <TableCell className="font-medium">
-                      {invite.email ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span>{invite.email}</span>
-                          </div>
-                          <Badge variant="outline" className="text-xs">Email invite</Badge>
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Link2 className="h-4 w-4 text-muted-foreground" />
-                            <span>{invite.recipient_name || "Unnamed recipient"}</span>
-                          </div>
-                          <Badge variant="outline" className="text-xs">Link invite</Badge>
-                        </div>
-                      )}
+                      {invite.email ? 
+                        invite.email : 
+                        <span className="italic text-muted-foreground">Link invite</span>
+                      }
                     </TableCell>
                     <TableCell>
                       <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>
@@ -782,39 +720,6 @@ export function TeamManagement() {
                 ))}
               </TableBody>
             </Table>
-            
-            {/* Pagination Controls */}
-            {totalInvitations > invitationsPerPage && (
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <div className="text-sm text-muted-foreground">
-                  Showing {Math.min((invitationsPage - 1) * invitationsPerPage + 1, totalInvitations)} to{' '}
-                  {Math.min(invitationsPage * invitationsPerPage, totalInvitations)} of {totalInvitations} invitations
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setInvitationsPage(prev => Math.max(1, prev - 1))}
-                    disabled={invitationsPage === 1}
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    Page {invitationsPage} of {Math.ceil(totalInvitations / invitationsPerPage)}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setInvitationsPage(prev => Math.min(Math.ceil(totalInvitations / invitationsPerPage), prev + 1))}
-                    disabled={invitationsPage >= Math.ceil(totalInvitations / invitationsPerPage)}
-                  >
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}
