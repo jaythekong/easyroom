@@ -102,7 +102,7 @@ export function TeamManagement() {
 
       setTeamMembers(membersWithEmails);
 
-      // Fetch pending invitations for this organization
+      // Fetch pending invitations for this organization (latest first)
       const { data: invites, error: invitesError } = await supabase
         .from('invitations')
         .select('*')
@@ -110,7 +110,8 @@ export function TeamManagement() {
         .eq('status', 'pending')
         .is('accepted_at', null)
         .is('revoked_at', null)
-        .gt('expires_at', new Date().toISOString());
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
 
       if (invitesError) {
         console.error('Invites query error:', invitesError);
@@ -182,8 +183,18 @@ export function TeamManagement() {
 
       if (error) throw error;
 
-      // Always use short_code for consistency in invite URLs
-      const inviteUrl = `${window.location.origin}/invite/${data.short_code}`;
+      // Wait a moment for the trigger to generate short_code, then refetch
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const { data: updatedData } = await supabase
+        .from('invitations')
+        .select('short_code, invite_token')
+        .eq('id', data.id)
+        .single();
+
+      // Use short_code if available, fallback to invite_token
+      const inviteCode = updatedData?.short_code || data.invite_token;
+      const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
       await navigator.clipboard.writeText(inviteUrl);
       
       toast({
@@ -207,8 +218,9 @@ export function TeamManagement() {
   };
 
   const copyInviteLink = async (invite: Invitation) => {
-    // Always use short_code for consistency in invite URLs
-    const inviteUrl = `${window.location.origin}/invite/${invite.short_code}`;
+    // Use short_code if available, fallback to invite_token for consistency
+    const inviteCode = invite.short_code || invite.invite_token;
+    const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
     await navigator.clipboard.writeText(inviteUrl);
     setCopiedToken(invite.invite_token);
     toast({
