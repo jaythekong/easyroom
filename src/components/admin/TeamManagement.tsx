@@ -35,6 +35,7 @@ interface Invitation {
   last_opened_at?: string;
   resend_count?: number;
   status?: string;
+  recipient_name?: string;
 }
 
 export function TeamManagement() {
@@ -47,6 +48,7 @@ export function TeamManagement() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [linkRole, setLinkRole] = useState("member");
+  const [linkRecipientName, setLinkRecipientName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -173,21 +175,24 @@ export function TeamManagement() {
           role: linkRole as 'admin' | 'member',
           invited_by: user.id,
           organization_id: organization.id,
+          recipient_name: linkRecipientName || null,
         })
         .select()
         .single();
 
       if (error) throw error;
 
-      const inviteUrl = `${window.location.origin}/invite/${data.short_code || data.invite_token}`;
+      // Always use short_code for consistency in invite URLs
+      const inviteUrl = `${window.location.origin}/invite/${data.short_code}`;
       await navigator.clipboard.writeText(inviteUrl);
       
       toast({
         title: "Invite link created!",
-        description: "Link copied to clipboard - share it with your team member",
+        description: `Link copied to clipboard${linkRecipientName ? ` for ${linkRecipientName}` : ' - share it with your team member'}`,
       });
 
       setIsLinkDialogOpen(false);
+      setLinkRecipientName("");
       fetchTeamData();
     } catch (error: any) {
       console.error('Generate invite link error:', error);
@@ -202,7 +207,8 @@ export function TeamManagement() {
   };
 
   const copyInviteLink = async (invite: Invitation) => {
-    const inviteUrl = `${window.location.origin}/invite/${invite.short_code || invite.invite_token}`;
+    // Always use short_code for consistency in invite URLs
+    const inviteUrl = `${window.location.origin}/invite/${invite.short_code}`;
     await navigator.clipboard.writeText(inviteUrl);
     setCopiedToken(invite.invite_token);
     toast({
@@ -477,6 +483,16 @@ export function TeamManagement() {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
+                    <Label htmlFor="recipientName">Recipient Name (Optional)</Label>
+                    <Input
+                      id="recipientName"
+                      type="text"
+                      placeholder="e.g., John Smith"
+                      value={linkRecipientName}
+                      onChange={(e) => setLinkRecipientName(e.target.value)}
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="linkRole">Role</Label>
                     <Select value={linkRole} onValueChange={setLinkRole}>
                       <SelectTrigger>
@@ -491,7 +507,10 @@ export function TeamManagement() {
                   <div className="flex justify-end gap-2 pt-4">
                     <Button
                       variant="outline"
-                      onClick={() => setIsLinkDialogOpen(false)}
+                      onClick={() => {
+                        setIsLinkDialogOpen(false);
+                        setLinkRecipientName("");
+                      }}
                     >
                       Cancel
                     </Button>
@@ -635,7 +654,7 @@ export function TeamManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Email</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Sent</TableHead>
                   <TableHead>Opens</TableHead>
@@ -647,10 +666,23 @@ export function TeamManagement() {
                 {invitations.map((invite) => (
                   <TableRow key={invite.id}>
                     <TableCell className="font-medium">
-                      {invite.email ? 
-                        invite.email : 
-                        <span className="italic text-muted-foreground">Link invite</span>
-                      }
+                      {invite.email ? (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span>{invite.email}</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Email invite</Badge>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Link2 className="h-4 w-4 text-muted-foreground" />
+                            <span>{invite.recipient_name || "Unnamed recipient"}</span>
+                          </div>
+                          <Badge variant="outline" className="text-xs">Link invite</Badge>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={invite.role === 'admin' ? 'default' : 'secondary'}>

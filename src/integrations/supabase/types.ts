@@ -170,6 +170,7 @@ export type Database = {
           last_resent_at: string | null
           open_count: number | null
           organization_id: string
+          recipient_name: string | null
           resend_count: number | null
           revoked_at: string | null
           revoked_by: string | null
@@ -191,6 +192,7 @@ export type Database = {
           last_resent_at?: string | null
           open_count?: number | null
           organization_id: string
+          recipient_name?: string | null
           resend_count?: number | null
           revoked_at?: string | null
           revoked_by?: string | null
@@ -212,6 +214,7 @@ export type Database = {
           last_resent_at?: string | null
           open_count?: number | null
           organization_id?: string
+          recipient_name?: string | null
           resend_count?: number | null
           revoked_at?: string | null
           revoked_by?: string | null
