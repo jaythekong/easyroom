@@ -3,6 +3,7 @@ import { createContext, useContext, ReactNode, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganizationBySlug, useUserMembership } from "@/hooks/useOrganization";
+import { useDynamicFavicon } from "@/hooks/useDynamicFavicon";
 
 interface Organization {
   id: string;
@@ -52,6 +53,9 @@ export function OrganizationProvider({ children }: OrganizationProviderProps) {
   // Use React Query hooks for better caching and error handling
   const orgQuery = useOrganizationBySlug(orgSlug);
   const membershipQuery = useUserMembership(orgQuery.data?.id);
+
+  // Update favicon when organization changes
+  useDynamicFavicon();
 
   // Enhanced context value with multi-org support
   const contextValue = useMemo(() => ({
