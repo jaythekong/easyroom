@@ -56,17 +56,22 @@ export function WelcomeScreen() {
   // Generate WiFi QR code when settings change
   useEffect(() => {
     if (wifiEnabled && wifiSsid) {
-      generateWiFiQRCode({
-        ssid: wifiSsid,
-        password: wifiPassword,
-        security: wifiSecurity,
-        hidden: wifiHidden
-      }, qrSize)
-        .then(setQrCodeDataUrl)
-        .catch((error) => {
-          console.error('Failed to generate WiFi QR code:', error);
-          setQrCodeDataUrl(null);
-        });
+      // Add a small delay to prevent rapid regeneration
+      const timeoutId = setTimeout(() => {
+        generateWiFiQRCode({
+          ssid: wifiSsid,
+          password: wifiPassword,
+          security: wifiSecurity,
+          hidden: wifiHidden
+        }, qrSize)
+          .then(setQrCodeDataUrl)
+          .catch((error) => {
+            console.error('Failed to generate WiFi QR code:', error);
+            setQrCodeDataUrl(null);
+          });
+      }, 100);
+      
+      return () => clearTimeout(timeoutId);
     } else {
       setQrCodeDataUrl(null);
     }
