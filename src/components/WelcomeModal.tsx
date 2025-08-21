@@ -18,6 +18,10 @@ interface WelcomeModalProps {
   onConnectTelegram: () => void;
   organizationName: string;
   orgSlug: string;
+  organization?: {
+    telegram_bot_username?: string;
+    telegram_bot_token?: string;
+  };
 }
 
 export function WelcomeModal({ 
@@ -25,9 +29,20 @@ export function WelcomeModal({
   onClose, 
   onConnectTelegram, 
   organizationName,
-  orgSlug 
+  orgSlug,
+  organization 
 }: WelcomeModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  
+  const isTelegramConfigured = organization?.telegram_bot_username && organization?.telegram_bot_token;
+  
+  const handleTelegramClick = () => {
+    if (isTelegramConfigured && organization?.telegram_bot_username) {
+      window.open(`https://t.me/${organization.telegram_bot_username}`, '_blank');
+    } else {
+      onConnectTelegram();
+    }
+  };
 
   const steps = [
     {
@@ -130,12 +145,14 @@ export function WelcomeModal({
           </div>
           
           <Button 
-            onClick={onConnectTelegram} 
+            onClick={handleTelegramClick} 
             className="w-full"
             size="lg"
+            disabled={!isTelegramConfigured}
+            variant={isTelegramConfigured ? "default" : "secondary"}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
-            Connect to Telegram
+            {isTelegramConfigured ? "Connect to Telegram" : "Telegram Not Configured"}
           </Button>
           
           <p className="text-xs text-muted-foreground text-center">
