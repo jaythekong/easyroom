@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { DemoDisabled } from "@/components/DemoDisabled";
 import { logger } from "@/lib/logger";
 
 export function DemoHandler() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-  const [demoConfig, setDemoConfig] = useState<{ orgSlug: string; userEmail: string } | null>(null);
+  const [demoConfig, setDemoConfig] = useState<{ orgSlug: string; userEmail: string; enabled: boolean } | null>(null);
 
   // Fetch demo configuration
   useEffect(() => {
@@ -19,6 +20,7 @@ export function DemoHandler() {
           .from('demo_configuration')
           .select(`
             demo_user_id,
+            demo_enabled,
             organizations (
               slug
             )
@@ -42,13 +44,15 @@ export function DemoHandler() {
 
           setDemoConfig({
             orgSlug: data.organizations?.slug || 'kjil',
-            userEmail: authUser.user.email || 'soliyak@gmail.com'
+            userEmail: authUser.user.email || 'soliyak@gmail.com',
+            enabled: data.demo_enabled ?? true
           });
         } else {
           // Fallback to hardcoded values if no config exists
           setDemoConfig({
             orgSlug: 'kjil',
-            userEmail: 'soliyak@gmail.com'
+            userEmail: 'soliyak@gmail.com',
+            enabled: true
           });
         }
       } catch (error) {
@@ -56,7 +60,8 @@ export function DemoHandler() {
         // Fallback to hardcoded values
         setDemoConfig({
           orgSlug: 'kjil',
-          userEmail: 'soliyak@gmail.com'
+          userEmail: 'soliyak@gmail.com',
+          enabled: true
         });
       }
     };
@@ -66,6 +71,9 @@ export function DemoHandler() {
 
   useEffect(() => {
     if (!demoConfig) return;
+
+    // If demo is disabled, don't proceed with authentication
+    if (!demoConfig.enabled) return;
 
     const handleDemoAuth = async () => {
       // If already authenticated as demo user, redirect to demo org
@@ -108,6 +116,11 @@ export function DemoHandler() {
 
     handleDemoAuth();
   }, [user, loading, navigate, demoConfig]);
+
+  // Show disabled message if demo is disabled
+  if (demoConfig && !demoConfig.enabled) {
+    return <DemoDisabled />;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

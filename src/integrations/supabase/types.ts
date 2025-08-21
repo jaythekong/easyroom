@@ -116,6 +116,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string
+          demo_enabled: boolean
           demo_organization_id: string
           demo_user_id: string
           id: string
@@ -125,6 +126,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by: string
+          demo_enabled?: boolean
           demo_organization_id: string
           demo_user_id: string
           id?: string
@@ -134,6 +136,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string
+          demo_enabled?: boolean
           demo_organization_id?: string
           demo_user_id?: string
           id?: string

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Play, Square, Settings, AlertTriangle } from "lucide-react";
+import { Play, Square, Settings, AlertTriangle, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
 
 interface Organization {
@@ -27,6 +27,7 @@ interface DemoConfig {
   demo_organization_id: string;
   demo_user_id: string;
   is_active: boolean;
+  demo_enabled: boolean;
   created_at: string;
   updated_at: string;
   organizations?: Organization;
@@ -115,6 +116,7 @@ export function DemoConfiguration() {
           demo_organization_id: orgId,
           demo_user_id: userId,
           is_active: true,
+          demo_enabled: true,
           created_by: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
@@ -152,6 +154,27 @@ export function DemoConfiguration() {
     },
     onError: (error) => {
       toast.error("Failed to deactivate demo configuration: " + error.message);
+    },
+  });
+
+  // Toggle demo enabled/disabled
+  const toggleDemoEnabled = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      if (!demoConfig) throw new Error("No active demo configuration");
+
+      const { error } = await supabase
+        .from('demo_configuration')
+        .update({ demo_enabled: enabled })
+        .eq('id', demoConfig.id);
+
+      if (error) throw error;
+    },
+    onSuccess: (_, enabled) => {
+      queryClient.invalidateQueries({ queryKey: ['demo-configuration'] });
+      toast.success(`Demo ${enabled ? 'enabled' : 'disabled'} successfully`);
+    },
+    onError: (error) => {
+      toast.error("Failed to toggle demo status: " + error.message);
     },
   });
 
@@ -195,7 +218,31 @@ export function DemoConfiguration() {
                   <Badge variant="secondary">User ID:</Badge>
                   <span className="font-mono text-sm">{demoConfig.demo_user_id}</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={demoConfig.demo_enabled ? "default" : "secondary"}>Status:</Badge>
+                  <span className={`font-medium ${demoConfig.demo_enabled ? 'text-green-600' : 'text-orange-600'}`}>
+                    {demoConfig.demo_enabled ? 'Live Demo Enabled' : 'Live Demo Disabled'}
+                  </span>
+                </div>
                 <div className="flex gap-2 mt-4">
+                  <Button
+                    variant={demoConfig.demo_enabled ? "secondary" : "default"}
+                    size="sm"
+                    onClick={() => toggleDemoEnabled.mutate(!demoConfig.demo_enabled)}
+                    disabled={toggleDemoEnabled.isPending}
+                  >
+                    {demoConfig.demo_enabled ? (
+                      <>
+                        <PowerOff className="h-4 w-4 mr-2" />
+                        Disable Live Demo
+                      </>
+                    ) : (
+                      <>
+                        <Power className="h-4 w-4 mr-2" />
+                        Enable Live Demo
+                      </>
+                    )}
+                  </Button>
                   <Button
                     variant="destructive"
                     size="sm"
