@@ -703,7 +703,6 @@ export default function Dashboard() {
           onConnectTelegram={handleConnectTelegram}
           organizationName={organization.name}
           orgSlug={orgSlug || ''}
-          organization={organization}
         />
       )}
     </div>
