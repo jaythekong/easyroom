@@ -3,7 +3,9 @@ import { PlatformAnalytics } from "@/components/admin/PlatformAnalytics";
 import { OrganizationManagement } from "@/components/admin/OrganizationManagement";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
-import { Crown, Shield, LogOut } from "lucide-react";
+import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
+import { SuperAdminSidebar } from "@/components/admin/SuperAdminSidebar";
+import { Crown, Shield, LogOut, Menu } from "lucide-react";
 
 export default function SuperAdminDashboard() {
   console.log('SuperAdminDashboard component rendering...');
@@ -56,40 +58,49 @@ function SuperAdminDashboardContent({ user }: { user: any }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Compact Header */}
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
-                <Crown className="h-5 w-5 text-primary" />
+    <SidebarProvider defaultOpen>
+      <div className="min-h-screen flex w-full bg-gradient-to-br from-background via-background to-muted/20">
+        <SuperAdminSidebar />
+        
+        <SidebarInset className="flex-1">
+          {/* Compact Header */}
+          <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <SidebarTrigger className="md:hidden" />
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20">
+                    <Crown className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold">Dashboard</h1>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h1 className="text-xl font-bold">Super Admin</h1>
-                <p className="text-xs text-muted-foreground">{user.email}</p>
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="container mx-auto py-4 px-4 space-y-6">
-        {/* Compact Platform Analytics */}
-        <PlatformAnalytics />
+          <div className="flex-1 overflow-auto">
+            <div className="container mx-auto py-6 px-4 space-y-6">
+              {/* Compact Platform Analytics */}
+              <PlatformAnalytics />
 
-        {/* Organization Management Section */}
-        <div className="animate-fade-in">
-          <OrganizationManagement />
-        </div>
+              {/* Organization Management Section */}
+              <div className="animate-fade-in">
+                <OrganizationManagement />
+              </div>
+            </div>
+          </div>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
