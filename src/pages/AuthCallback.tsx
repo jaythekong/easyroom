@@ -81,6 +81,20 @@ const AuthCallback = () => {
           if (session && session.user) {
             logger.debug('Auth callback successful, user confirmed:', session.user.email);
             
+            // Check for invitation completion first
+            if (redirectTo && redirectTo.includes('/invite/verify')) {
+              // Extract token and slug from the redirectTo URL
+              const urlObj = new URL(redirectTo, window.location.origin);
+              const token = urlObj.searchParams.get('token');
+              const slug = urlObj.searchParams.get('slug');
+              
+              if (token) {
+                logger.debug('Redirecting to complete invitation with token');
+                navigate(`/complete-invite?token=${token}`);
+                return;
+              }
+            }
+            
             // Check for pending organization redirect
             const pendingOrgSlug = localStorage.getItem('pendingOrgSlug');
             
