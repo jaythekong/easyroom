@@ -36,6 +36,8 @@ interface Invitation {
   resend_count?: number;
   status?: string;
   recipient_name?: string;
+  invited_by?: string;
+  invited_by_email?: string;
 }
 
 export function TeamManagement() {
@@ -113,13 +115,37 @@ export function TeamManagement() {
         .eq('status', 'pending')
         .is('accepted_at', null)
         .is('revoked_at', null)
-        .gt('expires_at', new Date().toISOString());
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
 
       if (invitesError) {
         console.error('Invites query error:', invitesError);
         throw invitesError;
       }
-      setInvitations(invites || []);
+
+      // Get invited_by user emails for the invitations
+      const invitedByIds = invites?.map(invite => invite.invited_by).filter(Boolean) || [];
+      let invitedByEmails: { [key: string]: string } = {};
+      
+      if (invitedByIds.length > 0) {
+        const { data: invitedByProfiles } = await supabase
+          .from('user_profiles')
+          .select('user_id, email')
+          .in('user_id', invitedByIds)
+          .eq('organization_id', organization.id);
+        
+        invitedByProfiles?.forEach(profile => {
+          invitedByEmails[profile.user_id] = profile.email;
+        });
+      }
+
+      // Combine invitations with invited_by email
+      const invitesWithCreatorInfo = invites?.map(invite => ({
+        ...invite,
+        invited_by_email: invitedByEmails[invite.invited_by] || 'Unknown'
+      })) || [];
+
+      setInvitations(invitesWithCreatorInfo);
     } catch (error) {
       console.error('Error fetching team data:', error);
       toast({
@@ -671,7 +697,7 @@ export function TeamManagement() {
                 <TableRow>
                   <TableHead>Name/Email</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead>Sent</TableHead>
+                  <TableHead>Created By</TableHead>
                   <TableHead>Opens</TableHead>
                   <TableHead>Expires</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -702,7 +728,12 @@ export function TeamManagement() {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div>{new Date(invite.created_at).toLocaleDateString()}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {invite.invited_by_email}
+                          </div>
+                          <div className="text-xs">
+                            {new Date(invite.created_at).toLocaleDateString()}
+                          </div>
                           {(invite.resend_count || 0) > 0 && (
                             <div className="text-xs text-muted-foreground">
                               Resent {invite.resend_count} time{invite.resend_count !== 1 ? 's' : ''}
