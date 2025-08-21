@@ -50,6 +50,19 @@ export function useOrgGuard(orgSlug: string): OrgGuardResult {
         };
       }
 
+      // Check if this is an impersonation scenario first
+      const isImpersonated = user.app_metadata?.impersonator_id;
+      
+      if (isImpersonated) {
+        // During impersonation, the super admin should have access to any organization
+        // The backend has already validated the impersonation permission
+        return { 
+          status: 'authorized', 
+          organization: { id: org.id, name: org.name, slug: org.slug },
+          userRole: 'admin' // Impersonated users always act as admin
+        };
+      }
+
       // Then check if user has membership in this organization
       const { data: membership, error: membershipError } = await supabase
         .from('user_organization_memberships')

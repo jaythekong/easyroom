@@ -27,7 +27,7 @@ export function ImpersonationBanner() {
             🔄 Impersonation Active
           </span>
           <span className="text-sm">
-            Acting as organization admin • Mode: admin
+            Acting as organization admin • Mode: {impersonationMode || 'view_only'}
           </span>
         </div>
         <Button

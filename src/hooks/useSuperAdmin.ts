@@ -218,35 +218,38 @@ export function useImpersonateAdmin() {
       return data;
     },
     onSuccess: (data, variables) => {
-      // Store original session for restoration
-      const currentSession = JSON.stringify(supabase.auth.getSession());
-      sessionStorage.setItem('original_super_admin_session', currentSession);
-      
       toast({
         title: "Impersonation Started",
         description: `Now acting as admin for organization. Mode: ${variables.mode}`,
       });
       
-      // Get the organization slug to redirect to the correct dashboard
-      // We need to fetch the organization data to get the slug
+      // Get the organization slug and redirect to the correct dashboard
       const redirectToOrgDashboard = async () => {
-        const { data: orgData, error } = await supabase
-          .from('organizations')
-          .select('slug')
-          .eq('id', variables.organizationId)
-          .single();
+        try {
+          // Refresh the session to pick up the impersonation metadata
+          await supabase.auth.refreshSession();
           
-        if (orgData && !error) {
-          // Direct redirect - the backend has already updated the metadata
-          window.location.href = `/${orgData.slug}`;
-        } else {
-          console.error('Failed to get organization slug:', error);
+          const { data: orgData, error } = await supabase
+            .from('organizations')
+            .select('slug')
+            .eq('id', variables.organizationId)
+            .single();
+            
+          if (orgData && !error) {
+            // Force a hard redirect to ensure the impersonated session is used
+            window.location.href = `/${orgData.slug}`;
+          } else {
+            console.error('Failed to get organization slug:', error);
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Error during impersonation redirect:', error);
           window.location.reload();
         }
       };
       
       // Small delay to ensure the backend metadata update is complete
-      setTimeout(redirectToOrgDashboard, 1000);
+      setTimeout(redirectToOrgDashboard, 1500);
     },
     onError: (error) => {
       toast({
