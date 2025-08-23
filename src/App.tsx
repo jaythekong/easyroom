@@ -33,6 +33,7 @@ import AuthCallback from "./pages/AuthCallback";
 import ImpersonationHandler from "./pages/ImpersonationHandler";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import DemoPage from "./pages/DemoPage";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,9 @@ const App = () => (
                   </Routes>
                 </OrganizationProvider>
               } />
+                
+                {/* Demo page */}
+                <Route path="/demo" element={<DemoPage />} />
                 
                 {/* Landing page */}
                 <Route path="/" element={<LandingPage />} />
