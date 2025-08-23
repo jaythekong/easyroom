@@ -34,7 +34,7 @@ const LandingPage = () => {
             <Button variant="ghost" onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
               Explore Features
             </Button>
-            <Link to="/demo">
+            <Link to="/auth">
               <Button variant="outline">View Demo</Button>
             </Link>
             <Link to="/auth">
@@ -59,7 +59,7 @@ const LandingPage = () => {
                 Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/demo">
+            <Link to="/auth">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 View Demo
               </Button>
@@ -427,7 +427,7 @@ const LandingPage = () => {
                 Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link to="/demo">
+            <Link to="/auth">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 View Demo
               </Button>
