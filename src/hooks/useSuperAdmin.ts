@@ -58,7 +58,7 @@ export function useSuperAdminCheck() {
   return {
     isSuperAdmin,
     user,
-    loading: false // Always return false for loading since we already have session data
+    loading: !user && !session
   };
 }
 
@@ -397,46 +397,21 @@ export const useOrganizationMembers = (organizationId: string | null) => {
     queryFn: async () => {
       if (!organizationId) return [];
       
-      // Query user_profiles directly since super admin should see all
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select(`
+          *,
+          user_organization_memberships!inner(role)
+        `)
         .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching organization members:', error);
-        // If RLS blocks it, try user_organization_memberships approach
-        const { data: membershipData, error: membershipError } = await supabase
-          .from('user_organization_memberships')
-          .select(`
-            user_id,
-            role,
-            created_at
-          `)
-          .eq('organization_id', organizationId);
-
-        if (membershipError) {
-          console.error('Error fetching memberships:', membershipError);
-          throw membershipError;
-        }
-
-        // Get user details from auth.users if possible, or return minimal data
-        return membershipData?.map(membership => ({
-          id: membership.user_id,
-          user_id: membership.user_id,
-          organization_id: organizationId,
-          role: membership.role,
-          email: 'Hidden (RLS)',
-          display_name: `User ${membership.user_id.slice(0, 8)}`,
-          created_at: membership.created_at,
-          avatar_url: null,
-          bio: null,
-          last_login: null
-        })) || [];
+        throw error;
       }
 
-      return data || [];
+      return data;
     },
     enabled: !!organizationId,
   });

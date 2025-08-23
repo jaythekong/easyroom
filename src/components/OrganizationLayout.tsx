@@ -9,7 +9,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { AccessDenied } from "@/components/AccessDenied";
 import { AppFooter } from "@/components/AppFooter";
 import { logger } from "@/lib/logger";
-import { DemoBanner } from "@/components/DemoBanner";
 
 interface OrganizationLayoutProps {
   children: ReactNode;
@@ -157,12 +156,9 @@ export function OrganizationLayout({
 
   // Render children with organization context
   return (
-    <div className="min-h-screen flex flex-col">
-      <DemoBanner />
-      <div className="flex-1">
-        {children}
-      </div>
+    <>
+      {children}
       <AppFooter />
-    </div>
+    </>
   );
 }

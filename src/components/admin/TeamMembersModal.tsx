@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Users, Crown, Shield, User, Mail, Calendar, X, UserCircle } from "lucide-react";
+import { Users, Crown, Shield, User, Mail, Calendar, X } from "lucide-react";
 import { useOrganizationMembers } from "@/hooks/useSuperAdmin";
 import { format } from "date-fns";
 
@@ -15,12 +16,12 @@ interface TeamMembersModalProps {
 }
 
 export function TeamMembersModal({ organizationId, organizationName, isOpen, onClose }: TeamMembersModalProps) {
-  const { data: members, isLoading, error } = useOrganizationMembers(organizationId);
+  const { data: members, isLoading } = useOrganizationMembers(organizationId);
 
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'admin':
-        return <Crown className="h-4 w-4 text-amber-500" />;
+        return <Crown className="h-4 w-4 text-yellow-500" />;
       case 'moderator':
         return <Shield className="h-4 w-4 text-blue-500" />;
       default:
@@ -28,150 +29,123 @@ export function TeamMembersModal({ organizationId, organizationName, isOpen, onC
     }
   };
 
-  const getRoleVariant = (role: string) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin':
-        return 'default';
+        return 'bg-yellow-100 text-yellow-800';
       case 'moderator':
-        return 'secondary';
+        return 'bg-blue-100 text-blue-800';
       default:
-        return 'outline';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  if (error) {
-    console.error('Team members error:', error);
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[80vh] overflow-hidden">
-        <DialogHeader className="space-y-4">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-semibold">Team Members</DialogTitle>
-                <p className="text-sm text-muted-foreground">{organizationName}</p>
-              </div>
-            </div>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Team Members - {organizationName}
+            </DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex items-center gap-3">
-                <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
-                <span className="text-muted-foreground">Loading team members...</span>
-              </div>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <UserCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-2">Unable to load team members</p>
-              <p className="text-sm text-muted-foreground/70">
-                {error instanceof Error ? error.message : 'An error occurred'}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                {members?.length || 0} team members
               </p>
             </div>
-          ) : !members || members.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Users className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-2">No team members found</p>
-              <p className="text-sm text-muted-foreground/70">
-                This organization doesn't have any members yet.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {members.length} team member{members.length !== 1 ? 's' : ''}
-                </p>
-              </div>
 
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="font-medium">Member</TableHead>
-                      <TableHead className="font-medium">Role</TableHead>
-                      <TableHead className="font-medium">Email</TableHead>
-                      <TableHead className="font-medium">Joined</TableHead>
-                      <TableHead className="font-medium">Last Login</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {members.map((member) => (
-                      <TableRow key={member.id} className="hover:bg-muted/30">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarImage src={member.avatar_url} />
-                              <AvatarFallback className="bg-primary/10 text-primary">
-                                {member.display_name
-                                  ? member.display_name
-                                      .split(' ')
-                                      .map(n => n[0])
-                                      .join('')
-                                      .toUpperCase()
-                                  : member.email ? member.email.substring(0, 2).toUpperCase() : 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium truncate">
-                                {member.display_name || 'No name set'}
-                              </div>
-                              {member.bio && (
-                                <div className="text-sm text-muted-foreground truncate max-w-48">
-                                  {member.bio}
-                                </div>
-                              )}
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead>Last Login</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members?.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={member.avatar_url} />
+                          <AvatarFallback>
+                            {member.display_name
+                              ? member.display_name
+                                  .split(' ')
+                                  .map(n => n[0])
+                                  .join('')
+                                  .toUpperCase()
+                              : member.email.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium">
+                            {member.display_name || 'No name set'}
+                          </div>
+                          {member.bio && (
+                            <div className="text-sm text-muted-foreground truncate max-w-48">
+                              {member.bio}
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getRoleVariant(member.role)} className="flex items-center gap-1 w-fit">
-                            {getRoleIcon(member.role)}
-                            <span className="capitalize">{member.role}</span>
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{member.email}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {format(new Date(member.created_at), 'MMM dd, yyyy')}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {member.last_login ? (
-                            <div className="text-sm">
-                              {format(new Date(member.last_login), 'MMM dd, yyyy HH:mm')}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">Never</span>
                           )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`flex items-center gap-1 w-fit ${getRoleColor((member as any).user_organization_memberships?.[0]?.role || 'member')}`}>
+                        {getRoleIcon((member as any).user_organization_memberships?.[0]?.role || 'member')}
+                        {(member as any).user_organization_memberships?.[0]?.role || 'member'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        {member.email}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        {format(new Date(member.created_at), 'MMM dd, yyyy')}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {member.last_login ? (
+                        <div className="text-sm">
+                          {format(new Date(member.last_login), 'MMM dd, yyyy HH:mm')}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Never</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {(!members || members.length === 0) && (
+              <div className="text-center py-8">
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No team members found</p>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

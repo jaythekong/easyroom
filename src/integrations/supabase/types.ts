@@ -112,47 +112,6 @@ export type Database = {
           },
         ]
       }
-      demo_configuration: {
-        Row: {
-          created_at: string
-          created_by: string
-          demo_enabled: boolean
-          demo_organization_id: string
-          demo_user_id: string
-          id: string
-          is_active: boolean
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          demo_enabled?: boolean
-          demo_organization_id: string
-          demo_user_id: string
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          demo_enabled?: boolean
-          demo_organization_id?: string
-          demo_user_id?: string
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demo_configuration_demo_organization_id_fkey"
-            columns: ["demo_organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       invitation_audit_log: {
         Row: {
           action: string

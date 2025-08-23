@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { Search, Eye, Pause, Play, Building2, Trash2, UserCheck, MoreHorizontal, Users, Crown, Mail, Calendar, Settings } from "lucide-react";
+import { Search, Eye, Pause, Play, Building2, Trash2, UserCheck, MoreHorizontal, Users, Crown, Mail } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { OrganizationDetailDrawer } from "./OrganizationDetailDrawer";
@@ -103,173 +103,153 @@ export function OrganizationManagement() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-0 shadow-md">
-        <CardHeader className="space-y-4 pb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Building2 className="h-5 w-5 text-primary" />
+      <Card className="glass-card border-0 bg-gradient-to-r from-card/80 to-card/60 backdrop-blur-sm">
+        <CardHeader className="space-y-3 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-secondary/10 border border-secondary/20">
+              <Building2 className="h-4 w-4 text-secondary" />
             </div>
             <div>
-              <CardTitle className="text-xl font-semibold">Organizations</CardTitle>
-              <p className="text-sm text-muted-foreground">Manage platform organizations and their settings</p>
+              <CardTitle className="text-lg">Organizations</CardTitle>
+              <p className="text-xs text-muted-foreground">Manage platform organizations</p>
             </div>
           </div>
-          
           <div className="flex items-center space-x-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search organizations by name or slug..."
+                placeholder="Search organizations..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="pl-10 h-10 bg-background border-border/50 focus:border-primary/50 transition-colors"
+                className="pl-10 h-9 bg-background/50 border-border/50 focus:bg-background transition-colors"
               />
             </div>
           </div>
         </CardHeader>
-        
         <CardContent className="pt-0">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex items-center gap-3">
-                <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-                <span className="text-muted-foreground">Loading organizations...</span>
-              </div>
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">Loading organizations...</div>
             </div>
           ) : (
             <>
-              <div className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="font-medium">Organization</TableHead>
-                      <TableHead className="font-medium">Admin</TableHead>
-                      <TableHead className="font-medium">Members</TableHead>
-                      <TableHead className="font-medium">Status</TableHead>
-                      <TableHead className="font-medium">Created</TableHead>
-                      <TableHead className="font-medium text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data?.organizations?.map((org) => (
-                      <TableRow key={org.id} className="hover:bg-muted/30">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                              <Building2 className="h-4 w-4 text-primary" />
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Organization</TableHead>
+                    <TableHead>Admin</TableHead>
+                    <TableHead>Members</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data?.organizations?.map((org) => (
+                    <TableRow key={org.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-primary/10">
+                            <Building2 className="h-4 w-4 text-primary" />
+                          </div>
+                          <div>
+                            <div className="font-medium">{org.name}</div>
+                            <div className="text-sm text-muted-foreground">{org.slug}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Crown className="h-4 w-4 text-yellow-500" />
+                          <div>
+                            <div className="font-medium text-sm">
+                              {"Admin not loaded"}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium truncate">{org.name}</div>
-                              <div className="text-sm text-muted-foreground truncate">/{org.slug}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {"Contact info not available"}
                             </div>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Crown className="h-4 w-4 text-amber-500 flex-shrink-0" />
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium text-sm truncate">Admin</div>
-                              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Mail className="h-3 w-3 flex-shrink-0" />
-                                <span className="truncate">Contact via team</span>
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button 
-                            variant="outline" 
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewTeam(org)}
+                          className="h-8"
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          {org.user_count || 0}
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={org.status === 'active' ? 'default' : 'destructive'}>
+                          {org.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{format(new Date(org.created_at), 'MMM d, yyyy')}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
                             size="sm"
-                            onClick={() => handleViewTeam(org)}
-                            className="h-8 w-full sm:w-auto"
+                            onClick={() => setSelectedOrg(org)}
                           >
-                            <Users className="h-4 w-4 mr-2" />
-                            {org.user_count || 0}
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={org.status === 'active' ? 'default' : 'destructive'}
-                            className="capitalize"
-                          >
-                            {org.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {format(new Date(org.created_at), 'MMM d, yyyy')}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-end gap-2">
+                          {org.status === 'active' ? (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => setSelectedOrg(org)}
-                              className="h-8"
+                              onClick={() => handleStatusChange(org, 'suspend')}
                             >
-                              <Eye className="h-4 w-4" />
+                              <Pause className="h-4 w-4" />
                             </Button>
-                            
-                            {org.status === 'active' ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleStatusChange(org, 'suspend')}
-                                className="h-8"
-                              >
-                                <Pause className="h-4 w-4" />
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleStatusChange(org, 'reactivate')}
+                            >
+                              <Play className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleStatusChange(org, 'reactivate')}
-                                className="h-8"
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleTransferOwnership(org)}>
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Transfer Ownership
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => handleDeleteOrganization(org)}
+                                className="text-destructive focus:text-destructive"
                               >
-                                <Play className="h-4 w-4" />
-                              </Button>
-                            )}
-                            
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => handleTransferOwnership(org)}>
-                                  <UserCheck className="h-4 w-4 mr-2" />
-                                  Transfer Ownership
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeleteOrganization(org)}
-                                  className="text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Organization
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Organization
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
               {data && data.totalPages > 1 && (
-                <div className="flex items-center justify-between mt-6 pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, data.total)} of {data.total} organizations
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <div className="text-xs text-muted-foreground">
+                    Showing {((currentPage - 1) * 10) + 1} to {Math.min(currentPage * 10, data.total)} of {data.total}
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button
@@ -280,11 +260,6 @@ export function OrganizationManagement() {
                     >
                       Previous
                     </Button>
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm text-muted-foreground">Page</span>
-                      <span className="font-medium">{currentPage}</span>
-                      <span className="text-sm text-muted-foreground">of {data.totalPages}</span>
-                    </div>
                     <Button
                       variant="outline"
                       size="sm"

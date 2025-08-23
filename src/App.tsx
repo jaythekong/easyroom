@@ -29,13 +29,10 @@ import SuperAdminUsers from "./pages/SuperAdminUsers";
 import SuperAdminSystem from "./pages/SuperAdminSystem";
 import SuperAdminSettings from "./pages/SuperAdminSettings";
 import SuperAdminAuth from "./pages/SuperAdminAuth";
-import SuperAdminDemoConfig from "./pages/SuperAdminDemoConfig";
 import AuthCallback from "./pages/AuthCallback";
 import ImpersonationHandler from "./pages/ImpersonationHandler";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { WelcomeScreen } from "./components/WelcomeScreen";
-import { DemoHandler } from "./components/DemoHandler";
-import { DemoLayout } from "./components/DemoLayout";
 
 const queryClient = new QueryClient();
 
@@ -57,7 +54,6 @@ const App = () => (
               <ImpersonationBanner />
               <Routes>
                 {/* Global routes (no organization context) */}
-                <Route path="/demo" element={<DemoHandler />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/thank-you" element={<ThankYouPage />} />
@@ -68,7 +64,6 @@ const App = () => (
         <Route path="/super-admin/users" element={<SuperAdminUsers />} />
         <Route path="/super-admin/system" element={<SuperAdminSystem />} />
         <Route path="/super-admin/settings" element={<SuperAdminSettings />} />
-        <Route path="/super-admin/demo-config" element={<SuperAdminDemoConfig />} />
         <Route path="/super-admin/auth" element={<SuperAdminAuth />} />
         <Route path="/impersonation-handler" element={<ImpersonationHandler />} />
                 
