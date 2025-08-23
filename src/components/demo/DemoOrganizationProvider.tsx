@@ -1,8 +1,8 @@
 import React, { createContext, useContext } from 'react';
 import { useDemoContext } from '@/contexts/DemoContext';
 
-// Create a mock organization context for demo mode
-const DemoOrganizationContext = createContext<any>(null);
+// Import the real OrganizationContext to provide the same interface
+const OrganizationContext = React.createContext<any>(undefined);
 
 export function DemoOrganizationProvider({ children }: { children: React.ReactNode }) {
   const demoContext = useDemoContext();
@@ -28,16 +28,17 @@ export function DemoOrganizationProvider({ children }: { children: React.ReactNo
   };
 
   return (
-    <DemoOrganizationContext.Provider value={organizationContextValue}>
+    <OrganizationContext.Provider value={organizationContextValue}>
       {children}
-    </DemoOrganizationContext.Provider>
+    </OrganizationContext.Provider>
   );
 }
 
-export function useDemoOrganization() {
-  const context = useContext(DemoOrganizationContext);
-  if (!context) {
-    throw new Error('useDemoOrganization must be used within a DemoOrganizationProvider');
+// Export the hook that matches the real useOrganization hook
+export function useOrganization() {
+  const context = useContext(OrganizationContext);
+  if (context === undefined) {
+    throw new Error('useOrganization must be used within an OrganizationProvider');
   }
   return context;
 }

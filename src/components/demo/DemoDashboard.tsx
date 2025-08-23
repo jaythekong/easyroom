@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { RoomCard } from "@/components/RoomCard";
 import { EnhancedRoomCard } from "@/components/EnhancedRoomCard";
-import { RoomTimeline } from "@/components/RoomTimeline";
+import { DemoRoomTimeline } from "@/components/demo/DemoRoomTimeline";
+import { DemoOrganizationClock } from "@/components/demo/DemoOrganizationClock";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
 import { UserMenu } from "@/components/UserMenu";
-import { OrganizationClock } from "@/components/OrganizationClock";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Clock, Users, Grid3X3, CalendarDays, Building, HelpCircle } from "lucide-react";
@@ -165,7 +165,7 @@ export default function DemoDashboard() {
             
             <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               <div className="hidden md:block">
-                <OrganizationClock />
+                <DemoOrganizationClock />
               </div>
               <UserMenu 
                 profile={userProfile} 
@@ -287,7 +287,7 @@ export default function DemoDashboard() {
           </TabsList>
 
           <TabsContent value="timeline" className="space-y-6">
-            <RoomTimeline
+            <DemoRoomTimeline
               rooms={timelineRooms}
               selectedDate={selectedDate}
               onQuickBook={handleQuickBook}
