@@ -5,7 +5,7 @@ import { DemoRoomTimeline } from "@/components/demo/DemoRoomTimeline";
 import { DemoOrganizationClock } from "@/components/demo/DemoOrganizationClock";
 import { SearchFilters } from "@/components/SearchFilters";
 import { BookingModal } from "@/components/BookingModal";
-import { UserMenu } from "@/components/UserMenu";
+import { DemoUserMenu } from "@/components/demo/DemoUserMenu";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Calendar, Clock, Users, Grid3X3, CalendarDays, Building, HelpCircle } from "lucide-react";
@@ -167,7 +167,7 @@ export default function DemoDashboard() {
               <div className="hidden md:block">
                 <DemoOrganizationClock />
               </div>
-              <UserMenu 
+              <DemoUserMenu 
                 profile={userProfile} 
                 onProfileUpdate={() => {}}
                 userRole={userRole}
