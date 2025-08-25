@@ -253,26 +253,8 @@ const Auth = () => {
           return;
         }
         
-        // Wait for the session to be established
-        console.log('Waiting for session to be established...');
-        let sessionCheckAttempts = 0;
-        const maxSessionCheckAttempts = 10;
-        
-        while (sessionCheckAttempts < maxSessionCheckAttempts) {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            console.log('Session established for user:', session.user.email);
-            authData = { user: session.user };
-            break;
-          }
-          sessionCheckAttempts++;
-          await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms
-        }
-        
-        if (!authData) {
-          toast.error("Authentication session could not be established. Please try signing in.");
-          return;
-        }
+        // Use the signup response directly
+        authData = newAuthData;
       }
 
       if (authData.user) {
