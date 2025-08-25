@@ -479,6 +479,30 @@ export type Database = {
           },
         ]
       }
+      security_compliance_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          setting_name: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          setting_name: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          setting_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       telegram_subscriptions: {
         Row: {
           created_at: string
