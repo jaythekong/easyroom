@@ -199,18 +199,27 @@ const Auth = () => {
       console.log('Step 3: Creating organization and user account');
       
       // Check if user is already authenticated
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+      console.log('Auth check - User:', user?.email, 'Error:', getUserError);
+      
       let authData;
       
-      if (user) {
+      if (user && !getUserError) {
         // User is already authenticated, verify email matches
+        console.log('User is authenticated with email:', user.email, 'Form email:', sanitizedEmail);
         if (user.email !== sanitizedEmail) {
-          toast.error("Email mismatch. Please sign out and try again with the correct email.");
-          return;
+          console.log('Email mismatch detected - clearing session and proceeding with signup');
+          // Clear the session and proceed with normal signup
+          await supabase.auth.signOut();
+          // Continue with normal signup flow
+        } else {
+          authData = { user };
         }
-        authData = { user };
-      } else {
+      }
+      
+      if (!authData) {
         // Create new user account - Supabase will handle duplicate email prevention
+        console.log('Creating new user account for:', sanitizedEmail);
         const { data: newAuthData, error: authError } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password,
