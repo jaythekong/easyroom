@@ -68,6 +68,11 @@ const AuthCallback = () => {
             navigate(`/auth?mode=reset`);
             return;
           }
+          
+          // If no session after recovery verification, something went wrong
+          logger.error('No session found after recovery verification');
+          navigate('/auth?error=recovery_failed');
+          return;
         } else {
           // Handle other auth types (signup, invite, etc.)
           const { data: { session }, error } = await supabase.auth.getSession();
