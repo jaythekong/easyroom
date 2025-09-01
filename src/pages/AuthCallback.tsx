@@ -22,7 +22,9 @@ const AuthCallback = () => {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         
         const type = searchParams.get('type') || hashParams.get('type');
-        const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
+        // Check for both token_hash and token (Supabase uses 'token' in email links)
+        const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash') || 
+                         searchParams.get('token') || hashParams.get('token');
         const redirectTo = searchParams.get('redirect_to') || hashParams.get('redirect_to');
         
         console.log('AuthCallback: Extracted params:', { type, tokenHash: !!tokenHash, redirectTo });
