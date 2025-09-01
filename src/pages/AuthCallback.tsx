@@ -52,19 +52,7 @@ const AuthCallback = () => {
           
           if (session && session.user) {
             logger.debug('Recovery successful, redirecting to password reset');
-            // Extract org slug from redirect_to if present
-            if (redirectTo) {
-              const orgMatch = redirectTo.match(/mode%3Dreset/);
-              if (orgMatch) {
-                // Find the org slug in the redirect URL
-                const orgSlugMatch = redirectTo.match(/easyroom\.asia%252F([^%]+)%252Fauth/);
-                if (orgSlugMatch) {
-                  const orgSlug = decodeURIComponent(orgSlugMatch[1]);
-                  navigate(`/${orgSlug}/auth?mode=reset`);
-                  return;
-                }
-              }
-            }
+            // For password recovery, always go to reset page - don't check other redirects
             navigate(`/auth?mode=reset`);
             return;
           }
