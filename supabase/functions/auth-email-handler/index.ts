@@ -60,8 +60,8 @@ const handler = async (req: Request): Promise<Response> => {
     // Start email sending in background task to avoid timeout
     const emailTask = async () => {
       try {
-        // Build the confirmation/action URL - use hash structure for better compatibility
-        const actionUrl = `${email_data.site_url}/#token_hash=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
+        // Build the confirmation/action URL - use callback URL structure for proper routing
+        const actionUrl = `${email_data.site_url}/auth/callback?token_hash=${email_data.token_hash}&type=${email_data.email_action_type}&redirect_to=${encodeURIComponent(email_data.redirect_to)}`;
 
         let subject = '';
         let htmlContent = '';
