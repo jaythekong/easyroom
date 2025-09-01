@@ -5,10 +5,14 @@ import { Loader2 } from 'lucide-react';
 import { logger } from '@/lib/logger';
 
 const AuthCallback = () => {
+  console.log('AuthCallback: Component rendering');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
+    console.log('AuthCallback: Component mounted');
+    console.log('AuthCallback: URL search:', window.location.search);
+    console.log('AuthCallback: URL hash:', window.location.hash);
     const handleAuthCallback = async () => {
       try {
         logger.debug('Processing auth callback...');
@@ -20,6 +24,8 @@ const AuthCallback = () => {
         const type = searchParams.get('type') || hashParams.get('type');
         const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash');
         const redirectTo = searchParams.get('redirect_to') || hashParams.get('redirect_to');
+        
+        console.log('AuthCallback: Extracted params:', { type, tokenHash: !!tokenHash, redirectTo });
         
         // Handle error cases from hash
         const error = hashParams.get('error');
@@ -35,8 +41,19 @@ const AuthCallback = () => {
         logger.debug('Callback params:', { type, tokenHash: !!tokenHash, redirectTo });
         
         // Handle different auth types
-        if (type === 'recovery' && tokenHash) {
+        console.log('AuthCallback: Checking auth type logic - type:', type, 'tokenHash exists:', !!tokenHash);
+        
+        if (type === 'recovery') {
+          console.log('AuthCallback: Recovery type detected');
+          
+          if (!tokenHash) {
+            console.log('AuthCallback: No token hash for recovery, redirecting to auth');
+            navigate('/auth?error=missing_token');
+            return;
+          }
+          
           // For password reset, verify the session and redirect to reset page
+          console.log('AuthCallback: Processing password recovery...');
           logger.debug('Handling password recovery callback...');
           
           const { data: { session }, error } = await supabase.auth.verifyOtp({
@@ -44,13 +61,21 @@ const AuthCallback = () => {
             type: 'recovery'
           });
           
+          console.log('AuthCallback: Recovery verification result:', { 
+            session: !!session, 
+            error: !!error,
+            errorMessage: error?.message 
+          });
+          
           if (error) {
+            console.log('AuthCallback: Recovery verification failed, redirecting to auth with error');
             logger.error('Password recovery verification error:', error);
             navigate('/auth?error=recovery_failed');
             return;
           }
           
           if (session && session.user) {
+            console.log('AuthCallback: Recovery successful, redirecting to password reset');
             logger.debug('Recovery successful, redirecting to password reset');
             // For password recovery, always go to reset page - don't check other redirects
             navigate(`/auth?mode=reset`);
@@ -58,6 +83,7 @@ const AuthCallback = () => {
           }
           
           // If no session after recovery verification, something went wrong
+          console.log('AuthCallback: No session after recovery verification');
           logger.error('No session found after recovery verification');
           navigate('/auth?error=recovery_failed');
           return;
