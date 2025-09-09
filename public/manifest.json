@@ -25,9 +25,21 @@
   "shortcuts": [
     {
       "name": "Dashboard",
-      "short_name": "Dashboard",
+      "short_name": "Dashboard", 
       "description": "Go to dashboard",
-      "url": "/dashboard",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/lovable-uploads/6721bbed-4f17-4518-8a39-2d4732849214.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Bookings",
+      "short_name": "Bookings",
+      "description": "View my bookings",
+      "url": "/my-bookings",
       "icons": [
         {
           "src": "/lovable-uploads/6721bbed-4f17-4518-8a39-2d4732849214.png",
@@ -35,5 +47,15 @@
         }
       ]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text", 
+      "url": "url"
+    }
+  },
+  "prefer_related_applications": false
 }

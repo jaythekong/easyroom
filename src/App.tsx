@@ -33,6 +33,8 @@ import AuthCallback from "./pages/AuthCallback";
 import ImpersonationHandler from "./pages/ImpersonationHandler";
 import { ImpersonationBanner } from "./components/ImpersonationBanner";
 import { WelcomeScreen } from "./components/WelcomeScreen";
+import { InstallPrompt } from "./components/InstallPrompt";
+import { PWAUpdatePrompt } from "./components/PWAUpdatePrompt";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
             <BrowserRouter>
               <PostConfirmationHandler />
               <ImpersonationBanner />
+              <InstallPrompt />
+              <PWAUpdatePrompt />
               <Routes>
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />
