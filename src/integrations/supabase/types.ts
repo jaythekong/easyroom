@@ -823,44 +823,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_invitation_and_create_user: {
-        Args:
-          | {
+      accept_invitation_and_create_user:
+        | {
+            Args: { invitation_token: string; user_email: string }
+            Returns: Json
+          }
+        | {
+            Args: {
               auth_user_id: string
               invitation_token: string
               user_email: string
             }
-          | { invitation_token: string; user_email: string }
-        Returns: Json
-      }
+            Returns: Json
+          }
       accept_invitation_link: {
         Args: { invitation_token: string }
         Returns: Json
       }
-      delete_organization: {
-        Args: { org_id: string }
-        Returns: Json
-      }
-      end_impersonation: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
-      generate_invitation_short_code: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      delete_organization: { Args: { org_id: string }; Returns: Json }
+      end_impersonation: { Args: never; Returns: Json }
+      generate_invitation_short_code: { Args: never; Returns: string }
       get_invitation_details: {
         Args: { invitation_token: string }
         Returns: Json
       }
-      get_organization_stats: {
-        Args: { org_id: string }
-        Returns: Json
-      }
-      get_platform_stats: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      get_organization_stats: { Args: { org_id: string }; Returns: Json }
+      get_platform_stats: { Args: never; Returns: Json }
       get_room_gaps: {
         Args: { p_date: string; p_room_id: string }
         Returns: {
@@ -868,10 +856,7 @@ export type Database = {
           gap_start: string
         }[]
       }
-      get_user_admin_org_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
+      get_user_admin_org_ids: { Args: never; Returns: string[] }
       get_user_memberships: {
         Args: { p_user_id: string }
         Returns: {
@@ -883,18 +868,9 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_user_organization_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_user_organization_ids: {
-        Args: Record<PropertyKey, never>
-        Returns: string[]
-      }
-      get_user_primary_organization_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_user_organization_id: { Args: never; Returns: string }
+      get_user_organization_ids: { Args: never; Returns: string[] }
+      get_user_primary_organization_id: { Args: never; Returns: string }
       get_user_role_in_org: {
         Args: { org_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
@@ -936,22 +912,10 @@ export type Database = {
         }
         Returns: undefined
       }
-      remove_user_super_admin: {
-        Args: { user_email: string }
-        Returns: string
-      }
-      resend_invitation: {
-        Args: { invitation_id: string }
-        Returns: Json
-      }
-      revoke_invitation: {
-        Args: { invitation_id: string }
-        Returns: Json
-      }
-      set_user_super_admin: {
-        Args: { user_email: string }
-        Returns: string
-      }
+      remove_user_super_admin: { Args: { user_email: string }; Returns: string }
+      resend_invitation: { Args: { invitation_id: string }; Returns: Json }
+      revoke_invitation: { Args: { invitation_id: string }; Returns: Json }
+      set_user_super_admin: { Args: { user_email: string }; Returns: string }
       track_invitation_open: {
         Args: { invitation_short_code?: string; invitation_token?: string }
         Returns: Json
