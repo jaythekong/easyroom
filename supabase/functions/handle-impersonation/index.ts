@@ -27,6 +27,32 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // --- Authorization: only super admins may impersonate ---
+    const authHeader = req.headers.get('Authorization');
+    const callerToken = authHeader?.replace(/^Bearer\s+/i, '');
+    if (!callerToken) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const { data: callerData, error: callerError } = await supabaseAdmin.auth.getUser(callerToken);
+    const caller = callerData?.user;
+    if (callerError || !caller) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired session' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    if (caller.app_metadata?.super_admin !== true) {
+      console.warn(`Impersonation denied for non-super-admin: ${caller.email} (${caller.id})`);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: super admin access required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    // --- end authorization ---
+
     // Get the target user's email
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
     

@@ -29,6 +29,32 @@ Deno.serve(async (req) => {
       }
     )
 
+    // --- Authorization: only super admins may delete users ---
+    const authHeader = req.headers.get('Authorization')
+    const callerToken = authHeader?.replace(/^Bearer\s+/i, '')
+    if (!callerToken) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const { data: callerData, error: callerError } = await supabaseAdmin.auth.getUser(callerToken)
+    const caller = callerData?.user
+    if (callerError || !caller) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired session' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (caller.app_metadata?.super_admin !== true) {
+      console.warn(`Delete-user denied for non-super-admin: ${caller.email} (${caller.id})`)
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: super admin access required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    // --- end authorization ---
+
     const { email, userId }: DeleteUserRequest = await req.json()
 
     if (!email && !userId) {
