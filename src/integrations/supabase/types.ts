@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.15"
   }
   public: {
     Tables: {
@@ -112,47 +112,6 @@ export type Database = {
           },
         ]
       }
-      demo_configuration: {
-        Row: {
-          created_at: string
-          created_by: string
-          demo_enabled: boolean
-          demo_organization_id: string
-          demo_user_id: string
-          id: string
-          is_active: boolean
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          demo_enabled?: boolean
-          demo_organization_id: string
-          demo_user_id: string
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          demo_enabled?: boolean
-          demo_organization_id?: string
-          demo_user_id?: string
-          id?: string
-          is_active?: boolean
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "demo_configuration_demo_organization_id_fkey"
-            columns: ["demo_organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       invitation_audit_log: {
         Row: {
           action: string
@@ -211,7 +170,6 @@ export type Database = {
           last_resent_at: string | null
           open_count: number | null
           organization_id: string
-          recipient_name: string | null
           resend_count: number | null
           revoked_at: string | null
           revoked_by: string | null
@@ -233,7 +191,6 @@ export type Database = {
           last_resent_at?: string | null
           open_count?: number | null
           organization_id: string
-          recipient_name?: string | null
           resend_count?: number | null
           revoked_at?: string | null
           revoked_by?: string | null
@@ -255,7 +212,6 @@ export type Database = {
           last_resent_at?: string | null
           open_count?: number | null
           organization_id?: string
-          recipient_name?: string | null
           resend_count?: number | null
           revoked_at?: string | null
           revoked_by?: string | null
@@ -478,30 +434,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      security_compliance_log: {
-        Row: {
-          created_at: string | null
-          id: string
-          notes: string | null
-          setting_name: string
-          status: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          setting_name: string
-          status: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          notes?: string | null
-          setting_name?: string
-          status?: string
-        }
-        Relationships: []
       }
       telegram_subscriptions: {
         Row: {
@@ -731,8 +663,6 @@ export type Database = {
           is_active: boolean
           logo_position: string | null
           organization_id: string
-          qr_position: string | null
-          qr_size: string | null
           sub_font_family: string | null
           sub_text: string | null
           sub_text_color: string | null
@@ -742,11 +672,6 @@ export type Database = {
           text_shadow: boolean | null
           updated_at: string
           welcome_text: string
-          wifi_enabled: boolean | null
-          wifi_hidden: boolean | null
-          wifi_password: string | null
-          wifi_security: string | null
-          wifi_ssid: string | null
         }
         Insert: {
           animation_enabled?: boolean
@@ -761,8 +686,6 @@ export type Database = {
           is_active?: boolean
           logo_position?: string | null
           organization_id: string
-          qr_position?: string | null
-          qr_size?: string | null
           sub_font_family?: string | null
           sub_text?: string | null
           sub_text_color?: string | null
@@ -772,11 +695,6 @@ export type Database = {
           text_shadow?: boolean | null
           updated_at?: string
           welcome_text?: string
-          wifi_enabled?: boolean | null
-          wifi_hidden?: boolean | null
-          wifi_password?: string | null
-          wifi_security?: string | null
-          wifi_ssid?: string | null
         }
         Update: {
           animation_enabled?: boolean
@@ -791,8 +709,6 @@ export type Database = {
           is_active?: boolean
           logo_position?: string | null
           organization_id?: string
-          qr_position?: string | null
-          qr_size?: string | null
           sub_font_family?: string | null
           sub_text?: string | null
           sub_text_color?: string | null
@@ -802,11 +718,6 @@ export type Database = {
           text_shadow?: boolean | null
           updated_at?: string
           welcome_text?: string
-          wifi_enabled?: boolean | null
-          wifi_hidden?: boolean | null
-          wifi_password?: string | null
-          wifi_security?: string | null
-          wifi_ssid?: string | null
         }
         Relationships: [
           {
@@ -823,32 +734,44 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_invitation_and_create_user:
-        | {
-            Args: { invitation_token: string; user_email: string }
-            Returns: Json
-          }
-        | {
-            Args: {
+      accept_invitation_and_create_user: {
+        Args:
+          | {
               auth_user_id: string
               invitation_token: string
               user_email: string
             }
-            Returns: Json
-          }
+          | { invitation_token: string; user_email: string }
+        Returns: Json
+      }
       accept_invitation_link: {
         Args: { invitation_token: string }
         Returns: Json
       }
-      delete_organization: { Args: { org_id: string }; Returns: Json }
-      end_impersonation: { Args: never; Returns: Json }
-      generate_invitation_short_code: { Args: never; Returns: string }
+      delete_organization: {
+        Args: { org_id: string }
+        Returns: Json
+      }
+      end_impersonation: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      generate_invitation_short_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_invitation_details: {
         Args: { invitation_token: string }
         Returns: Json
       }
-      get_organization_stats: { Args: { org_id: string }; Returns: Json }
-      get_platform_stats: { Args: never; Returns: Json }
+      get_organization_stats: {
+        Args: { org_id: string }
+        Returns: Json
+      }
+      get_platform_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       get_room_gaps: {
         Args: { p_date: string; p_room_id: string }
         Returns: {
@@ -856,7 +779,10 @@ export type Database = {
           gap_start: string
         }[]
       }
-      get_user_admin_org_ids: { Args: never; Returns: string[] }
+      get_user_admin_org_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       get_user_memberships: {
         Args: { p_user_id: string }
         Returns: {
@@ -868,9 +794,18 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_user_organization_id: { Args: never; Returns: string }
-      get_user_organization_ids: { Args: never; Returns: string[] }
-      get_user_primary_organization_id: { Args: never; Returns: string }
+      get_user_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_organization_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
+      get_user_primary_organization_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role_in_org: {
         Args: { org_id: string }
         Returns: Database["public"]["Enums"]["user_role"]
@@ -912,10 +847,22 @@ export type Database = {
         }
         Returns: undefined
       }
-      remove_user_super_admin: { Args: { user_email: string }; Returns: string }
-      resend_invitation: { Args: { invitation_id: string }; Returns: Json }
-      revoke_invitation: { Args: { invitation_id: string }; Returns: Json }
-      set_user_super_admin: { Args: { user_email: string }; Returns: string }
+      remove_user_super_admin: {
+        Args: { user_email: string }
+        Returns: string
+      }
+      resend_invitation: {
+        Args: { invitation_id: string }
+        Returns: Json
+      }
+      revoke_invitation: {
+        Args: { invitation_id: string }
+        Returns: Json
+      }
+      set_user_super_admin: {
+        Args: { user_email: string }
+        Returns: string
+      }
       track_invitation_open: {
         Args: { invitation_short_code?: string; invitation_token?: string }
         Returns: Json
