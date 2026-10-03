@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmCancelDialog } from "@/components/ConfirmCancelDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
@@ -70,12 +71,26 @@ const generateAllTimeSlots = () => {
 
 const allTimeSlots = generateAllTimeSlots();
 
+/** "20:00" + 90 minutes -> "21:30" (24h, same day). */
+const addMinutes = (time: string, minutes: number): string => {
+  const [h, m] = time.split(':').map(Number);
+  const total = h * 60 + m + minutes;
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+};
+
+const QUICK_DURATIONS = [
+  { label: '30 min', minutes: 30 },
+  { label: '1 hour', minutes: 60 },
+  { label: '2 hours', minutes: 120 },
+];
+
 export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialDate, initialStartTime, existingBooking }: BookingModalProps) {
   console.log('📱 BookingModal render:', { isOpen, room: room?.name, existingBooking: !!existingBooking, initialStartTime });
   const { user } = useAuth();
   const { organization } = useOrganization();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [existingBookings, setExistingBookings] = useState<any[]>([]);
   const [timeConflictError, setTimeConflictError] = useState<string>("");
   const [formData, setFormData] = useState({
@@ -539,30 +554,43 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
       .map(item => item.time);
   };
 
+  // New bookings: pre-fill the end time so most people only pick a start time.
+  // One hour if the room is free that long, otherwise the longest slot that fits
+  // (availableEndTimes only lists times inside the same free gap as the start).
+  useEffect(() => {
+    if (existingBooking || !formData.startTime || formData.endTime || isLoadingGaps) return;
+    if (!availableEndTimes.length) return;
+    const oneHour = addMinutes(formData.startTime, 60);
+    updateFormData({ endTime: availableEndTimes.includes(oneHour) ? oneHour : availableEndTimes[0] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingBooking, formData.startTime, formData.endTime, isLoadingGaps, availableEndTimes]);
+
   const handleDeleteBooking = async () => {
     if (!existingBooking?.id || !user || !organization?.id) return;
     
     setIsSubmitting(true);
     
     try {
+      // Notify first: the function reads the booking from the database to build
+      // the message, so it must still exist. A failed alert never blocks the delete.
+      try {
+        await supabase.functions.invoke('send-telegram-notification', {
+          body: {
+            bookingId: existingBooking.id,
+            organizationId: organization.id,
+            action: 'cancelled'
+          }
+        });
+      } catch (notificationError) {
+        console.warn('Failed to send telegram notification:', notificationError);
+      }
+
       const { error } = await supabase
         .from('bookings')
         .delete()
         .eq('id', existingBooking.id);
 
       if (error) throw error;
-
-      // Send telegram notification
-      try {
-        await supabase.functions.invoke('send-telegram-notification', {
-          body: {
-            organization_id: organization.id,
-            message: `🗑️ Booking deleted:\n\n📅 ${existingBooking.title}\n🏢 ${room?.name}\n👤 ${user.email}`
-          }
-        });
-      } catch (notificationError) {
-        console.warn('Failed to send telegram notification:', notificationError);
-      }
 
       toast({
         title: "Booking Deleted",
@@ -1027,6 +1055,30 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
             </div>
           </div>
 
+          {/* Quick length buttons */}
+          {!existingBooking && formData.startTime && (
+            <div className="flex flex-wrap items-center gap-2 -mt-2">
+              <span className="text-sm text-muted-foreground">Length:</span>
+              {QUICK_DURATIONS.map(({ label, minutes }) => {
+                const target = addMinutes(formData.startTime, minutes);
+                const fits = availableEndTimes.includes(target);
+                return (
+                  <Button
+                    key={minutes}
+                    type="button"
+                    size="sm"
+                    variant={formData.endTime === target ? 'default' : 'outline'}
+                    disabled={!fits}
+                    onClick={() => updateFormData({ endTime: target })}
+                    title={fits ? undefined : 'The room is booked before this length ends'}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Attendees */}
           <div className="space-y-2">
             <Label htmlFor="attendees">Number of Attendees</Label>
@@ -1078,12 +1130,22 @@ export function BookingModal({ isOpen, onClose, room, onBookingConfirm, initialD
               <Button 
                 type="button" 
                 variant="destructive"
-                onClick={handleDeleteBooking}
+                onClick={() => setConfirmDeleteOpen(true)}
                 disabled={isSubmitting}
                 className="flex-1"
               >
                 {isSubmitting ? 'Deleting...' : 'Delete'}
               </Button>
+            )}
+            {existingBooking && (
+              <ConfirmCancelDialog
+                open={confirmDeleteOpen}
+                onOpenChange={setConfirmDeleteOpen}
+                bookingTitle={existingBooking.title}
+                onConfirm={handleDeleteBooking}
+                loading={isSubmitting}
+                confirmLabel="Delete booking"
+              />
             )}
             <Button 
               type="submit" 

@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { logger } from "@/lib/logger";
 import { buildCallbackUrl } from "@/lib/authRedirect";
+import { PasswordInput } from "@/components/ui/password-input";
 import { 
   sanitizeInput, 
   sanitizeEmail, 
@@ -883,9 +884,9 @@ const Auth = () => {
                   <form onSubmit={handlePasswordUpdate} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="new-password">New Password</Label>
-                      <Input
+                      <PasswordInput
                         id="new-password"
-                        type="password"
+                        autoComplete="new-password"
                         placeholder="Enter your new password"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
@@ -896,9 +897,9 @@ const Auth = () => {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirm-password">Confirm New Password</Label>
-                      <Input
+                      <PasswordInput
                         id="confirm-password"
-                        type="password"
+                        autoComplete="new-password"
                         placeholder="Confirm your new password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
@@ -984,6 +985,8 @@ const Auth = () => {
                               <Input
                                 id="admin-email"
                                 type="email"
+                                autoComplete="email"
+                                inputMode="email"
                                 placeholder="you@company.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -993,9 +996,9 @@ const Auth = () => {
                             
                             <div className="space-y-2">
                               <Label htmlFor="admin-password">Password</Label>
-                              <Input
+                              <PasswordInput
                                 id="admin-password"
-                                type="password"
+                                autoComplete="new-password"
                                 placeholder="Create a secure password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -1224,6 +1227,8 @@ const Auth = () => {
                               <Input
                                 id="signin-email"
                                 type="email"
+                                autoComplete="username"
+                                inputMode="email"
                                 placeholder="Enter your email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -1245,9 +1250,9 @@ const Auth = () => {
                                   Forgot Password?
                                 </Button>
                               </div>
-                              <Input
+                              <PasswordInput
                                 id="signin-password"
-                                type="password"
+                                autoComplete="current-password"
                                 placeholder="Enter your password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
@@ -1292,6 +1297,8 @@ const Auth = () => {
                               <Input
                                 id="reset-email"
                                 type="email"
+                                autoComplete="email"
+                                inputMode="email"
                                 placeholder="Enter your email"
                                 value={resetEmail}
                                 onChange={(e) => setResetEmail(e.target.value)}

@@ -304,6 +304,8 @@ export default function InviteSignup() {
             <Input
               id="email"
               type="email"
+              autoComplete="username"
+              inputMode="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -316,6 +318,7 @@ export default function InviteSignup() {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
                 placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -344,6 +347,7 @@ export default function InviteSignup() {
               <Input
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
+                autoComplete="new-password"
                 placeholder="Confirm your password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}

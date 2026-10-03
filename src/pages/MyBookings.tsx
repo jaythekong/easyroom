@@ -191,6 +191,22 @@ export default function MyBookings() {
     if (!selectedBooking) return;
     
     try {
+      // Alert Telegram subscribers first (the function reads the booking from the
+      // database to build the message). A failed alert never blocks the delete.
+      if (organization?.id) {
+        try {
+          await supabase.functions.invoke('send-telegram-notification', {
+            body: {
+              bookingId: selectedBooking.id,
+              organizationId: organization.id,
+              action: 'cancelled'
+            }
+          });
+        } catch (notificationError) {
+          console.warn('Failed to send Telegram notification:', notificationError);
+        }
+      }
+
       const deleteQuery = supabase
         .from('bookings')
         .delete()

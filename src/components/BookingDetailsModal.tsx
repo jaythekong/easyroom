@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ConfirmCancelDialog } from "@/components/ConfirmCancelDialog";
 
 interface BookingDetailsModalProps {
   isOpen: boolean;
@@ -81,6 +82,8 @@ export function BookingDetailsModal({
     }).format(date);
   };
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const handleCancelBooking = async () => {
     if (!canEditBooking) return;
     
@@ -88,18 +91,14 @@ export function BookingDetailsModal({
     try {
       // Send Telegram notification BEFORE deleting the booking
       try {
-        // Get user's organization ID for notification
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('organization_id')
-          .eq('user_id', user?.id || '')
-          .maybeSingle();
-
-        if (profile?.organization_id) {
+        // Use the organization the user is currently working in. The old lookup
+        // through user_profiles returned nothing (and so sent no alert) for anyone
+        // who belongs to more than one organization.
+        if (organization?.id) {
           await supabase.functions.invoke('send-telegram-notification', {
             body: {
               bookingId: booking.id,
-              organizationId: profile.organization_id,
+              organizationId: organization.id,
               action: 'cancelled'
             }
           });
@@ -157,6 +156,7 @@ export function BookingDetailsModal({
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]" aria-describedby="booking-details-description">
         <div id="booking-details-description" className="sr-only">
@@ -277,7 +277,7 @@ export function BookingDetailsModal({
                 </Button>
                 <Button 
                   variant="destructive" 
-                  onClick={handleCancelBooking}
+                  onClick={() => setConfirmOpen(true)}
                   disabled={loading}
                   className="flex-1"
                 >
@@ -290,5 +290,13 @@ export function BookingDetailsModal({
         </div>
       </DialogContent>
     </Dialog>
+    <ConfirmCancelDialog
+      open={confirmOpen}
+      onOpenChange={setConfirmOpen}
+      bookingTitle={booking.title}
+      onConfirm={handleCancelBooking}
+      loading={loading}
+    />
+    </>
   );
 }
