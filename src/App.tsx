@@ -60,6 +60,7 @@ const App = () => (
                 {/* Global routes (no organization context) */}
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/auth/callback/*" element={<AuthCallback />} />
                 <Route path="/thank-you" element={<ThankYouPage />} />
                 <Route path="/thank-you/:orgSlug" element={<ThankYouPage />} />
                 <Route path="/access-denied" element={<AccessDeniedPage />} />

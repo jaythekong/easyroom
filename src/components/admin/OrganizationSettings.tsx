@@ -233,7 +233,7 @@ export function OrganizationSettings() {
   };
 
   const copySubdomainUrl = async () => {
-    const pathUrl = `https://easyroom.asia/${subdomain}`;
+    const pathUrl = `${window.location.origin}/${subdomain}`;
     await navigator.clipboard.writeText(pathUrl);
     toast({
       title: "Copied!",
@@ -446,7 +446,7 @@ export function OrganizationSettings() {
               )}
               
               <p className="text-sm text-muted-foreground">
-                Your organization will be accessible at: <code className="bg-muted px-1 rounded">https://easyroom.asia/{subdomain || 'your-org'}</code>
+                Your organization will be accessible at: <code className="bg-muted px-1 rounded">{window.location.origin}/{subdomain || 'your-org'}</code>
               </p>
             </div>
           </div>
@@ -455,7 +455,7 @@ export function OrganizationSettings() {
             <div>
               <p className="font-medium">Current Path</p>
               <p className="text-sm text-muted-foreground">
-                https://easyroom.asia/{originalSubdomain}
+                {window.location.origin}/{originalSubdomain}
               </p>
             </div>
             <div className="flex items-center gap-2">

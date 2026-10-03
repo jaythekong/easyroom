@@ -1,6 +1,6 @@
-const CACHE_NAME = 'easy-room-v2';
-const STATIC_CACHE = 'easy-room-static-v2';
-const DYNAMIC_CACHE = 'easy-room-dynamic-v2';
+const CACHE_NAME = 'easy-room-v3';
+const STATIC_CACHE = 'easy-room-static-v3';
+const DYNAMIC_CACHE = 'easy-room-dynamic-v3';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
@@ -66,9 +66,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for navigation requests
-  if (request.mode === 'navigate') {
-    event.respondWith(staleWhileRevalidate(request));
+  // Network-first for navigation requests so a new deploy is picked up immediately
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirst(request));
     return;
   }
 

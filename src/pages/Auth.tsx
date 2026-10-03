@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { logger } from "@/lib/logger";
+import { buildCallbackUrl } from "@/lib/authRedirect";
 import { 
   sanitizeInput, 
   sanitizeEmail, 
@@ -215,7 +216,7 @@ const Auth = () => {
           email: sanitizedEmail,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(`/${sanitizedSlug}`)}`
+            emailRedirectTo: buildCallbackUrl({ kind: 'to', path: `/${sanitizedSlug}` })
           }
         });
         
@@ -460,7 +461,7 @@ const Auth = () => {
         email: sanitizedEmail,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`
+          emailRedirectTo: buildCallbackUrl({ kind: 'to', path: redirectTo.startsWith('/') ? redirectTo : '/' })
         }
       });
 
@@ -670,13 +671,9 @@ const Auth = () => {
       
       passwordResetRateLimiter.recordAttempt(rateLimitKey);
 
-      // Build proper callback URL that will handle the reset token
-      const redirectTo = orgSlug 
-        ? `${window.location.origin}/${orgSlug}/auth?mode=reset`
-        : `${window.location.origin}/auth?mode=reset`;
-      
+      // Callback URL carries the org in a path segment (no query string: see src/lib/authRedirect.ts)
       const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
-        redirectTo: `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectTo)}`,
+        redirectTo: buildCallbackUrl({ kind: 'recovery', orgSlug: orgSlug || null }),
       });
 
       if (error) {
@@ -942,7 +939,7 @@ const Auth = () => {
                               required
                             />
                             <p className="text-xs text-muted-foreground">
-                              Your organization will be accessible at: <span className="font-mono">https://easyroom.asia/{orgSubdomain || 'your-org'}</span>
+                              Your organization will be accessible at: <span className="font-mono">{window.location.origin}/{orgSubdomain || 'your-org'}</span>
                             </p>
                           </div>
                         </div>
@@ -1172,7 +1169,7 @@ const Auth = () => {
                                     required
                                   />
                                   <p className="text-xs text-muted-foreground">
-                                    Your organization will be accessible at: <span className="font-mono">https://easyroom.asia/{organizationSlug || 'your-org'}</span>
+                                    Your organization will be accessible at: <span className="font-mono">{window.location.origin}/{organizationSlug || 'your-org'}</span>
                                   </p>
                                 </div>
                               </div>

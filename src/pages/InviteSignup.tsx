@@ -8,6 +8,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { buildCallbackUrl } from "@/lib/authRedirect";
 import { Loader2, UserPlus, AlertCircle, Building2, Eye, EyeOff } from "lucide-react";
 
 interface InviteData {
@@ -203,7 +204,8 @@ export default function InviteSignup() {
         email: email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/invite/verify?token=${token}&slug=${organizationData?.slug}`,
+          // Path-segment callback (no query string) so the invite token and org survive email link tracking.
+          emailRedirectTo: buildCallbackUrl({ kind: 'invite', token: token || '', slug: organizationData?.slug || '' }),
         }
       });
 

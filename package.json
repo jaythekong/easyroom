@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "node scripts/deploy.mjs",
+    "cf:dev": "vite build && wrangler dev",
+    "cf:test-cron": "node scripts/test-cron.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -73,6 +76,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261003.1",
     "@eslint/js": "^9.9.0",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",

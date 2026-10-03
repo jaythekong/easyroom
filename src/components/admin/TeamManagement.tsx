@@ -183,26 +183,35 @@ export function TeamManagement() {
     }
   };
 
+  // Invitations are link-based by design (the database only accepts rows with a
+  // NULL email, see migration 20250724143451). The email entered here is kept as
+  // a note on the invite so the admin knows who the link was meant for.
   const sendInvite = async () => {
     if (!inviteEmail || !user || !organization?.id) return;
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
+      const note = [inviteName, inviteEmail].filter(Boolean).join(' · ');
+      const { data, error } = await supabase
         .from('invitations')
         .insert({
-          email: inviteEmail,
+          email: null,
           role: inviteRole as 'admin' | 'member',
           invited_by: user.id,
           organization_id: organization.id,
-          recipient_name: inviteName || null,
-        });
+          recipient_name: note || null,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
+      const inviteUrl = `${window.location.origin}/invite/${data.invite_token}`;
+      await navigator.clipboard.writeText(inviteUrl);
+
       toast({
-        title: "Invite sent!",
-        description: `Invitation sent to ${inviteEmail}`,
+        title: "Invite link created!",
+        description: `Link copied to clipboard. Send it to ${inviteEmail}.`,
       });
 
       setInviteEmail("");
@@ -585,7 +594,7 @@ export function TeamManagement() {
                 <DialogHeader>
                   <DialogTitle>Invite Team Member</DialogTitle>
                   <DialogDescription>
-                    Send an invitation to join your organization
+                    Creates a personal invite link and copies it to your clipboard. Send the link to your team member yourself, for example by email or Telegram.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
@@ -629,7 +638,7 @@ export function TeamManagement() {
                       Cancel
                     </Button>
                     <Button onClick={sendInvite} disabled={isLoading || !inviteEmail}>
-                      {isLoading ? "Sending..." : "Send Invite"}
+                      {isLoading ? "Creating..." : "Create Invite Link"}
                     </Button>
                   </div>
                 </div>

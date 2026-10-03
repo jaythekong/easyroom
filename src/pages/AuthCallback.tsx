@@ -1,158 +1,216 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import type { EmailOtpType } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, KeyRound, MailCheck } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { logger } from '@/lib/logger';
+import { parseCallbackTarget, type CallbackTarget } from '@/lib/authRedirect';
+
+/** Only allow same-origin relative paths so an email link can never bounce users elsewhere. */
+const sanitizeRedirect = (value: string | null): string | null => {
+  if (!value) return null;
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return null;
+  }
+};
+
+/** supabase-js picks the session out of the URL hash asynchronously; give it a moment. */
+const waitForSession = async (attempts = 10, delayMs = 300) => {
+  for (let i = 0; i < attempts; i++) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) return session;
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  return null;
+};
+
+const OTP_TYPES: EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
 
 const AuthCallback = () => {
-  console.log('AuthCallback: Component rendering');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // When the email carries a token_hash we wait for a real click before redeeming
+  // it: mail scanners open links automatically and would otherwise burn the
+  // one-time token before the user ever sees the page.
+  const [pending, setPending] = useState<{ tokenHash: string; type: EmailOtpType } | null>(null);
+  const [verifying, setVerifying] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+
+  // Where should the user end up? Sources, in priority order:
+  //  1. `next` from the email template (= the redirect URL the app asked for)
+  //  2. the current path, when Supabase redirected straight to our clean callback URL
+  //  3. legacy `redirectTo` / `redirect_to` query params
+  const legacyRedirect = sanitizeRedirect(
+    searchParams.get('redirectTo') || searchParams.get('redirect_to') || hashParams.get('redirect_to'),
+  );
+  const target: CallbackTarget = (() => {
+    const fromNext = parseCallbackTarget(searchParams.get('next'));
+    if (fromNext.kind !== 'none') return fromNext;
+    const fromPath = parseCallbackTarget(window.location.pathname);
+    if (fromPath.kind !== 'none') return fromPath;
+    if (legacyRedirect) {
+      const m = legacyRedirect.match(/^\/([^/?#]+)\/auth(?:[/?#]|$)/);
+      if (/[?&]mode=reset/.test(legacyRedirect)) return { kind: 'recovery', orgSlug: m ? m[1] : null };
+      return { kind: 'to', path: legacyRedirect };
+    }
+    return { kind: 'none' };
+  })();
+
+  const orgSlugHint = target.kind === 'recovery' ? target.orgSlug : target.kind === 'invite' ? target.slug : null;
+  const authPath = orgSlugHint ? `/${orgSlugHint}/auth` : '/auth';
+
+  const fail = (code: string, details?: string) => {
+    navigate(`${authPath}?error=${code}${details ? `&details=${encodeURIComponent(details)}` : ''}`);
+  };
+
+  /** Password reset: prefer the org in the link, else the user's primary org. */
+  const resetFormPath = async (): Promise<string> => {
+    if (target.kind === 'recovery' && target.orgSlug) return `/${target.orgSlug}/auth?mode=reset`;
+    try {
+      const { data: orgId } = await supabase.rpc('get_user_primary_organization_id');
+      if (orgId) {
+        const { data: org } = await supabase.from('organizations').select('slug').eq('id', orgId).maybeSingle();
+        if (org?.slug) return `/${org.slug}/auth?mode=reset`;
+      }
+    } catch (err) {
+      logger.debug('Could not resolve organization for reset page', err);
+    }
+    return '/auth?mode=reset';
+  };
+
+  /** Invite signup: email is confirmed and the session exists; now join the organization. */
+  const completeInvite = async (token: string, slug: string) => {
+    const { error } = await supabase.rpc('accept_invitation_link', { invitation_token: token });
+    if (error && !error.message?.includes('INVITE_INVALID')) {
+      logger.error('Accept invitation error:', error);
+      setFailure(`Your email is confirmed, but joining the organization failed: ${error.message}`);
+      return;
+    }
+    navigate(`/${slug}?welcome=true`);
+  };
+
+  const continueAfterSession = async () => {
+    switch (target.kind) {
+      case 'recovery':
+        navigate(await resetFormPath());
+        return;
+      case 'invite':
+        await completeInvite(target.token, target.slug);
+        return;
+      case 'to':
+        navigate(target.path);
+        return;
+      default: {
+        const pendingOrgSlug = localStorage.getItem('pendingOrgSlug');
+        if (pendingOrgSlug) {
+          localStorage.removeItem('pendingOrgSlug');
+          navigate(`/${pendingOrgSlug}/onboarding`);
+        } else {
+          navigate('/select-org');
+        }
+      }
+    }
+  };
+
+  const redeem = async () => {
+    if (!pending) return;
+    setVerifying(true);
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: pending.tokenHash, type: pending.type });
+    if (error || !data.session?.user) {
+      logger.error('Email link verification error:', error);
+      setVerifying(false);
+      setFailure(error?.message || 'This link is no longer valid. Please request a new one.');
+      return;
+    }
+    await continueAfterSession();
+  };
 
   useEffect(() => {
-    console.log('AuthCallback: Component mounted');
-    console.log('AuthCallback: URL search:', window.location.search);
-    console.log('AuthCallback: URL hash:', window.location.hash);
-    const handleAuthCallback = async () => {
+    const run = async () => {
       try {
-        logger.debug('Processing auth callback...');
-        
-        // Check both URL params and hash params for compatibility
-        const urlParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        
-        const type = searchParams.get('type') || hashParams.get('type');
-        // Check for both token_hash and token (Supabase uses 'token' in email links)
-        const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash') || 
-                         searchParams.get('token') || hashParams.get('token');
-        const redirectTo = searchParams.get('redirect_to') || hashParams.get('redirect_to');
-        
-        console.log('AuthCallback: Extracted params:', { type, tokenHash: !!tokenHash, redirectTo });
-        
-        // Handle error cases from hash
-        const error = hashParams.get('error');
-        const errorCode = hashParams.get('error_code');
-        const errorDescription = hashParams.get('error_description');
-        
-        if (error) {
-          logger.error('Auth error from URL:', { error, errorCode, errorDescription });
-          navigate('/auth?error=auth_failed&details=' + encodeURIComponent(errorDescription || error));
-          return;
-        }
-        
-        logger.debug('Callback params:', { type, tokenHash: !!tokenHash, redirectTo });
-        
-        // Handle different auth types
-        console.log('AuthCallback: Checking auth type logic - type:', type, 'tokenHash exists:', !!tokenHash);
-        
-        if (type === 'recovery') {
-          console.log('AuthCallback: Recovery type detected');
-          
-          if (!tokenHash) {
-            console.log('AuthCallback: No token hash for recovery, redirecting to auth');
-            navigate('/auth?error=missing_token');
-            return;
-          }
-          
-          // For password reset, verify the session and redirect to reset page
-          console.log('AuthCallback: Processing password recovery...');
-          logger.debug('Handling password recovery callback...');
-          
-          const { data: { session }, error } = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: 'recovery'
-          });
-          
-          console.log('AuthCallback: Recovery verification result:', { 
-            session: !!session, 
-            error: !!error,
-            errorMessage: error?.message 
-          });
-          
-          if (error) {
-            console.log('AuthCallback: Recovery verification failed, redirecting to auth with error');
-            logger.error('Password recovery verification error:', error);
-            navigate('/auth?error=recovery_failed');
-            return;
-          }
-          
-          if (session && session.user) {
-            console.log('AuthCallback: Recovery successful, redirecting to password reset');
-            logger.debug('Recovery successful, redirecting to password reset');
-            // For password recovery, always go to reset page - don't check other redirects
-            navigate(`/auth?mode=reset`);
-            return;
-          }
-          
-          // If no session after recovery verification, something went wrong
-          console.log('AuthCallback: No session after recovery verification');
-          logger.error('No session found after recovery verification');
-          navigate('/auth?error=recovery_failed');
-          return;
-        } else {
-          // Handle other auth types (signup, invite, etc.)
-          const { data: { session }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            logger.error('Auth callback error:', error);
-            navigate('/auth?error=callback_failed');
-            return;
-          }
+        const rawType = searchParams.get('type') || hashParams.get('type');
+        const type = (OTP_TYPES as string[]).includes(rawType || '') ? (rawType as EmailOtpType) : null;
+        const tokenHash = searchParams.get('token_hash') || hashParams.get('token_hash') ||
+                          searchParams.get('token') || hashParams.get('token');
+        const hasImplicitSession = hashParams.has('access_token');
 
-          if (session && session.user) {
-            logger.debug('Auth callback successful, user confirmed:', session.user.email);
-            
-            // Check for invitation completion first
-            if (redirectTo) {
-              // Handle both /invite/verify and direct invitation URLs
-              if (redirectTo.includes('/invite/verify') || redirectTo.includes('/invite?token=')) {
-                let token = null;
-                
-                if (redirectTo.includes('/invite/verify')) {
-                  // Extract token from verify URL
-                  const urlObj = new URL(redirectTo, window.location.origin);
-                  token = urlObj.searchParams.get('token');
-                } else if (redirectTo.includes('/invite?token=')) {
-                  // Extract token from direct invite URL
-                  const tokenMatch = redirectTo.match(/token=([^&]+)/);
-                  token = tokenMatch ? tokenMatch[1] : null;
-                }
-                
-                if (token) {
-                  logger.debug('Redirecting to complete invitation with token:', token);
-                  navigate(`/complete-invite?token=${token}`);
-                  return;
-                }
-              }
-            }
-            
-            // Check for pending organization redirect
-            const pendingOrgSlug = localStorage.getItem('pendingOrgSlug');
-            
-            if (pendingOrgSlug) {
-              logger.debug('Redirecting to pending organization:', pendingOrgSlug);
-              localStorage.removeItem('pendingOrgSlug');
-              navigate(`/${pendingOrgSlug}/onboarding`);
-            } else if (redirectTo) {
-              logger.debug('Redirecting to specified path:', redirectTo);
-              navigate(redirectTo);
-            } else {
-              // Default redirect to dashboard or select org
-              navigate('/select-org');
-            }
-          } else {
-            logger.debug('No session found after callback, redirecting to auth');
-            navigate('/auth');
-          }
+        // Supabase reports link problems in the hash (#error=...&error_description=...).
+        const error = hashParams.get('error') || searchParams.get('error');
+        const errorDescription = hashParams.get('error_description') || searchParams.get('error_description');
+        if (error) {
+          logger.error('Auth error from URL:', { error, errorDescription });
+          fail('auth_failed', errorDescription || error);
+          return;
         }
-      } catch (error) {
-        logger.error('Unexpected error in auth callback:', error);
-        navigate('/auth?error=unexpected');
+
+        if (tokenHash && type) {
+          // Ask for a click before redeeming the one-time code.
+          setPending({ tokenHash, type });
+          return;
+        }
+
+        // Legacy implicit flow: Supabase already verified the link and put the session in the hash.
+        const session = hasImplicitSession ? await waitForSession() : (await supabase.auth.getSession()).data.session;
+        if (!session?.user) {
+          logger.debug('No session found after callback');
+          fail(type === 'recovery' ? 'recovery_failed' : 'callback_failed');
+          return;
+        }
+        if (type === 'recovery' || target.kind === 'recovery') {
+          navigate(await resetFormPath());
+          return;
+        }
+        await continueAfterSession();
+      } catch (err) {
+        logger.error('Unexpected error in auth callback:', err);
+        fail('unexpected');
       }
     };
+    run();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    handleAuthCallback();
-  }, [navigate, searchParams]);
+  if (failure) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md text-center space-y-6 rounded-xl border bg-card p-8 shadow-sm">
+          <h2 className="text-xl font-semibold">That link didn't work</h2>
+          <p className="text-muted-foreground">{failure}</p>
+          <Button className="w-full" variant="outline" onClick={() => navigate(authPath)}>Back to sign in</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (pending) {
+    const isRecovery = pending.type === 'recovery';
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="w-full max-w-md text-center space-y-6 rounded-xl border bg-card p-8 shadow-sm">
+          {isRecovery ? <KeyRound className="w-10 h-10 mx-auto text-primary" /> : <MailCheck className="w-10 h-10 mx-auto text-primary" />}
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold">{isRecovery ? 'Reset your password' : 'Confirm your email'}</h2>
+            <p className="text-muted-foreground">
+              {isRecovery
+                ? 'Click continue to open the password reset form. This link can only be used once.'
+                : 'Click continue to confirm your email address and finish setting up your account.'}
+            </p>
+          </div>
+          <Button className="w-full" size="lg" disabled={verifying} onClick={redeem}>
+            {verifying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            {verifying ? 'Verifying…' : 'Continue'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
