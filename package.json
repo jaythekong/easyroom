@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "deploy": "node scripts/deploy.mjs",
     "cf:dev": "vite build && wrangler dev",
-    "cf:test-cron": "node scripts/test-cron.mjs"
+    "cf:test-cron": "node scripts/test-cron.mjs",
+    "test:telegram": "node scripts/test-telegram-function.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
