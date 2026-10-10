@@ -10,6 +10,7 @@
     "not_found_handling": "single-page-application",
     "run_worker_first": true
   },
+  // Cloudflare weekdays count from Sunday = 1, so "1,4" runs Sunday and Wednesday at 06:00 UTC.
   "triggers": { "crons": ["0 6 * * 1,4"] },
   "observability": { "enabled": true }
 }

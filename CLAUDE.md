@@ -31,10 +31,29 @@ Never deploy this project to any other Cloudflare account (the owner also has "D
 - The invitations table only allows link invites (`email` must be NULL). The "Email Invite" dialog creates a link.
 - Telegram function (`supabase/functions/send-telegram-notification`) requires a signed-in organization member, formats times in the organization's timezone, escapes HTML. Test it with `npm run test:telegram`. Do not send live test alerts without asking: they reach real subscribers.
 - Cancel flows alert Telegram **before** deleting (the function reads the booking).
-- Supabase free projects pause after about a week idle; the Worker cron (Mon and Thu 06:00 UTC) pings the database to prevent that (`npm run cf:test-cron`).
+- Supabase free projects pause after about a week idle; the Worker cron pings the database to prevent that (`npm run cf:test-cron`). Schedule `0 6 * * 1,4` runs **Sunday and Wednesday** 06:00 UTC: Cloudflare numbers weekdays from Sunday = 1, not Monday = 1. Verified in the Supabase logs on 2026-10-04 (Sun) and 2026-10-07 (Wed).
 
 ## Conventions
 
 - Production data is real (about 41 users). Reads of Roomer are fine when needed; anything that changes live data, auth settings, or messages real people needs the owner's go-ahead.
 - Keep user-visible text in English only (the owner decided Khmer is not needed).
 - The owner prefers short, plain explanations and wants things working end to end, then verified on the live site.
+
+## Branches and git
+
+- All work is on `cloudflare-migration`, pushed to github.com/jaythekong/easyroom. `main` is the Lovable-synced branch: do not merge into it without asking.
+- The permission system blocks Claude from `git push`, so the owner pushes. Claude commits locally as work completes.
+
+## State as of 2026-10-10
+
+Live and verified: site, sign-in, password reset, invite signup, Telegram alerts (create and cancel), booking form defaults, cancel confirmation, show/hide password, keep-alive, safe deploys.
+
+Open, in suggested order:
+1. **Backups.** The free Supabase plan has none; a weekly dump outside Supabase is needed (`scripts/migrate/01-dump-old.sh` is a starting point).
+2. **Double-booking rule.** Verify on Roomer whether the database rejects overlapping bookings; if not, add an exclusion constraint.
+3. **Self-check.** A daily test of sign-in, email and Telegram that alerts an admin on failure; several earlier faults were silent.
+4. **Telegram webhook** has no `secret_token`, so anyone who knows an organization id can post fake updates. Fixing it means re-registering every organization's bot.
+5. **Repeating bookings** (the IR Department books the same slots weekly) and **Telegram reminders / preferences**; remove subscribers who blocked the bot.
+6. **Open organization sign-up** has no limits or approval; decide whether to keep it open.
+7. Automatic deploys from GitHub, so deploys do not depend on one laptop.
+
