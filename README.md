@@ -1,73 +1,40 @@
-# Welcome to your Lovable project
+# EasyRoom
 
-## Project info
+Meeting-room booking for organizations. People sign in to their organization's page, book a room on a timeline, and get Telegram alerts when rooms are booked or cancelled. Admins invite people with links and manage rooms and teams.
 
-**URL**: https://lovable.dev/projects/d0aa88b5-d019-46f1-b86a-c5a76a8c649d
+## Stack
 
-## How can I edit this code?
+- Vite, React, TypeScript, Tailwind, shadcn-ui
+- Supabase (database, auth, storage, edge functions) for the backend
+- Cloudflare Workers to serve the site, with a scheduled job that keeps the database awake
+- Brevo SMTP for password-reset and signup emails; per-organization Telegram bots for alerts
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/d0aa88b5-d019-46f1-b86a-c5a76a8c649d) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Run it locally
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+npm install --legacy-peer-deps
+npm run dev          # http://localhost:8080
 ```
 
-**Edit a file directly in GitHub**
+Copy the Supabase URL and public key into `.env` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`).
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Deploy
 
-**Use GitHub Codespaces**
+```sh
+npm run deploy       # builds, checks the Cloudflare account, deploys the Worker
+supabase functions deploy send-telegram-notification --project-ref <ref> --no-verify-jwt
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Deploying needs a Cloudflare API token in `.deploy.local` (see `CLAUDE.md`).
 
-## What technologies are used for this project?
+## Useful scripts
 
-This project is built with:
+| Command | What it does |
+|---|---|
+| `npm run test:telegram` | Tests the Telegram alert function locally with a fake database |
+| `npm run cf:test-cron` | Fires the keep-alive job once, locally |
+| `npm run lint` | Lints the code |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## More
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/d0aa88b5-d019-46f1-b86a-c5a76a8c649d) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+`CLAUDE.md` holds the working notes: where everything lives, how deploys work, problems already solved, and the list of open improvements.
